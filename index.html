@@ -3,144 +3,424 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#BDFF00" />
+<meta name="description" content="Consolidador de movimientos de residuos · Ambipar Chile · Inteligencia Circular" />
 <title>Consolidador de Trazabilidad · Ambipar Chile</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
+  /* =========================================================
+     TIPOGRAFÍA — NEO SANS (fuente corporativa Ambipar)
+     ---------------------------------------------------------
+     Neo Sans es una fuente con licencia (Monotype): NO se puede
+     descargar gratis desde internet como las de Google Fonts.
+
+     · Si TIENES los archivos de la fuente (licencia Ambipar):
+       crea en el repo una carpeta "fonts/" y sube ahí
+       NeoSans.woff2 y NeoSans-Bold.woff2. Con eso, los bloques
+       @font-face de abajo la activan solos, sin tocar nada más.
+
+     · Si NO los tienes todavía: no pasa nada. La página usa
+       automáticamente "Exo 2", que es la alternativa libre más
+       parecida a Neo Sans (misma forma geométrica y cuadrada).
+       Verás un error 404 de fuente en la consola: es inofensivo.
+     ========================================================= */
+  @font-face{
+    font-family:"Neo Sans Web";
+    src:url("fonts/NeoSans.woff2") format("woff2");
+    font-weight:400; font-style:normal; font-display:swap;
+  }
+  @font-face{
+    font-family:"Neo Sans Web";
+    src:url("fonts/NeoSans-Medium.woff2") format("woff2");
+    font-weight:600; font-style:normal; font-display:swap;
+  }
+  @font-face{
+    font-family:"Neo Sans Web";
+    src:url("fonts/NeoSans-Bold.woff2") format("woff2");
+    font-weight:700; font-style:normal; font-display:swap;
+  }
+
+  /* =========================================================
+     PALETA AMBIPAR
+     ========================================================= */
   :root{
-    --verde:#00953B;        /* verde Ambipar */
-    --verde-osc:#00722d;
-    --verde-claro:#e6f4ec;
-    --tinta:#12261b;         /* texto principal */
-    --gris:#5b6b62;
-    --linea:#d7e2db;
-    --fondo:#f6f8f7;
-    --alerta:#b4610a;
-    --alerta-fondo:#fdf1e3;
+    --lima:#BDFF00;          /* verde lima de marca (barra superior) */
+    --verde:#00953B;         /* verde Ambipar */
+    --verde-osc:#00722D;
+    --verde-claro:#E9F6EF;
+    --tinta:#0A2E2E;         /* texto principal / azul petróleo de marca */
+    --tinta-2:#274746;
+    --gris:#6B7C7A;
+    --gris-claro:#98A7A5;
+    --linea:#DDE5E2;
+    --fondo:#F4F6F5;
+    --blanco:#FFFFFF;
+    --alerta:#B4610A;
+    --alerta-fondo:#FDF3E6;
+    --alerta-linea:#F0D3AC;
     --ok:#00953B;
-    --radio:10px;
+    --radio:16px;
+    --radio-sm:10px;
+    --sombra:0 1px 2px rgba(10,46,46,.04), 0 12px 32px rgba(10,46,46,.06);
+    --sombra-alta:0 2px 4px rgba(10,46,46,.05), 0 18px 44px rgba(10,46,46,.10);
+
+    /* Orden de prioridad: fuente subida al repo → fuente instalada
+       en el computador → alternativa libre parecida → sistema */
+    --fuente:"Neo Sans Web","Neo Sans","Neo Sans Pro","Exo 2",
+             -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
+
   *{box-sizing:border-box}
+  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+
   body{
-    margin:0; background:var(--fondo); color:var(--tinta);
-    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.5;
+    margin:0;
+    background:
+      radial-gradient(900px 420px at 92% -8%, rgba(189,255,0,.20), transparent 60%),
+      radial-gradient(700px 380px at -5% 12%, rgba(0,149,59,.06), transparent 60%),
+      var(--fondo);
+    color:var(--tinta);
+    font-family:var(--fuente);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
   }
+
+  button,input{font:inherit}
+  :focus-visible{outline:2.5px solid var(--verde); outline-offset:2px; border-radius:6px}
+
+  /* =========================================================
+     BARRA SUPERIOR
+     ========================================================= */
   header{
-    background:var(--verde); color:#fff; padding:18px 24px;
-    display:flex; align-items:center; gap:14px;
-  }
-  header .logo{
-    font-weight:800; letter-spacing:.5px; font-size:20px; text-transform:lowercase;
-  }
-  header .sub{font-size:13px; opacity:.9}
-  main{max-width:860px; margin:0 auto; padding:24px 20px 60px}
-
-  h1{font-size:22px; margin:8px 0 4px}
-  .intro{color:var(--gris); margin:0 0 24px}
-
-  /* Pasos numerados: el orden aquí SÍ es real (1 subir → 2 procesar → 3 descargar) */
-  .paso{
-    background:#fff; border:1px solid var(--linea); border-radius:var(--radio);
-    padding:20px; margin-bottom:16px;
-  }
-  .paso h2{
-    font-size:15px; margin:0 0 12px; display:flex; align-items:center; gap:10px;
-    text-transform:uppercase; letter-spacing:.6px; color:var(--verde-osc);
-  }
-  .num{
-    background:var(--verde); color:#fff; width:26px; height:26px; border-radius:50%;
-    display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700;
-    flex-shrink:0;
+    position:sticky; top:0; z-index:50;
+    background:var(--lima);
+    border-bottom:1px solid rgba(10,46,46,.10);
+    padding:0 28px;
+    height:72px;
+    display:flex; align-items:center; gap:20px;
   }
 
-  /* Selector de zona */
-  .zonas{display:flex; gap:8px; flex-wrap:wrap}
-  .zona-btn{
-    border:1.5px solid var(--linea); background:#fff; color:var(--tinta);
-    padding:8px 18px; border-radius:999px; cursor:pointer; font-size:14px; font-weight:600;
-  }
-  .zona-btn[aria-pressed="true"]{background:var(--verde); border-color:var(--verde); color:#fff}
+  .marca{display:flex; align-items:center; gap:18px; min-width:0}
+  .marca .logo-img{display:block; height:28px; width:auto; flex-shrink:0}
+  .marca .logo-svg{display:none; height:26px; width:auto; flex-shrink:0}
 
-  /* Zona de carga */
-  .dropzone{
-    border:2px dashed var(--linea); border-radius:var(--radio); padding:28px;
-    text-align:center; color:var(--gris); cursor:pointer; transition:.15s;
-  }
-  .dropzone:hover, .dropzone.drag{border-color:var(--verde); background:var(--verde-claro)}
-  .dropzone strong{color:var(--tinta)}
-  input[type=file]{display:none}
+  .divisor{width:1px; height:34px; background:rgba(10,46,46,.25); flex-shrink:0}
 
-  .lista-archivos{list-style:none; padding:0; margin:14px 0 0}
-  .lista-archivos li{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:8px 12px; border:1px solid var(--linea); border-radius:8px; margin-bottom:6px; font-size:14px;
+  .marca-texto{line-height:1.25; min-width:0}
+  .marca-texto b{
+    display:block; font-size:13px; font-weight:800;
+    letter-spacing:.09em; text-transform:uppercase; color:var(--tinta);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .lista-archivos .quitar{border:none; background:none; color:var(--alerta); cursor:pointer; font-size:13px}
-
-  /* Botones de acción */
-  .btn{
-    background:var(--verde); color:#fff; border:none; border-radius:8px;
-    padding:12px 22px; font-size:15px; font-weight:600; cursor:pointer;
+  .marca-texto span{
+    display:block; font-size:11px; font-weight:700;
+    letter-spacing:.05em; color:#3C5654; white-space:nowrap;
   }
-  .btn:hover{background:var(--verde-osc)}
-  .btn:disabled{background:#b8c7be; cursor:not-allowed}
-  .btn.secundario{background:#fff; color:var(--verde-osc); border:1.5px solid var(--verde)}
 
-  /* Estado del motor */
+  /* Estado del motor Pyodide (vive en la barra superior) */
   #estado-motor{
-    font-size:13px; color:var(--gris); display:flex; align-items:center; gap:8px; margin-top:2px;
+    margin-left:auto;
+    display:flex; align-items:center; gap:9px;
+    background:var(--blanco);
+    border:1px solid rgba(10,46,46,.10);
+    border-radius:999px;
+    padding:8px 15px;
+    font-size:12.5px; font-weight:700; color:var(--tinta-2);
+    white-space:nowrap;
+    box-shadow:0 2px 10px rgba(10,46,46,.06);
   }
-  .punto{width:9px; height:9px; border-radius:50%; background:#c9a227; flex-shrink:0}
-  .punto.listo{background:var(--ok)}
+  .punto{
+    width:9px; height:9px; border-radius:50%;
+    background:#C9A227; flex-shrink:0;
+    box-shadow:0 0 0 4px rgba(201,162,39,.16);
+    animation:latido 1.6s ease-in-out infinite;
+  }
+  .punto.listo{
+    background:var(--ok);
+    box-shadow:0 0 0 4px rgba(0,149,59,.15);
+    animation:none;
+  }
+  @keyframes latido{50%{opacity:.35}}
+
   .spin{
-    width:14px;height:14px;border:2px solid var(--linea);border-top-color:var(--verde);
-    border-radius:50%; animation:g .8s linear infinite;
+    width:14px; height:14px;
+    border:2px solid var(--linea); border-top-color:var(--verde);
+    border-radius:50%; animation:g .8s linear infinite; flex-shrink:0;
   }
   @keyframes g{to{transform:rotate(360deg)}}
 
-  /* Resultados */
-  #resultado{display:none}
-  .resumen{
-    background:var(--verde-claro); border:1px solid #bfe0cd; border-radius:8px;
-    padding:14px 16px; margin-bottom:14px; font-size:14px;
+  /* =========================================================
+     ESTRUCTURA
+     ========================================================= */
+  main{max-width:940px; margin:0 auto; padding:44px 24px 72px}
+
+  .encabezado{margin-bottom:34px}
+  h1{
+    font-size:34px; line-height:1.15; letter-spacing:-.025em;
+    margin:0 0 12px; font-weight:800;
   }
-  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px}
-  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--linea)}
-  th{color:var(--gris); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:.5px}
+  .intro{
+    color:var(--gris); margin:0; max-width:640px; font-size:15.5px;
+  }
+
+  /* =========================================================
+     TARJETAS DE PASO
+     ========================================================= */
+  .paso{
+    background:var(--blanco);
+    border:1px solid var(--linea);
+    border-radius:var(--radio);
+    padding:26px 28px 28px;
+    margin-bottom:18px;
+    box-shadow:var(--sombra);
+    transition:box-shadow .2s ease, border-color .2s ease;
+  }
+  .paso:hover{box-shadow:var(--sombra-alta)}
+
+  .paso h2{
+    font-size:13px; margin:0 0 6px;
+    display:flex; align-items:center; gap:13px;
+    text-transform:uppercase; letter-spacing:.1em; font-weight:800;
+    color:var(--tinta);
+  }
+  .num{
+    background:var(--verde); color:#fff;
+    width:30px; height:30px; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:800; flex-shrink:0;
+    box-shadow:0 4px 12px rgba(0,149,59,.24);
+  }
+  .paso .ayuda{
+    margin:0 0 20px 43px;
+    font-size:13.5px; color:var(--gris);
+  }
+
+  /* ---- Selector de zona ---- */
+  .zonas{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .zona-btn{
+    border:1.5px solid var(--linea); background:var(--blanco); color:var(--tinta);
+    padding:16px 14px; border-radius:12px; cursor:pointer;
+    font-size:15px; font-weight:700; letter-spacing:.01em;
+    transition:.16s ease;
+  }
+  .zona-btn:hover{border-color:#A9C3B9; transform:translateY(-1px)}
+  .zona-btn[aria-pressed="true"]{
+    background:var(--verde); border-color:var(--verde); color:#fff;
+    box-shadow:0 8px 20px rgba(0,149,59,.22);
+  }
+
+  /* ---- Zona de carga ---- */
+  .dropzone{
+    display:block;
+    border:2px dashed #BFCCC8; border-radius:14px;
+    padding:36px 24px; background:#FAFCFB;
+    text-align:center; color:var(--gris); cursor:pointer;
+    transition:.16s ease;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--verde); background:var(--verde-claro);
+  }
+  .dropzone strong{color:var(--tinta); font-size:15.5px; font-weight:700}
+  .dropzone .icono{
+    width:48px; height:48px; margin:0 auto 14px;
+    border-radius:14px; background:var(--verde-claro);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--verde);
+  }
+  .dropzone .formato{
+    display:block; margin-top:8px;
+    font-size:12.5px; color:var(--gris-claro);
+  }
+  input[type=file]{display:none}
+
+  .lista-archivos{list-style:none; padding:0; margin:16px 0 0}
+  .lista-archivos li{
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:12px 14px; background:#F8FAF9;
+    border:1px solid var(--linea); border-radius:var(--radio-sm);
+    margin-bottom:8px; font-size:13.5px; font-weight:600;
+    animation:aparecer .18s ease;
+  }
+  @keyframes aparecer{from{opacity:0; transform:translateY(-3px)}}
+  .lista-archivos .quitar{
+    border:none; background:none; color:var(--alerta);
+    cursor:pointer; font-size:12.5px; font-weight:700; padding:4px 6px;
+    border-radius:6px; flex-shrink:0;
+  }
+  .lista-archivos .quitar:hover{background:var(--alerta-fondo)}
+
+  /* ---- Botones ---- */
+  .btn{
+    background:var(--verde); color:#fff; border:none; border-radius:11px;
+    padding:14px 26px; font-size:14.5px; font-weight:700; cursor:pointer;
+    letter-spacing:.01em;
+    box-shadow:0 8px 20px rgba(0,149,59,.20);
+    transition:.16s ease;
+  }
+  .btn:hover:not(:disabled){background:var(--verde-osc); transform:translateY(-1px)}
+  .btn:active:not(:disabled){transform:translateY(0)}
+  .btn:disabled{background:#C3D0CA; box-shadow:none; cursor:not-allowed}
+  .btn.secundario{
+    background:var(--blanco); color:var(--verde-osc);
+    border:1.5px solid var(--verde); box-shadow:none;
+  }
+  .btn.secundario:hover:not(:disabled){background:var(--verde-claro)}
+
+  /* =========================================================
+     RESULTADOS
+     ========================================================= */
+  #resultado{display:none; margin-top:24px; padding-top:24px; border-top:1px solid var(--linea)}
+
+  .resumen{
+    background:var(--verde-claro);
+    border:1px solid #C6E3D3;
+    border-left:4px solid var(--verde);
+    border-radius:var(--radio-sm);
+    padding:16px 18px; margin-bottom:16px;
+    font-size:14px; color:var(--tinta-2);
+  }
+
+  table{
+    width:100%; border-collapse:collapse; font-size:13.5px;
+    margin-top:10px; border:1px solid var(--linea); border-radius:var(--radio-sm);
+    overflow:hidden;
+  }
+  th,td{text-align:left; padding:12px 14px; border-bottom:1px solid var(--linea)}
+  th{
+    background:#F6F8F7; color:var(--gris);
+    font-weight:800; text-transform:uppercase; font-size:10.5px; letter-spacing:.09em;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#FAFCFB}
 
   .alertas{margin-top:6px}
   .alerta{
-    background:var(--alerta-fondo); border:1px solid #f0d3ac; border-left:4px solid var(--alerta);
-    border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:13.5px;
+    background:var(--alerta-fondo);
+    border:1px solid var(--alerta-linea);
+    border-left:4px solid var(--alerta);
+    border-radius:var(--radio-sm);
+    padding:12px 16px; margin-bottom:8px; font-size:13.5px;
   }
   .alerta b{color:var(--alerta)}
 
   .registro{
-    background:#0f1a14; color:#c8e6d3; font-family:ui-monospace,"SF Mono",Menlo,monospace;
-    font-size:12px; padding:14px; border-radius:8px; white-space:pre-wrap; max-height:280px; overflow:auto;
-    margin-top:14px;
+    background:#08201F; color:#C8E6D3;
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:12px; line-height:1.6;
+    padding:18px; border-radius:var(--radio-sm);
+    white-space:pre-wrap; max-height:300px; overflow:auto;
+    margin-top:16px;
   }
   .oculto{display:none !important}
-  footer{color:var(--gris); font-size:12px; text-align:center; padding:24px}
+
+  .acciones{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+
+  /* =========================================================
+     NOTA DE PRIVACIDAD + PIE
+     ========================================================= */
+  .privacidad{
+    display:flex; align-items:flex-start; gap:12px;
+    background:var(--blanco); border:1px solid var(--linea);
+    border-radius:var(--radio-sm); padding:14px 16px; margin-top:22px;
+    font-size:12.5px; color:var(--gris);
+  }
+  .privacidad svg{flex-shrink:0; color:var(--verde); margin-top:1px}
+
+  footer{
+    color:var(--gris-claro); font-size:12px; text-align:center;
+    padding:32px 24px 8px;
+  }
+  footer b{color:var(--gris); font-weight:700}
+
+  /* =========================================================
+     RESPONSIVE
+     ========================================================= */
+  @media (max-width:760px){
+    header{padding:0 16px; height:64px; gap:12px}
+    .marca .logo-img, .marca .logo-svg{height:22px}
+    .marca-texto b{max-width:42vw}
+    .divisor, .marca-texto span{display:none}
+    .marca-texto b{font-size:11.5px}
+    #estado-motor{padding:7px 11px; font-size:11.5px}
+    main{padding:30px 16px 56px}
+    h1{font-size:26px}
+    .intro{font-size:14.5px}
+    .paso{padding:20px 18px 22px}
+    .paso .ayuda{margin-left:0}
+    .zonas{grid-template-columns:1fr}
+    .btn{width:100%}
+    .acciones{flex-direction:column}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important; scroll-behavior:auto}
+  }
 </style>
 </head>
 <body>
+
+<!-- =========================================================
+     BARRA SUPERIOR
+
+     LOGO: la página busca el archivo "ambipar-logo.png" en la
+     raíz del repositorio. Mientras ese archivo no exista, se
+     muestra automáticamente un logo de respaldo dibujado en
+     código (nunca se ve una imagen rota).
+     ========================================================= -->
 <header>
-  <span class="logo">ambipar</span>
-  <div>
-    <div style="font-weight:600">Consolidador de Trazabilidad</div>
-    <div class="sub">Inteligencia Circular · Chile</div>
+  <div class="marca">
+    <img class="logo-img" src="ambipar-logo.png" alt="Ambipar"
+         onerror="this.style.display='none';
+                  document.getElementById('logo-respaldo').style.display='block';">
+
+    <svg class="logo-svg" id="logo-respaldo" viewBox="0 0 260 46"
+         role="img" aria-label="Ambipar" focusable="false">
+      <text x="0" y="35" font-family="'Exo 2', Verdana, sans-serif"
+            font-size="42" font-weight="800" letter-spacing="-1"
+            fill="#0A2E2E">ambipar</text>
+      <g transform="translate(222 2)">
+        <rect x="2" y="2" width="25" height="25" rx="8" ry="8"
+              transform="rotate(45 14.5 14.5)"
+              fill="none" stroke="#0A2E2E" stroke-width="3"/>
+        <text x="14.5" y="21" text-anchor="middle"
+              font-family="'Exo 2', Verdana, sans-serif"
+              font-size="18" font-weight="800" fill="#0A2E2E">a</text>
+      </g>
+    </svg>
+
+    <div class="divisor"></div>
+
+    <div class="marca-texto">
+      <b>Consolidador Sistema de Trazabilidad Ambipar</b>
+      <span>Inteligencia Circular · Chile</span>
+    </div>
+  </div>
+
+  <!-- Estado del motor Pyodide (app.js actualiza #punto-motor y #txt-motor) -->
+  <div id="estado-motor">
+    <span class="punto" id="punto-motor"></span>
+    <span id="txt-motor">Iniciando el motor…</span>
   </div>
 </header>
 
 <main>
-  <h1>Consolida los movimientos de residuos por zona</h1>
-  <p class="intro">Sube los archivos Excel de la zona, la página los procesa aquí mismo y te
-  entrega el consolidado listo para descargar. No se instala nada y los archivos no salen de este navegador.</p>
-  <div id="estado-motor"><span class="punto" id="punto-motor"></span><span id="txt-motor">Iniciando el motor…</span></div>
+  <section class="encabezado">
+    <h1>Generación Archivo Trazabilidad</h1>
+    <p class="intro">
+      Subir archivos Excel por zona. El sistema los procesa y entrega consolidado
+      listo para descargar.
+    </p>
+  </section>
 
   <!-- PASO 1 -->
   <section class="paso">
     <h2><span class="num">1</span> Elige la zona</h2>
+    <p class="ayuda">Define el ámbito del procesamiento. Cada zona tiene sus propias fuentes y reglas.</p>
     <div class="zonas" id="zonas">
       <button class="zona-btn" data-zona="RM" aria-pressed="false">RM</button>
       <button class="zona-btn" data-zona="SUR" aria-pressed="false">Sur</button>
@@ -151,10 +431,21 @@
   <!-- PASO 2 -->
   <section class="paso">
     <h2><span class="num">2</span> Sube los archivos Excel</h2>
+    <p class="ayuda">Puedes arrastrarlos directamente desde tu carpeta o elegirlos con el mouse.</p>
+
     <label class="dropzone" id="dropzone" for="input-archivos">
-      <strong>Haz clic para elegir archivos</strong> o arrástralos aquí<br />
-      <span style="font-size:13px">Formatos .xlsx — puedes subir varios a la vez</span>
+      <span class="icono" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </span>
+      <strong>Haz clic para elegir archivos</strong> o arrástralos aquí
+      <span class="formato">Formato .xlsx · puedes subir varios a la vez</span>
     </label>
+
     <input type="file" id="input-archivos" multiple accept=".xlsx" />
     <ul class="lista-archivos" id="lista-archivos"></ul>
   </section>
@@ -162,19 +453,46 @@
   <!-- PASO 3 -->
   <section class="paso">
     <h2><span class="num">3</span> Procesa y descarga</h2>
+    <p class="ayuda">El consolidado se genera en tu navegador y queda disponible como archivo .xlsx.</p>
+
     <button class="btn" id="btn-procesar" disabled>Procesar consolidado</button>
+
     <div id="resultado">
       <div class="resumen" id="resumen"></div>
       <div class="alertas" id="alertas"></div>
-      <table id="tabla-fuentes"><thead><tr><th>Archivo</th><th>Hojas</th><th>Filas</th></tr></thead><tbody></tbody></table>
-      <button class="btn" id="btn-descargar" style="margin-top:16px">Descargar consolidado</button>
-      <button class="btn secundario" id="btn-log" style="margin-top:16px">Ver detalle técnico</button>
+
+      <table id="tabla-fuentes">
+        <thead>
+          <tr><th>Archivo</th><th>Hojas</th><th>Filas</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="acciones">
+        <button class="btn" id="btn-descargar">Descargar consolidado</button>
+        <button class="btn secundario" id="btn-log">Ver detalle técnico</button>
+      </div>
+
       <pre class="registro oculto" id="registro"></pre>
     </div>
   </section>
-</main>
 
-<footer>Ambipar Chile · Inteligencia Circular · Sistema de Trazabilidad</footer>
+  <div class="privacidad">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span>
+      Los archivos se procesan localmente, dentro de este navegador. No se suben a ningún
+      servidor ni quedan guardados en el repositorio.
+    </span>
+  </div>
+
+  <footer>
+    <b>Ambipar Chile</b> · Inteligencia Circular · Sistema de Trazabilidad<br>
+    Etapa 2 · App web con Pyodide
+  </footer>
+</main>
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.3/full/pyodide.js"></script>
 <script src="app.js"></script>
