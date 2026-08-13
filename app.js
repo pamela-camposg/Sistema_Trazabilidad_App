@@ -12,16 +12,40 @@ let nombreSalida = "";
 
 const $ = (id) => document.getElementById(id);
 
+/* Scripts refactorizados de cada zona que hay que dejar dentro del motor.
+   Cuando se conecten SUR y NORTE, se agregan acá igual que RM. */
+const MODULOS_PY = {
+  rm: ["consolidar.py", "control_calidad.py", "revisar_consolidado.py"],
+};
+
 /* ---- 1. Arrancar Pyodide y cargar pandas + openpyxl ---- */
 async function iniciarMotor() {
   try {
     pyodide = await loadPyodide();
     await pyodide.loadPackage(["pandas", "openpyxl"]);
 
-    // Traer tu código Python (procesar.py) y dejarlo disponible dentro del motor.
-    const codigo = await (await fetch("python/procesar.py")).text();
     pyodide.FS.mkdirTree("/work/uploads");
     pyodide.FS.mkdirTree("/work/salida");
+
+    // Copiar los scripts de cada zona al motor, en /work/py/<zona>/,
+    // para que procesar.py pueda importarlos con "from rm import consolidar".
+    const enc = new TextEncoder();
+    pyodide.FS.mkdirTree("/work/py");
+    for (const [carpeta, nombres] of Object.entries(MODULOS_PY)) {
+      pyodide.FS.mkdirTree("/work/py/" + carpeta);
+      pyodide.FS.writeFile(`/work/py/${carpeta}/__init__.py`, enc.encode(""));
+      for (const nombre of nombres) {
+        const r = await fetch(`python/${carpeta}/${nombre}`);
+        if (!r.ok) {
+          console.warn(`No se encontró python/${carpeta}/${nombre}`);
+          continue;
+        }
+        pyodide.FS.writeFile(`/work/py/${carpeta}/${nombre}`, enc.encode(await r.text()));
+      }
+    }
+
+    // Traer tu código Python (procesar.py) y dejarlo disponible dentro del motor.
+    const codigo = await (await fetch("python/procesar.py")).text();
     pyodide.runPython(codigo);
 
     $("punto-motor").classList.add("listo");
