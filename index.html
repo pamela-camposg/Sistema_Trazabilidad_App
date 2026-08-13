@@ -238,6 +238,28 @@
   }
   input[type=file]{display:none}
 
+  /* ---- Archivos base ---- */
+  .chip{
+    font-size:9.5px; font-weight:800; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--verde-osc);
+    background:var(--verde-claro); border:1px solid #CFE7DB;
+    padding:4px 9px; border-radius:999px; margin-left:2px;
+  }
+  .estado-base{
+    background:#F8FAF9; border:1px solid var(--linea);
+    border-left:4px solid var(--verde);
+    border-radius:var(--radio-sm); padding:12px 15px;
+    font-size:13.5px; font-weight:600; color:var(--tinta-2);
+    margin-bottom:12px;
+  }
+  .lista-base li{background:var(--verde-claro); border-color:#CFE7DB}
+  .lista-base .fecha{
+    font-size:11.5px; font-weight:600; color:var(--gris); white-space:nowrap;
+  }
+  .dropzone.compacta{padding:20px 18px}
+  .dropzone.compacta strong{font-size:14px}
+  .btn.chico{padding:10px 16px; font-size:13px; margin-top:12px}
+
   .lista-archivos{list-style:none; padding:0; margin:16px 0 0}
   .lista-archivos li{
     display:flex; justify-content:space-between; align-items:center; gap:12px;
@@ -428,10 +450,36 @@
     </div>
   </section>
 
-  <!-- PASO 2 -->
+  <!-- PASO 2 — ARCHIVOS BASE -->
   <section class="paso">
-    <h2><span class="num">2</span> Sube los archivos Excel</h2>
-    <p class="ayuda">Puedes arrastrarlos directamente desde tu carpeta o elegirlos con el mouse.</p>
+    <h2><span class="num">2</span> Archivos base <span class="chip">se suben una sola vez</span></h2>
+    <p class="ayuda">
+      Homologación, Destinatarios, Clasificación SINADER y Transportistas son los
+      mismos para las tres zonas. Quedan guardados en este computador y no hay
+      que volver a subirlos: solo cuando cambien.
+    </p>
+
+    <div class="estado-base" id="estado-base">Iniciando…</div>
+    <ul class="lista-archivos lista-base" id="lista-base"></ul>
+
+    <label class="dropzone compacta" id="dropzone-base" for="input-base">
+      <strong>Actualizar archivos base</strong> — suéltalos aquí
+      <span class="formato">Los 4 Excel sueltos, o la carpeta "Información Base" en .zip</span>
+    </label>
+    <input type="file" id="input-base" multiple accept=".xlsx,.zip" />
+
+    <button class="btn secundario chico" id="btn-borrar-base" style="display:none">
+      Borrar archivos base guardados
+    </button>
+  </section>
+
+  <!-- PASO 3 — MOVIMIENTOS DEL MES -->
+  <section class="paso">
+    <h2><span class="num">3</span> Movimientos del mes</h2>
+    <p class="ayuda">
+      Los Excel de la zona elegida. Puedes soltar los archivos sueltos o, más
+      fácil, bajar la carpeta completa desde OneDrive y soltar el .zip tal cual.
+    </p>
 
     <label class="dropzone" id="dropzone" for="input-archivos">
       <span class="icono" aria-hidden="true">
@@ -443,16 +491,16 @@
         </svg>
       </span>
       <strong>Haz clic para elegir archivos</strong> o arrástralos aquí
-      <span class="formato">Formato .xlsx · puedes subir varios a la vez</span>
+      <span class="formato">Archivos .xlsx o carpetas .zip · puedes soltar varios a la vez</span>
     </label>
 
-    <input type="file" id="input-archivos" multiple accept=".xlsx" />
+    <input type="file" id="input-archivos" multiple accept=".xlsx,.zip" />
     <ul class="lista-archivos" id="lista-archivos"></ul>
   </section>
 
-  <!-- PASO 3 -->
+  <!-- PASO 4 -->
   <section class="paso">
-    <h2><span class="num">3</span> Procesa y descarga</h2>
+    <h2><span class="num">4</span> Procesa y descarga</h2>
     <p class="ayuda">El consolidado se genera en tu navegador y queda disponible como archivo .xlsx.</p>
 
     <button class="btn" id="btn-procesar" disabled>Procesar consolidado</button>
@@ -468,10 +516,7 @@
         <tbody></tbody>
       </table>
 
-      <div class="acciones">
-        <button class="btn" id="btn-descargar">Descargar consolidado</button>
-        <button class="btn secundario" id="btn-log">Ver detalle técnico</button>
-      </div>
+      <div class="acciones" id="descargas"></div>
 
       <pre class="registro oculto" id="registro"></pre>
     </div>
