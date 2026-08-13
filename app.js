@@ -1,14 +1,22 @@
 /* =========================================================================
-   app.js — pega el navegador con tu código Python.
-   No necesitas tocar este archivo para conectar tus scripts: eso se hace
-   en python/procesar.py. Aquí solo está la mecánica de la interfaz.
+   app.js — pega el navegador con el código Python.
+
+   Qué hace, en orden:
+     1. Arranca Pyodide (Python dentro del navegador) con pandas y openpyxl.
+     2. Copia los scripts de cada zona (python/rm/…) dentro del motor.
+     3. Guarda los ARCHIVOS BASE en el navegador, para que la operadora no
+        tenga que volver a subirlos en cada corrida.
+     4. Recibe los movimientos del mes (archivos sueltos o una carpeta .zip).
+     5. Llama a procesar() en python/procesar.py y muestra el resultado.
+
+   La lógica de negocio NO vive acá: está en python/procesar.py y en los
+   scripts de python/rm/.
    ========================================================================= */
 
-let pyodide = null;         // el "motor" Python en el navegador
-let zonaElegida = null;     // "RM" | "SUR" | "NORTE"
-let archivos = [];          // archivos que subió la operadora
-let bytesSalida = null;     // el consolidado generado, listo para descargar
-let nombreSalida = "";
+let pyodide = null;          // el "motor" Python en el navegador
+let zonaElegida = null;      // "RM" | "SUR" | "NORTE"
+let archivos = [];           // movimientos del mes que subió la operadora
+let baseGuardada = [];       // archivos base que ya están en el navegador
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,7 +26,58 @@ const MODULOS_PY = {
   rm: ["consolidar.py", "control_calidad.py", "revisar_consolidado.py"],
 };
 
-/* ---- 1. Arrancar Pyodide y cargar pandas + openpyxl ---- */
+const ACEPTADOS = [".xlsx", ".zip"];
+const esValido = (nombre) =>
+  ACEPTADOS.some((ext) => nombre.toLowerCase().endsWith(ext)) &&
+  !nombre.startsWith("~$");
+
+/* =========================================================================
+   MEMORIA DEL NAVEGADOR — donde quedan guardados los archivos base
+   -------------------------------------------------------------------------
+   Se usa IndexedDB, que es el almacén del navegador para archivos grandes.
+   Los archivos quedan SOLO en este computador: no se suben a ningún lado.
+   ========================================================================= */
+const DB_NOMBRE = "trazabilidad_app";
+const DB_STORE = "archivos_base";
+
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NOMBRE, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: "nombre" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function operarDB(modo, accion) {
+  return abrirDB().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, modo);
+        const store = tx.objectStore(DB_STORE);
+        const pedido = accion(store);
+        tx.oncomplete = () => resolve(pedido && pedido.result);
+        tx.onerror = () => reject(tx.error);
+      })
+  );
+}
+
+const leerBaseDB = () => operarDB("readonly", (s) => s.getAll());
+const borrarBaseDB = () => operarDB("readwrite", (s) => s.clear());
+const guardarBaseDB = (items) =>
+  operarDB("readwrite", (s) => {
+    s.clear();
+    items.forEach((i) => s.put(i));
+  });
+
+/* =========================================================================
+   1. ARRANCAR EL MOTOR
+   ========================================================================= */
 async function iniciarMotor() {
   try {
     pyodide = await loadPyodide();
@@ -26,6 +85,7 @@ async function iniciarMotor() {
 
     pyodide.FS.mkdirTree("/work/uploads");
     pyodide.FS.mkdirTree("/work/salida");
+    pyodide.FS.mkdirTree("/work/base");
 
     // Copiar los scripts de cada zona al motor, en /work/py/<zona>/,
     // para que procesar.py pueda importarlos con "from rm import consolidar".
@@ -44,12 +104,14 @@ async function iniciarMotor() {
       }
     }
 
-    // Traer tu código Python (procesar.py) y dejarlo disponible dentro del motor.
+    // Traer procesar.py y dejarlo disponible dentro del motor
     const codigo = await (await fetch("python/procesar.py")).text();
     pyodide.runPython(codigo);
 
     $("punto-motor").classList.add("listo");
-    $("txt-motor").textContent = "Motor listo. Ya puedes procesar.";
+    $("txt-motor").textContent = "Motor listo";
+
+    await pintarBase();
     revisarSiPuedeProcesar();
   } catch (e) {
     $("txt-motor").textContent = "No se pudo iniciar el motor. Recarga la página.";
@@ -57,7 +119,9 @@ async function iniciarMotor() {
   }
 }
 
-/* ---- 2. Elegir zona ---- */
+/* =========================================================================
+   2. ELEGIR ZONA
+   ========================================================================= */
 $("zonas").addEventListener("click", (ev) => {
   const btn = ev.target.closest(".zona-btn");
   if (!btn) return;
@@ -68,20 +132,109 @@ $("zonas").addEventListener("click", (ev) => {
   revisarSiPuedeProcesar();
 });
 
-/* ---- 3. Subir archivos (clic o arrastrar) ---- */
-const dz = $("dropzone");
-$("input-archivos").addEventListener("change", (e) => agregarArchivos(e.target.files));
-["dragover", "dragenter"].forEach((ev) =>
-  dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add("drag"); })
-);
-["dragleave", "drop"].forEach((ev) =>
-  dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove("drag"); })
-);
-dz.addEventListener("drop", (e) => agregarArchivos(e.dataTransfer.files));
+/* =========================================================================
+   3. ARCHIVOS BASE — se suben una vez y quedan guardados
+   ========================================================================= */
+function conectarZonaDeCarga(idZona, idInput, alSoltar) {
+  const dz = $(idZona);
+  $(idInput).addEventListener("change", (e) => {
+    alSoltar(e.target.files);
+    e.target.value = "";           // permite volver a elegir el mismo archivo
+  });
+  ["dragover", "dragenter"].forEach((ev) =>
+    dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add("drag"); })
+  );
+  ["dragleave", "drop"].forEach((ev) =>
+    dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove("drag"); })
+  );
+  dz.addEventListener("drop", (e) => alSoltar(e.dataTransfer.files));
+}
 
+async function recibirBase(fileList) {
+  if (!pyodide) {
+    alert("El motor todavía se está iniciando. Espera unos segundos y vuelve a intentar.");
+    return;
+  }
+
+  const utiles = [...fileList].filter((f) => esValido(f.name));
+  if (!utiles.length) return;
+
+  $("estado-base").textContent = "Revisando archivos…";
+
+  try {
+    // Dejar los archivos en una carpeta aparte del motor
+    for (const f of pyodide.FS.readdir("/work/base")) {
+      if (f !== "." && f !== "..") pyodide.FS.unlink("/work/base/" + f);
+    }
+    for (const f of utiles) {
+      pyodide.FS.writeFile("/work/base/" + f.name, new Uint8Array(await f.arrayBuffer()));
+    }
+
+    // Python expande los .zip y se queda solo con los cuatro maestros
+    const res = JSON.parse(
+      pyodide.runPython(`import json; json.dumps(preparar_base("/work/base"))`)
+    );
+
+    // Guardar en el navegador lo que quedó
+    const fecha = new Date().toLocaleDateString("es-CL");
+    const items = res.guardados.map((nombre, i) => ({
+      nombre,
+      etiqueta: res.etiquetas[i],
+      fecha,
+      bytes: pyodide.FS.readFile("/work/base/" + nombre),
+    }));
+
+    if (items.length) await guardarBaseDB(items);
+    await pintarBase(res.faltantes);
+  } catch (e) {
+    $("estado-base").textContent = "No se pudieron guardar los archivos base.";
+    console.error(e);
+  }
+}
+
+async function pintarBase(faltantes) {
+  baseGuardada = (await leerBaseDB()) || [];
+  const ul = $("lista-base");
+  ul.innerHTML = "";
+
+  baseGuardada.forEach((item) => {
+    const li = document.createElement("li");
+    li.innerHTML =
+      `<span><b>${item.etiqueta}</b> · ${item.nombre}</span>` +
+      `<span class="fecha">guardado el ${item.fecha}</span>`;
+    ul.appendChild(li);
+  });
+
+  const total = baseGuardada.length;
+  $("btn-borrar-base").style.display = total ? "inline-block" : "none";
+
+  if (!total) {
+    $("estado-base").textContent =
+      "Todavía no hay archivos base guardados en este computador.";
+  } else if (total === 4) {
+    $("estado-base").textContent =
+      "Los 4 archivos base están guardados. No hay que volver a subirlos.";
+  } else {
+    const falta = (faltantes && faltantes.length)
+      ? ` Faltan: ${faltantes.join(", ")}.`
+      : "";
+    $("estado-base").textContent = `Hay ${total} de 4 archivos base guardados.${falta}`;
+  }
+}
+
+$("btn-borrar-base").addEventListener("click", async () => {
+  await borrarBaseDB();
+  await pintarBase();
+});
+
+conectarZonaDeCarga("dropzone-base", "input-base", recibirBase);
+
+/* =========================================================================
+   4. MOVIMIENTOS DEL MES
+   ========================================================================= */
 function agregarArchivos(fileList) {
   for (const f of fileList) {
-    if (f.name.toLowerCase().endsWith(".xlsx") && !archivos.some((a) => a.name === f.name)) {
+    if (esValido(f.name) && !archivos.some((a) => a.name === f.name)) {
       archivos.push(f);
     }
   }
@@ -94,7 +247,8 @@ function pintarLista() {
   ul.innerHTML = "";
   archivos.forEach((f, i) => {
     const li = document.createElement("li");
-    li.innerHTML = `<span>${f.name}</span>`;
+    const esZip = f.name.toLowerCase().endsWith(".zip");
+    li.innerHTML = `<span>${esZip ? "🗂 " : ""}${f.name}</span>`;
     const b = document.createElement("button");
     b.className = "quitar";
     b.textContent = "quitar";
@@ -104,28 +258,38 @@ function pintarLista() {
   });
 }
 
+conectarZonaDeCarga("dropzone", "input-archivos", agregarArchivos);
+
 function revisarSiPuedeProcesar() {
   $("btn-procesar").disabled = !(pyodide && zonaElegida && archivos.length > 0);
 }
 
-/* ---- 4. Procesar: escribir los archivos en el motor y llamar a tu Python ---- */
+/* =========================================================================
+   5. PROCESAR
+   ========================================================================= */
 $("btn-procesar").addEventListener("click", async () => {
   const btn = $("btn-procesar");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin" style="display:inline-block;vertical-align:middle"></span> Procesando…';
 
   try {
-    // Limpiar la carpeta de subidas de una corrida anterior
-    for (const f of pyodide.FS.readdir("/work/uploads")) {
-      if (f !== "." && f !== "..") pyodide.FS.unlink("/work/uploads/" + f);
+    // Limpiar las carpetas de la corrida anterior
+    for (const carpeta of ["/work/uploads", "/work/salida"]) {
+      for (const f of pyodide.FS.readdir(carpeta)) {
+        if (f !== "." && f !== "..") pyodide.FS.unlink(carpeta + "/" + f);
+      }
     }
-    // Copiar cada archivo subido al sistema de archivos del motor
+
+    // Primero los archivos base guardados…
+    for (const item of baseGuardada) {
+      pyodide.FS.writeFile("/work/uploads/" + item.nombre, item.bytes);
+    }
+    // …y encima los movimientos del mes
     for (const f of archivos) {
       const buf = new Uint8Array(await f.arrayBuffer());
       pyodide.FS.writeFile("/work/uploads/" + f.name, buf);
     }
 
-    // Llamar a tu función Python. Devuelve un JSON con el resultado.
     pyodide.globals.set("ZONA_JS", zonaElegida);
     const jsonTexto = await pyodide.runPythonAsync(`
 import json
@@ -141,10 +305,13 @@ json.dumps(procesar(ZONA_JS, "/work/uploads", "/work/salida"))
   } finally {
     btn.disabled = false;
     btn.textContent = "Procesar consolidado";
+    revisarSiPuedeProcesar();
   }
 });
 
-/* ---- 5. Mostrar resultado y preparar la descarga ---- */
+/* =========================================================================
+   6. MOSTRAR RESULTADO Y PREPARAR LAS DESCARGAS
+   ========================================================================= */
 function mostrarResultado(r) {
   $("resultado").style.display = "block";
   $("resumen").innerHTML = r.resumen || "Proceso terminado.";
@@ -168,30 +335,40 @@ function mostrarResultado(r) {
 
   $("registro").textContent = r.log || "";
 
-  // Leer el archivo consolidado que generó Python y dejarlo listo para descargar
-  if (r.salida) {
-    bytesSalida = pyodide.FS.readFile("/work/salida/" + r.salida);
-    nombreSalida = r.salida;
-    $("btn-descargar").style.display = "inline-block";
-  } else {
-    $("btn-descargar").style.display = "none";
-  }
+  // Un botón por cada archivo que Python dejó listo para descargar
+  const zona = $("descargas");
+  zona.innerHTML = "";
+  (r.descargas || []).forEach((d, i) => {
+    let bytes;
+    try {
+      bytes = pyodide.FS.readFile("/work/salida/" + d.archivo);
+    } catch (e) {
+      return;   // ese archivo no se generó, no se muestra el botón
+    }
+    const b = document.createElement("button");
+    b.className = i === 0 ? "btn" : "btn secundario";
+    b.textContent = d.etiqueta;
+    b.onclick = () => descargar(bytes, d.archivo);
+    zona.appendChild(b);
+  });
+
+  const verLog = document.createElement("button");
+  verLog.className = "btn secundario";
+  verLog.textContent = "Ver detalle técnico";
+  verLog.onclick = () => $("registro").classList.toggle("oculto");
+  zona.appendChild(verLog);
 }
 
-/* ---- 6. Descargar ---- */
-$("btn-descargar").addEventListener("click", () => {
-  if (!bytesSalida) return;
-  const blob = new Blob([bytesSalida], {
+function descargar(bytes, nombre) {
+  const blob = new Blob([bytes], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = nombreSalida;
+  a.download = nombre;
   a.click();
   URL.revokeObjectURL(url);
-});
-
-$("btn-log").addEventListener("click", () => $("registro").classList.toggle("oculto"));
+}
 
 iniciarMotor();
