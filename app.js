@@ -80,16 +80,31 @@ const guardarBaseDB = (items) =>
    1. ARRANCAR EL MOTOR
    ========================================================================= */
 async function iniciarMotor() {
+  // Se va anotando en qué paso vamos: si algo falla, el mensaje dice
+  // exactamente dónde, en vez de un "no se pudo iniciar" a ciegas.
+  let paso = "descargando Pyodide";
+
   try {
+    if (typeof loadPyodide !== "function") {
+      throw new Error(
+        "No se pudo descargar Pyodide desde internet. Puede estar bloqueado " +
+        "por la red de la empresa (cdn.jsdelivr.net)."
+      );
+    }
+
     pyodide = await loadPyodide();
+
+    paso = "cargando pandas y openpyxl";
     await pyodide.loadPackage(["pandas", "openpyxl"]);
 
+    paso = "preparando las carpetas de trabajo";
     pyodide.FS.mkdirTree("/work/uploads");
     pyodide.FS.mkdirTree("/work/salida");
     pyodide.FS.mkdirTree("/work/base");
 
     // Copiar los scripts de cada zona al motor, en /work/py/<zona>/,
     // para que procesar.py pueda importarlos con "from rm import consolidar".
+    paso = "copiando los scripts de zona (python/rm/…)";
     const enc = new TextEncoder();
     pyodide.FS.mkdirTree("/work/py");
     for (const [carpeta, nombres] of Object.entries(MODULOS_PY)) {
@@ -106,19 +121,53 @@ async function iniciarMotor() {
     }
 
     // Traer procesar.py y dejarlo disponible dentro del motor
-    const codigo = await (await fetch("python/procesar.py")).text();
-    pyodide.runPython(codigo);
+    paso = "descargando python/procesar.py";
+    const resp = await fetch("python/procesar.py");
+    if (!resp.ok) {
+      throw new Error(
+        `No se encontró python/procesar.py en el sitio (error ${resp.status}). ` +
+        "Revisa que el archivo esté dentro de la carpeta python/ del repositorio."
+      );
+    }
+
+    paso = "ejecutando procesar.py";
+    pyodide.runPython(await resp.text());
 
     // Aviso claro si el procesar.py del repositorio es una versión anterior
+    paso = "revisando la versión de procesar.py";
     hayPrepararBase = pyodide.runPython(`"preparar_base" in globals()`);
 
     $("punto-motor").classList.add("listo");
     $("txt-motor").textContent = "Motor listo";
 
-    await pintarBase();
+    // La memoria del navegador es opcional: si este navegador no la permite,
+    // la app igual tiene que poder consolidar subiendo todos los archivos.
+    paso = "leyendo los archivos base guardados";
+    try {
+      await pintarBase();
+    } catch (e) {
+      $("estado-base").textContent =
+        "Este navegador no permite guardar archivos base (" +
+        (e && e.message ? e.message : e) +
+        "). Puedes seguir usando la app subiendo todos los archivos cada vez.";
+      console.warn(e);
+    }
+
     revisarSiPuedeProcesar();
   } catch (e) {
-    $("txt-motor").textContent = "No se pudo iniciar el motor. Recarga la página.";
+    // Mostrar el error completo en pantalla: sin esto no hay forma de saber
+    // qué pasó sin abrir la consola del navegador.
+    const detalle = e && e.stack ? e.stack : String(e);
+    $("txt-motor").textContent = "No se pudo iniciar el motor";
+    $("resultado").style.display = "block";
+    $("resumen").innerHTML =
+      `<b>No se pudo iniciar el motor.</b> Falló en: ${paso}.`;
+    $("alertas").innerHTML =
+      `<div class="alerta"><b>${(e && e.name) || "Error"}</b> — ${
+        (e && e.message) || e
+      }</div>`;
+    $("registro").textContent = `Paso: ${paso}\n\n${detalle}`;
+    $("registro").classList.remove("oculto");
     console.error(e);
   }
 }
