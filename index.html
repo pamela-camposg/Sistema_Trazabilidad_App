@@ -3,541 +3,420 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#BDFF00" />
-<meta name="description" content="Consolidador de movimientos de residuos · Ambipar Chile · Inteligencia Circular" />
+<meta name="theme-color" content="#031716" />
 <title>Sistema Trazabilidad Ambipar · Chile</title>
 
+<!-- =========================================================================
+     NEO SANS — hoja de estilos de Monotype
+     -------------------------------------------------------------------------
+     Monotype entrega una URL propia por proyecto, del tipo:
+        https://fast.fonts.net/t/1.css?apiType=css&projectid=XXXXXXXX
+     Reemplaza la línea comentada por esa URL cuando tengas la licencia.
+     Mientras tanto se usa Barlow Semi Condensed, la alternativa libre
+     más parecida a la tipografía del sitio de Ambipar.
+     ========================================================================= -->
+<!-- <link rel="stylesheet" href="https://fast.fonts.net/t/1.css?apiType=css&projectid=TU-PROYECTO"> -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+
+<!-- =========================================================================
+     Tailwind CSS compilado y embebido: la pagina no depende de ningun CDN.
+     Contiene solo las clases realmente usadas en este archivo.
+     ========================================================================= -->
+<style>*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:Neo Sans,Neo Sans W01,Exo\ 2,system-ui,sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.sticky{position:sticky}.-left-\[277px\]{left:-277px}.-top-\[18px\]{top:-18px}.top-0{top:0}.-z-10{z-index:-10}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-10{margin-bottom:2.5rem}.mb-4{margin-bottom:1rem}.ml-auto{margin-left:auto}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-1\.5{margin-top:.375rem}.mt-2\.5{margin-top:.625rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-7{margin-top:1.75rem}.mt-8{margin-top:2rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.hidden{display:none}.h-1\.5{height:.375rem}.h-20{height:5rem}.h-5{height:1.25rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-\[3px\]{height:3px}.h-\[716px\]{height:716px}.h-full{height:100%}.w-1\.5{width:.375rem}.w-10{width:2.5rem}.w-6{width:1.5rem}.w-\[716px\]{width:716px}.w-auto{width:auto}.w-full{width:100%}.w-px{width:1px}.min-w-0{min-width:0}.max-w-6xl{max-width:72rem}.max-w-lg{max-width:32rem}.max-w-xl{max-width:36rem}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.items-baseline{align-items:baseline}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.gap-6{gap:1.5rem}.space-y-2\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.625rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.625rem*var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem*var(--tw-space-y-reverse))}.space-y-8>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem*var(--tw-space-y-reverse))}.overflow-hidden,.truncate{overflow:hidden}.truncate{text-overflow:ellipsis;white-space:nowrap}.rounded-\[1px\]{border-radius:1px}.rounded-\[3px\]{border-radius:3px}.rounded-\[4px\]{border-radius:4px}.rounded-lg{border-radius:8px}.rounded-md{border-radius:6px}.rounded-r-md{border-top-right-radius:6px;border-bottom-right-radius:6px}.border{border-width:1px}.border-l-\[3px\]{border-left-width:3px}.border-t{border-top-width:1px}.border-dashed{border-style:dashed}.border-neon{--tw-border-opacity:1;border-color:rgb(204 255 0/var(--tw-border-opacity,1))}.border-zinc-200{--tw-border-opacity:1;border-color:rgb(228 228 231/var(--tw-border-opacity,1))}.border-zinc-300{--tw-border-opacity:1;border-color:rgb(212 212 216/var(--tw-border-opacity,1))}.border-l-zinc-200{--tw-border-opacity:1;border-left-color:rgb(228 228 231/var(--tw-border-opacity,1))}.bg-neon{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.bg-tinta{--tw-bg-opacity:1;background-color:rgb(3 23 22/var(--tw-bg-opacity,1))}.bg-tinta\/25{background-color:rgba(3,23,22,.25)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.bg-zinc-100{--tw-bg-opacity:1;background-color:rgb(244 244 245/var(--tw-bg-opacity,1))}.bg-zinc-300{--tw-bg-opacity:1;background-color:rgb(212 212 216/var(--tw-bg-opacity,1))}.bg-zinc-50{--tw-bg-opacity:1;background-color:rgb(250 250 250/var(--tw-bg-opacity,1))}.object-contain{-o-object-fit:contain;object-fit:contain}.p-1{padding:.25rem}.p-6{padding:1.5rem}.p-\[18\%\]{padding:18%}.px-2{padding-left:.5rem;padding-right:.5rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.pt-7{padding-top:1.75rem}.text-center{text-align:center}.font-sans{font-family:Neo Sans,Neo Sans W01,Exo\ 2,system-ui,sans-serif}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[12px\]{font-size:12px}.text-\[13px\]{font-size:13px}.text-\[15px\]{font-size:15px}.text-\[17px\]{font-size:17px}.text-sm{font-size:.875rem;line-height:1.25rem}.font-medium{font-weight:500}.font-semibold{font-weight:600}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-\[0\.12em\]{letter-spacing:.12em}.tracking-\[0\.18em\]{letter-spacing:.18em}.text-tinta{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.text-tinta\/70{color:rgba(3,23,22,.7)}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.text-zinc-400{--tw-text-opacity:1;color:rgb(161 161 170/var(--tw-text-opacity,1))}.text-zinc-500{--tw-text-opacity:1;color:rgb(113 113 122/var(--tw-text-opacity,1))}.text-zinc-600{--tw-text-opacity:1;color:rgb(82 82 91/var(--tw-text-opacity,1))}.text-zinc-700{--tw-text-opacity:1;color:rgb(63 63 70/var(--tw-text-opacity,1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-\[0\.17\]{opacity:.17}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-300{transition-duration:.3s}.ease-in-out{transition-timing-function:cubic-bezier(.4,0,.2,1)}.focus-within\:border-l-neon:focus-within{--tw-border-opacity:1;border-left-color:rgb(204 255 0/var(--tw-border-opacity,1))}.focus-within\:shadow-\[0_8px_30px_rgb\(0\2c 0\2c 0\2c 0\.04\)\]:focus-within{--tw-shadow:0 8px 30px rgb(0,0,0,0.04);--tw-shadow-colored:0 8px 30px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.hover\:-translate-y-0\.5:hover{--tw-translate-y:-0.125rem}.hover\:-translate-y-0\.5:hover,.hover\:-translate-y-px:hover{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.hover\:-translate-y-px:hover{--tw-translate-y:-1px}.hover\:translate-x-0\.5:hover{--tw-translate-x:0.125rem;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.hover\:border-l-neon:hover{--tw-border-opacity:1;border-left-color:rgb(204 255 0/var(--tw-border-opacity,1))}.hover\:bg-zinc-50:hover{--tw-bg-opacity:1;background-color:rgb(250 250 250/var(--tw-bg-opacity,1))}.hover\:text-tinta:hover{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.hover\:shadow-\[0_8px_30px_rgb\(0\2c 0\2c 0\2c 0\.04\)\]:hover{--tw-shadow:0 8px 30px rgb(0,0,0,0.04);--tw-shadow-colored:0 8px 30px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.group:focus-within .group-focus-within\:bg-neon{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.group:focus-within .group-focus-within\:text-tinta{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.group:hover .group-hover\:bg-neon,.group\/b:hover .group-hover\/b\:bg-neon{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.group:hover .group-hover\:text-tinta{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.aria-pressed\:bg-neon[aria-pressed=true]{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.aria-pressed\:font-medium[aria-pressed=true]{font-weight:500}.aria-pressed\:text-tinta[aria-pressed=true]{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}@media (min-width:1024px){.lg\:sticky{position:sticky}.lg\:top-24{top:6rem}.lg\:grid-cols-\[minmax\(0\2c 1fr\)_290px\]{grid-template-columns:minmax(0,1fr) 290px}}</style>
 
 <style>
-  /* =========================================================
-     TIPOGRAFÍA — NEO SANS (fuente corporativa Ambipar)
-     ---------------------------------------------------------
-     Neo Sans es una fuente con licencia (Monotype): NO se puede
-     descargar gratis desde internet como las de Google Fonts.
+  html, body{ overflow-x:hidden }
+  .premium-heading{ letter-spacing:-0.01em }
 
-     · Si TIENES los archivos de la fuente (licencia Ambipar):
-       crea en el repo una carpeta "fonts/" y sube ahí
-       NeoSans.woff2 y NeoSans-Bold.woff2. Con eso, los bloques
-       @font-face de abajo la activan solos, sin tocar nada más.
+  /* Indicador de sistema activo: el único elemento animado de la interfaz */
+  .punto{ width:6px; height:6px; border-radius:9999px; background:#d4d4d8; flex-shrink:0 }
+  .punto.listo{ background:#CCFF00; animation:latir 2.4s ease-in-out infinite }
+  @keyframes latir{ 0%,100%{opacity:1} 50%{opacity:.35} }
 
-     · Si NO los tienes todavía: no pasa nada. La página usa
-       automáticamente "Exo 2", que es la alternativa libre más
-       parecida a Neo Sans (misma forma geométrica y cuadrada).
-       Verás un error 404 de fuente en la consola: es inofensivo.
-     ========================================================= */
-  @font-face{
-    font-family:"Neo Sans Web";
-    src:url("fonts/NeoSans.woff2") format("woff2");
-    font-weight:400; font-style:normal; font-display:swap;
+  /* -----------------------------------------------------------------------
+     Clases que app.js crea al vuelo. Se definen acá para que el HTML y el
+     JavaScript sigan hablando el mismo idioma sin tener que tocar app.js.
+     ----------------------------------------------------------------------- */
+  /* Botón primario en lima con texto oscuro: es el par de marca de Ambipar
+     y el punto de mayor contraste de la pantalla. */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    background:#CCFF00; color:#031716; border:1px solid #CCFF00; border-radius:6px;
+    padding:.6rem 1.15rem; font-size:.8125rem; font-weight:600;
+    cursor:pointer; transition:.15s ease;
   }
-  @font-face{
-    font-family:"Neo Sans Web";
-    src:url("fonts/NeoSans-Medium.woff2") format("woff2");
-    font-weight:600; font-style:normal; font-display:swap;
+  .btn:hover:not(:disabled){
+    background:#031716; color:#CCFF00; border-color:#031716;
+    box-shadow:0 8px 30px rgb(0 0 0 / .06);
   }
-  @font-face{
-    font-family:"Neo Sans Web";
-    src:url("fonts/NeoSans-Bold.woff2") format("woff2");
-    font-weight:700; font-style:normal; font-display:swap;
+  .btn:disabled{ background:#f4f4f6; color:#a1a1aa; border-color:#e4e4e7; cursor:not-allowed }
+  .btn.secundario{ background:#fff; color:#031716; border-color:#e4e4e7; font-weight:500 }
+  .btn.secundario:hover{ border-color:#CCFF00; background:#FBFFE8 }
+
+  .quitar{
+    background:none; border:0; cursor:pointer; padding:2px 4px;
+    font-size:.6875rem; letter-spacing:.08em; text-transform:uppercase; color:#a1a1aa;
   }
-
-  /* =========================================================
-     PALETA AMBIPAR
-     ========================================================= */
-  :root{
-    --lima:#BDFF00;          /* verde lima de marca (barra superior) */
-    --verde:#00953B;         /* verde Ambipar */
-    --verde-osc:#00722D;
-    --verde-claro:#E9F6EF;
-    --tinta:#0A2E2E;         /* texto principal / azul petróleo de marca */
-    --tinta-2:#274746;
-    --gris:#6B7C7A;
-    --gris-claro:#98A7A5;
-    --linea:#DDE5E2;
-    --fondo:#F4F6F5;
-    --blanco:#FFFFFF;
-    --alerta:#B4610A;
-    --alerta-fondo:#FDF3E6;
-    --alerta-linea:#F0D3AC;
-    --ok:#00953B;
-    --radio:16px;
-    --radio-sm:10px;
-    --sombra:0 1px 2px rgba(10,46,46,.04), 0 12px 32px rgba(10,46,46,.06);
-    --sombra-alta:0 2px 4px rgba(10,46,46,.05), 0 18px 44px rgba(10,46,46,.10);
-
-    /* Orden de prioridad: fuente subida al repo → fuente instalada
-       en el computador → alternativa libre parecida → sistema */
-    --fuente:"Neo Sans Web","Neo Sans","Neo Sans Pro","Exo 2",
-             -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
-
-  body{
-    margin:0;
-    background:
-      radial-gradient(900px 420px at 92% -8%, rgba(189,255,0,.20), transparent 60%),
-      radial-gradient(700px 380px at -5% 12%, rgba(0,149,59,.06), transparent 60%),
-      var(--fondo);
-    color:var(--tinta);
-    font-family:var(--fuente);
-    font-size:15px;
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
-  }
-
-  button,input{font:inherit}
-  :focus-visible{outline:2.5px solid var(--verde); outline-offset:2px; border-radius:6px}
-
-  /* =========================================================
-     BARRA SUPERIOR
-     ========================================================= */
-  header{
-    position:sticky; top:0; z-index:50;
-    background:var(--lima);
-    border-bottom:1px solid rgba(10,46,46,.10);
-    padding:0 28px;
-    height:72px;
-    display:flex; align-items:center; gap:20px;
-  }
-
-  .marca{display:flex; align-items:center; gap:18px; min-width:0}
-  .marca .logo-img{display:block; height:28px; width:auto; flex-shrink:0}
-  .marca .logo-svg{display:none; height:26px; width:auto; flex-shrink:0}
-
-  .divisor{width:1px; height:34px; background:rgba(10,46,46,.25); flex-shrink:0}
-
-  .marca-texto{line-height:1.25; min-width:0}
-  .marca-texto b{
-    display:block; font-size:13px; font-weight:800;
-    letter-spacing:.09em; text-transform:uppercase; color:var(--tinta);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .marca-texto span{
-    display:block; font-size:11px; font-weight:700;
-    letter-spacing:.05em; color:#3C5654; white-space:nowrap;
-  }
-
-  /* Estado del motor Pyodide (vive en la barra superior) */
-  #estado-motor{
-    margin-left:auto;
-    display:flex; align-items:center; gap:9px;
-    background:var(--blanco);
-    border:1px solid rgba(10,46,46,.10);
-    border-radius:999px;
-    padding:8px 15px;
-    font-size:12.5px; font-weight:700; color:var(--tinta-2);
-    white-space:nowrap;
-    box-shadow:0 2px 10px rgba(10,46,46,.06);
-  }
-  .punto{
-    width:9px; height:9px; border-radius:50%;
-    background:#C9A227; flex-shrink:0;
-    box-shadow:0 0 0 4px rgba(201,162,39,.16);
-    animation:latido 1.6s ease-in-out infinite;
-  }
-  .punto.listo{
-    background:var(--ok);
-    box-shadow:0 0 0 4px rgba(0,149,59,.15);
-    animation:none;
-  }
-  @keyframes latido{50%{opacity:.35}}
+  .quitar:hover{ color:#031716 }
 
   .spin{
-    width:14px; height:14px;
-    border:2px solid var(--linea); border-top-color:var(--verde);
-    border-radius:50%; animation:g .8s linear infinite; flex-shrink:0;
+    width:12px; height:12px; border:1.5px solid rgba(3,23,22,.25);
+    border-top-color:#031716; border-radius:50%;
+    animation:giro .7s linear infinite; margin-right:.5rem;
   }
-  @keyframes g{to{transform:rotate(360deg)}}
+  @keyframes giro{ to{ transform:rotate(360deg) } }
 
-  /* =========================================================
-     ESTRUCTURA
-     ========================================================= */
-  main{max-width:940px; margin:0 auto; padding:44px 24px 72px}
+  .oculto{ display:none !important }
 
-  .encabezado{margin-bottom:34px}
-  h1{
-    font-size:34px; line-height:1.15; letter-spacing:-.025em;
-    margin:0 0 12px; font-weight:800;
-  }
-  .intro{
-    color:var(--gris); margin:0; max-width:640px; font-size:15.5px;
-  }
-
-  /* =========================================================
-     TARJETAS DE PASO
-     ========================================================= */
-  .paso{
-    background:var(--blanco);
-    border:1px solid var(--linea);
-    border-radius:var(--radio);
-    padding:26px 28px 28px;
-    margin-bottom:18px;
-    box-shadow:var(--sombra);
-    transition:box-shadow .2s ease, border-color .2s ease;
-  }
-  .paso:hover{box-shadow:var(--sombra-alta)}
-
-  .paso h2{
-    font-size:13px; margin:0 0 6px;
-    display:flex; align-items:center; gap:13px;
-    text-transform:uppercase; letter-spacing:.1em; font-weight:800;
-    color:var(--tinta);
-  }
-  .num{
-    background:var(--verde); color:#fff;
-    width:30px; height:30px; border-radius:9px;
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:14px; font-weight:800; flex-shrink:0;
-    box-shadow:0 4px 12px rgba(0,149,59,.24);
-  }
-  .paso .ayuda{
-    margin:0 0 20px 43px;
-    font-size:13.5px; color:var(--gris);
-  }
-
-  /* ---- Selector de zona ---- */
-  .zonas{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
-  .zona-btn{
-    border:1.5px solid var(--linea); background:var(--blanco); color:var(--tinta);
-    padding:16px 14px; border-radius:12px; cursor:pointer;
-    font-size:15px; font-weight:700; letter-spacing:.01em;
-    transition:.16s ease;
-  }
-  .zona-btn:hover{border-color:#A9C3B9; transform:translateY(-1px)}
-  .zona-btn[aria-pressed="true"]{
-    background:var(--verde); border-color:var(--verde); color:#fff;
-    box-shadow:0 8px 20px rgba(0,149,59,.22);
-  }
-
-  /* ---- Zona de carga ---- */
-  .dropzone{
-    display:block;
-    border:2px dashed #BFCCC8; border-radius:14px;
-    padding:36px 24px; background:#FAFCFB;
-    text-align:center; color:var(--gris); cursor:pointer;
-    transition:.16s ease;
-  }
-  .dropzone:hover, .dropzone.drag{
-    border-color:var(--verde); background:var(--verde-claro);
-  }
-  .dropzone strong{color:var(--tinta); font-size:15.5px; font-weight:700}
-  .dropzone .icono{
-    width:48px; height:48px; margin:0 auto 14px;
-    border-radius:14px; background:var(--verde-claro);
-    display:flex; align-items:center; justify-content:center;
-    color:var(--verde);
-  }
-  .dropzone .formato{
-    display:block; margin-top:8px;
-    font-size:12.5px; color:var(--gris-claro);
-  }
-  input[type=file]{display:none}
-
-  /* ---- Archivos base ---- */
-  .chip{
-    font-size:9.5px; font-weight:800; letter-spacing:.08em;
-    text-transform:uppercase; color:var(--verde-osc);
-    background:var(--verde-claro); border:1px solid #CFE7DB;
-    padding:4px 9px; border-radius:999px; margin-left:2px;
-  }
-  .estado-base{
-    background:#F8FAF9; border:1px solid var(--linea);
-    border-left:4px solid var(--verde);
-    border-radius:var(--radio-sm); padding:12px 15px;
-    font-size:13.5px; font-weight:600; color:var(--tinta-2);
-    margin-bottom:12px;
-  }
-  .lista-base li{background:var(--verde-claro); border-color:#CFE7DB}
-  .lista-base .fecha{
-    font-size:11.5px; font-weight:600; color:var(--gris); white-space:nowrap;
-  }
-  .dropzone.compacta{padding:20px 18px}
-  .dropzone.compacta strong{font-size:14px}
-  .btn.chico{padding:10px 16px; font-size:13px; margin-top:12px}
-
-  .lista-archivos{list-style:none; padding:0; margin:16px 0 0}
-  .lista-archivos li{
-    display:flex; justify-content:space-between; align-items:center; gap:12px;
-    padding:12px 14px; background:#F8FAF9;
-    border:1px solid var(--linea); border-radius:var(--radio-sm);
-    margin-bottom:8px; font-size:13.5px; font-weight:600;
-    animation:aparecer .18s ease;
-  }
-  @keyframes aparecer{from{opacity:0; transform:translateY(-3px)}}
-  .lista-archivos .quitar{
-    border:none; background:none; color:var(--alerta);
-    cursor:pointer; font-size:12.5px; font-weight:700; padding:4px 6px;
-    border-radius:6px; flex-shrink:0;
-  }
-  .lista-archivos .quitar:hover{background:var(--alerta-fondo)}
-
-  /* ---- Botones ---- */
-  .btn{
-    background:var(--verde); color:#fff; border:none; border-radius:11px;
-    padding:14px 26px; font-size:14.5px; font-weight:700; cursor:pointer;
-    letter-spacing:.01em;
-    box-shadow:0 8px 20px rgba(0,149,59,.20);
-    transition:.16s ease;
-  }
-  .btn:hover:not(:disabled){background:var(--verde-osc); transform:translateY(-1px)}
-  .btn:active:not(:disabled){transform:translateY(0)}
-  .btn:disabled{background:#C3D0CA; box-shadow:none; cursor:not-allowed}
-  .btn.secundario{
-    background:var(--blanco); color:var(--verde-osc);
-    border:1.5px solid var(--verde); box-shadow:none;
-  }
-  .btn.secundario:hover:not(:disabled){background:var(--verde-claro)}
-
-  /* =========================================================
-     RESULTADOS
-     ========================================================= */
-  #resultado{display:none; margin-top:24px; padding-top:24px; border-top:1px solid var(--linea)}
-
-  .resumen{
-    background:var(--verde-claro);
-    border:1px solid #C6E3D3;
-    border-left:4px solid var(--verde);
-    border-radius:var(--radio-sm);
-    padding:16px 18px; margin-bottom:16px;
-    font-size:14px; color:var(--tinta-2);
-  }
-
-  table{
-    width:100%; border-collapse:collapse; font-size:13.5px;
-    margin-top:10px; border:1px solid var(--linea); border-radius:var(--radio-sm);
-    overflow:hidden;
-  }
-  th,td{text-align:left; padding:12px 14px; border-bottom:1px solid var(--linea)}
-  th{
-    background:#F6F8F7; color:var(--gris);
-    font-weight:800; text-transform:uppercase; font-size:10.5px; letter-spacing:.09em;
-  }
-  tbody tr:last-child td{border-bottom:none}
-  tbody tr:hover{background:#FAFCFB}
-
-  .alertas{margin-top:6px}
+  /* Alertas: línea de énfasis de 1px, sin fondos de color */
   .alerta{
-    background:var(--alerta-fondo);
-    border:1px solid var(--alerta-linea);
-    border-left:4px solid var(--alerta);
-    border-radius:var(--radio-sm);
-    padding:12px 16px; margin-bottom:8px; font-size:13.5px;
+    border-left:3px solid #CCFF00; background:#F9F9FB;
+    border-radius:0 6px 6px 0; padding:.7rem 1rem;
+    margin-bottom:.5rem; font-size:.8125rem; color:#3f3f46;
   }
-  .alerta b{color:var(--alerta)}
+  .alerta b{ color:#031716; font-weight:500 }
 
-  .registro{
-    background:#08201F; color:#C8E6D3;
-    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-    font-size:12px; line-height:1.6;
-    padding:18px; border-radius:var(--radio-sm);
-    white-space:pre-wrap; max-height:300px; overflow:auto;
-    margin-top:16px;
+  /* Listas de archivos: filas compactas separadas por 1px */
+  #lista-archivos li, #lista-base li{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:.7rem .9rem; font-size:.8125rem; color:#3f3f46;
+    border:1px solid #e4e4e7; border-radius:6px; margin-bottom:.375rem;
+    background:#fff;
   }
-  .oculto{display:none !important}
+  #lista-base li{ background:#F9F9FB; border-left:3px solid #CCFF00 }
+  #lista-base li b{ font-weight:500; color:#031716 }
+  .fecha{ font-size:.6875rem; color:#a1a1aa; white-space:nowrap }
 
-  .acciones{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+  .dropzone{ transition:.15s ease }
+  .dropzone:hover, .dropzone.drag{ border-color:#CCFF00; background:#FBFFE8 }
 
-  /* =========================================================
-     NOTA DE PRIVACIDAD + PIE
-     ========================================================= */
-  .privacidad{
-    display:flex; align-items:flex-start; gap:12px;
-    background:var(--blanco); border:1px solid var(--linea);
-    border-radius:var(--radio-sm); padding:14px 16px; margin-top:22px;
-    font-size:12.5px; color:var(--gris);
+  #resultado{ display:none }
+
+  /* -----------------------------------------------------------------------
+     Tabla de registros densos: solo líneas horizontales de 1px, sin bordes
+     verticales ni filas alternadas. Padding vertical ajustado (py-3).
+     ----------------------------------------------------------------------- */
+  table{ width:100%; border-collapse:collapse; font-size:.8125rem }
+  th{
+    text-align:left; padding:.5rem .75rem;
+    border-bottom:2px solid #CCFF00;
+    font-size:.75rem; font-weight:400; color:#71717a;
   }
-  .privacidad svg{flex-shrink:0; color:var(--verde); margin-top:1px}
-
-  footer{
-    color:var(--gris-claro); font-size:12px; text-align:center;
-    padding:32px 24px 8px;
+  th .orden{ display:inline-flex; align-items:center; gap:.35rem; color:inherit }
+  th svg{ opacity:.45 }
+  td{
+    padding:.75rem; border-bottom:1px solid #e4e4e7; color:#3f3f46;
+    font-variant-numeric:tabular-nums;
   }
-  footer b{color:var(--gris); font-weight:700}
+  tbody tr:last-child td{ border-bottom:0 }
+  tbody tr:hover td{ background:#FAFAFA }
+  /* Columna numérica alineada a la derecha para lectura de ingeniería */
+  th:nth-child(3), td:nth-child(3){ text-align:right }
 
-  /* =========================================================
-     RESPONSIVE
-     ========================================================= */
-  @media (max-width:760px){
-    header{padding:0 16px; height:64px; gap:12px}
-    .marca .logo-img, .marca .logo-svg{height:22px}
-    .marca-texto b{max-width:42vw}
-    .divisor, .marca-texto span{display:none}
-    .marca-texto b{font-size:11.5px}
-    #estado-motor{padding:7px 11px; font-size:11.5px}
-    main{padding:30px 16px 56px}
-    h1{font-size:26px}
-    .intro{font-size:14.5px}
-    .paso{padding:20px 18px 22px}
-    .paso .ayuda{margin-left:0}
-    .zonas{grid-template-columns:1fr}
-    .btn{width:100%}
-    .acciones{flex-direction:column}
+  #registro{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.7188rem;
+    line-height:1.7; color:#52525b; background:#F9F9FB;
+    border:1px solid #e4e4e7; border-radius:6px; padding:1rem 1.15rem;
+    white-space:pre-wrap; max-height:20rem; overflow:auto; margin-top:1rem;
   }
 
-  @media (prefers-reduced-motion:reduce){
-    *{animation:none !important; transition:none !important; scroll-behavior:auto}
+  input[type=file]{ display:none }
+  ::selection{ background:#CCFF00; color:#031716 }
+
+  /* Cursor estándar del sistema; manito solo en lo que se puede clickear */
+  a, button, label, summary, [role="button"], .zona-btn, .dropzone, .quitar, .btn{
+    cursor: pointer;
   }
+  button:disabled, .btn:disabled{ cursor: not-allowed }
+  input, textarea, select{ cursor: text }
+
+  /* Relieve sutil en los botones */
+  .btn{ will-change: transform }
+  .btn:hover:not(:disabled){ transform: translateY(-1px) }
+  .btn:active:not(:disabled){ transform: translateY(0) }
 </style>
 </head>
-<body>
 
-<!-- =========================================================
-     BARRA SUPERIOR
+<body class="bg-zinc-100 font-sans text-tinta antialiased">
+<!-- =========================================================================
+     MARCA DE AGUA: la "a" del logo Ambipar en megazoom.
+     Se ve solo un trozo, anclado a la esquina superior izquierda. Va detrás
+     de todo y no intercepta clics.
+     ========================================================================= -->
+<div aria-hidden="true"
+     class="pointer-events-none fixed -left-[277px] -top-[18px] -z-10 h-[716px] w-[716px] select-none opacity-[0.17]">
 
-     LOGO: la página busca el archivo "ambipar-logo.png" en la
-     raíz del repositorio. Mientras ese archivo no exista, se
-     muestra automáticamente un logo de respaldo dibujado en
-     código (nunca se ve una imagen rota).
-     ========================================================= -->
-<header>
-  <div class="marca">
-    <img class="logo-img" src="ambipar-logo.png" alt="Ambipar"
-         onerror="this.style.display='none';
-                  document.getElementById('logo-respaldo').style.display='block';">
+  <!-- El isotipo oficial (ambipar-a-verde.png, fondo transparente) ampliado.
+       Si el archivo todavía no está en el repositorio, se dibuja el de
+       respaldo y la página nunca muestra una imagen rota. -->
+  <img src="ambipar-a-verde.png" alt="" class="h-full w-full object-contain"
+       onerror="this.style.display='none';document.getElementById('a-respaldo').style.display='block'">
 
-    <svg class="logo-svg" id="logo-respaldo" viewBox="0 0 260 46"
-         role="img" aria-label="Ambipar" focusable="false">
-      <text x="0" y="35" font-family="'Exo 2', Verdana, sans-serif"
-            font-size="42" font-weight="800" letter-spacing="-1"
-            fill="#0A2E2E">ambipar</text>
-      <g transform="translate(222 2)">
-        <rect x="2" y="2" width="25" height="25" rx="8" ry="8"
-              transform="rotate(45 14.5 14.5)"
-              fill="none" stroke="#0A2E2E" stroke-width="3"/>
-        <text x="14.5" y="21" text-anchor="middle"
-              font-family="'Exo 2', Verdana, sans-serif"
-              font-size="18" font-weight="800" fill="#0A2E2E">a</text>
+  <div id="a-respaldo" class="hidden h-full w-full p-[18%]">
+    <svg viewBox="0 0 100 100" class="h-full w-full">
+    <!-- Rombo redondeado + "a" de una sola planta: la misma construcción
+         del isotipo (cuenco circular con asta recta a la derecha). -->
+    <g fill="none" stroke="#CCFF00" stroke-linecap="butt">
+      <rect x="22" y="22" width="56" height="56" rx="13"
+            transform="rotate(45 50 50)" stroke-width="7"/>
+      <circle cx="48.5" cy="55" r="10.5" stroke-width="6.5"/>
+      <path d="M59 41.5 V 68.5" stroke-width="6.5"/>
+      </g>
+    </svg>
+  </div>
+</div>
+
+
+<!-- ========================= BARRA SUPERIOR ========================= -->
+<!-- Bloque sólido de marca: lima corporativo con tipografía en oscuro
+     institucional, replicando el patrón editorial de Ambipar. -->
+<header class="sticky top-0 z-50 bg-neon">
+  <div class="mx-auto flex h-20 max-w-6xl items-center gap-6 px-6">
+
+    <img src="ambipar-logo.png" alt="Ambipar" class="h-8 w-auto"
+         onerror="this.style.display='none';document.getElementById('logo-respaldo').style.display='block'">
+    <svg id="logo-respaldo" viewBox="0 0 260 46" class="hidden h-8 w-auto" aria-label="Ambipar">
+      <text x="0" y="35" font-family="'Barlow Semi Condensed', sans-serif" font-size="42"
+            font-weight="600" letter-spacing="-1" fill="#031716">ambipar</text>
+      <g transform="translate(220 3)" fill="none" stroke="#031716" stroke-linecap="butt">
+        <rect x="5" y="5" width="26" height="26" rx="6" transform="rotate(45 18 18)" stroke-width="3.2"/>
+        <circle cx="17.4" cy="19.8" r="4.9" stroke-width="3"/>
+        <path d="M22.3 13.4 V 26.2" stroke-width="3"/>
       </g>
     </svg>
 
-    <div class="divisor"></div>
+    <span class="h-9 w-px bg-tinta/25"></span>
 
-    <div class="marca-texto">
-      <b>Sistema Trazabilidad Ambipar</b>
-      <span>Inteligencia Circular · Chile</span>
+    <div class="min-w-0 leading-tight">
+      <p class="premium-heading truncate text-[17px] font-medium text-tinta">
+        Sistema Trazabilidad Ambipar
+      </p>
+      <p class="mt-0.5 text-[13px] text-tinta/70">Inteligencia Circular · Chile</p>
     </div>
-  </div>
 
-  <!-- Estado del motor Pyodide (app.js actualiza #punto-motor y #txt-motor) -->
-  <div id="estado-motor">
-    <span class="punto" id="punto-motor"></span>
-    <span id="txt-motor">Iniciando el motor…</span>
+    <div id="estado-motor"
+         class="ml-auto flex items-center gap-2 rounded-md bg-tinta px-3 py-2 text-[12px] text-white">
+      <span class="punto" id="punto-motor"></span>
+      <span id="txt-motor">Iniciando el motor…</span>
+    </div>
   </div>
 </header>
 
-<main>
-  <section class="encabezado">
-    <h1>Generación Archivo Trazabilidad</h1>
-    <p class="intro">
-      Subir archivos Excel por zona. El sistema los procesa y entrega consolidado
-      listo para descargar.
-    </p>
-  </section>
+<div class="mx-auto max-w-6xl px-6 py-12">
 
-  <!-- PASO 1 -->
-  <section class="paso">
-    <h2><span class="num">1</span> Elige la zona</h2>
-    <p class="ayuda">Define el ámbito del procesamiento. Cada zona tiene sus propias fuentes y reglas.</p>
-    <div class="zonas" id="zonas">
-      <button class="zona-btn" data-zona="RM" aria-pressed="false">RM</button>
-      <button class="zona-btn" data-zona="SUR" aria-pressed="false">Sur</button>
-      <button class="zona-btn" data-zona="NORTE" aria-pressed="false">Norte</button>
+  <!-- ========================= ENCABEZADO ========================= -->
+  <div class="mb-10">
+    <div>
+      <span class="mb-4 block h-[3px] w-10 bg-neon"></span>
+      <h1 class="premium-heading text-3xl font-medium text-tinta">
+        Generación Archivo Trazabilidad
+      </h1>
+      <p class="mt-2.5 max-w-lg text-sm leading-relaxed text-zinc-500">
+        Subir archivos Excel por zona. El sistema los procesa y entrega
+        consolidado listo para descargar.
+      </p>
     </div>
-  </section>
-
-  <!-- PASO 2 — ARCHIVOS BASE -->
-  <section class="paso">
-    <h2><span class="num">2</span> Archivos base <span class="chip">se suben una sola vez</span></h2>
-    <p class="ayuda">
-      Homologación, Destinatarios, Clasificación SINADER y Transportistas son los
-      mismos para las tres zonas. Quedan guardados en este computador y no hay
-      que volver a subirlos: solo cuando cambien.
-    </p>
-
-    <div class="estado-base" id="estado-base">Iniciando…</div>
-    <ul class="lista-archivos lista-base" id="lista-base"></ul>
-
-    <label class="dropzone compacta" id="dropzone-base" for="input-base">
-      <strong>Actualizar archivos base</strong> — suéltalos aquí
-      <span class="formato">Los 4 Excel sueltos, o la carpeta "Información Base" en .zip</span>
-    </label>
-    <input type="file" id="input-base" multiple accept=".xlsx,.zip" />
-
-    <button class="btn secundario chico" id="btn-borrar-base" style="display:none">
-      Borrar archivos base guardados
-    </button>
-  </section>
-
-  <!-- PASO 3 — MOVIMIENTOS DEL MES -->
-  <section class="paso">
-    <h2><span class="num">3</span> Movimientos del mes</h2>
-    <p class="ayuda">
-      Los Excel de la zona elegida. Puedes soltar los archivos sueltos o, más
-      fácil, bajar la carpeta completa desde OneDrive y soltar el .zip tal cual.
-    </p>
-
-    <label class="dropzone" id="dropzone" for="input-archivos">
-      <span class="icono" aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-      </span>
-      <strong>Haz clic para elegir archivos</strong> o arrástralos aquí
-      <span class="formato">Archivos .xlsx o carpetas .zip · puedes soltar varios a la vez</span>
-    </label>
-
-    <input type="file" id="input-archivos" multiple accept=".xlsx,.zip" />
-    <ul class="lista-archivos" id="lista-archivos"></ul>
-  </section>
-
-  <!-- PASO 4 -->
-  <section class="paso">
-    <h2><span class="num">4</span> Procesa y descarga</h2>
-    <p class="ayuda">El consolidado se genera en tu navegador y queda disponible como archivo .xlsx.</p>
-
-    <button class="btn" id="btn-procesar" disabled>Procesar consolidado</button>
-
-    <div id="resultado">
-      <div class="resumen" id="resumen"></div>
-      <div class="alertas" id="alertas"></div>
-
-      <table id="tabla-fuentes">
-        <thead>
-          <tr><th>Archivo</th><th>Hojas</th><th>Filas</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <div class="acciones" id="descargas"></div>
-
-      <pre class="registro oculto" id="registro"></pre>
-    </div>
-  </section>
-
-  <div class="privacidad">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-    <span>
-      Los archivos se procesan localmente, dentro de este navegador. No se suben a ningún
-      servidor ni quedan guardados en el repositorio.
-    </span>
   </div>
 
-  <footer>
-    <b>Ambipar Chile</b> · Inteligencia Circular · Sistema de Trazabilidad<br>
-    Etapa 2 · App web con Pyodide
-  </footer>
-</main>
+  <!-- ============ MAQUETACIÓN ASIMÉTRICA: 1fr + columna técnica ============ -->
+  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_290px]">
+
+    <!-- ---------------- COLUMNA PRINCIPAL ---------------- -->
+    <div class="min-w-0 space-y-5">
+
+      <!-- 01 · ZONA -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">01</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Zona</h2>
+        </div>
+        <p class="mt-1.5 text-[13px] text-zinc-500">
+          Ámbito del procesamiento. Cada zona tiene sus propias fuentes y reglas.
+        </p>
+
+        <div id="zonas" class="mt-5 inline-flex rounded-md border border-zinc-200 p-1">
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="RM" aria-pressed="false">RM</button>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="SUR" aria-pressed="false">Sur</button>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="NORTE" aria-pressed="false">Norte</button>
+        </div>
+      </section>
+
+      <!-- 02 · ARCHIVOS BASE -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">02</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Archivos base</h2>
+          <span class="rounded-[4px] bg-zinc-100 px-2 py-0.5 text-[10px] font-medium tracking-[0.12em] text-zinc-500">
+            SE SUBEN UNA SOLA VEZ
+          </span>
+        </div>
+        <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
+          Homologación, Destinatarios, Clasificación SINADER y Transportistas son los
+          mismos para las tres zonas. Quedan guardados en este computador.
+        </p>
+
+        <p id="estado-base"
+           class="mt-5 rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-2.5 text-[13px] text-zinc-600">
+          Iniciando…
+        </p>
+
+        <ul id="lista-base" class="mt-4"></ul>
+
+        <label id="dropzone-base" for="input-base"
+               class="dropzone mt-4 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-5 py-5 text-center">
+          <span class="text-[13px] font-medium text-tinta">Actualizar archivos base</span>
+          <span class="mt-0.5 block text-[12px] text-zinc-400">
+            Los 4 Excel sueltos, o la carpeta “Información Base” en .zip
+          </span>
+        </label>
+        <input type="file" id="input-base" multiple accept=".xlsx,.zip" />
+
+        <button id="btn-borrar-base" class="quitar mt-4" style="display:none">
+          Borrar archivos base guardados
+        </button>
+      </section>
+
+      <!-- 03 · MOVIMIENTOS -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">03</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Movimientos del mes</h2>
+        </div>
+        <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
+          Los Excel de la zona elegida. Puedes soltar los archivos sueltos o bajar la
+          carpeta completa desde OneDrive y soltar el .zip tal cual.
+        </p>
+
+        <label id="dropzone" for="input-archivos"
+               class="dropzone mt-5 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-6 py-12 text-center">
+          <span class="text-[13px] font-medium text-tinta">Arrastra los archivos aquí</span>
+          <span class="mt-0.5 block text-[12px] text-zinc-400">
+            o haz clic para elegirlos · .xlsx o .zip
+          </span>
+        </label>
+        <input type="file" id="input-archivos" multiple accept=".xlsx,.zip" />
+
+        <ul id="lista-archivos" class="mt-4"></ul>
+      </section>
+
+      <!-- 04 · PROCESAR -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">04</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Procesar</h2>
+        </div>
+        <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
+          El consolidado se genera dentro de este navegador y queda disponible para descargar.
+        </p>
+
+        <button id="btn-procesar" class="btn mt-5" disabled>Procesar consolidado</button>
+
+        <div id="resultado" class="mt-8 border-t border-zinc-200 pt-7">
+          <p id="resumen"
+             class="rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-700"></p>
+
+          <div id="alertas" class="mt-6"></div>
+
+          <div class="mt-7 overflow-hidden rounded-md border border-zinc-200">
+            <table id="tabla-fuentes">
+              <thead>
+                <tr>
+                  <th><span class="orden">Archivo<svg width="9" height="11" viewBox="0 0 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1v9M1.5 7.5l3 3 3-3"/></svg></span></th>
+                  <th><span class="orden">Hojas<svg width="9" height="11" viewBox="0 0 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1v9M1.5 7.5l3 3 3-3"/></svg></span></th>
+                  <th><span class="orden">Filas<svg width="9" height="11" viewBox="0 0 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1v9M1.5 7.5l3 3 3-3"/></svg></span></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div id="descargas" class="mt-7 flex flex-wrap gap-2.5"></div>
+
+          <pre id="registro" class="oculto"></pre>
+        </div>
+      </section>
+    </div>
+
+    <!-- ---------------- COLUMNA TÉCNICA (soporte) ---------------- -->
+    <!-- Bento integrado: sin bordes propios. El ritmo lo dan el aire y las
+         sangrías escalonadas, no una caja alrededor de cada bloque. -->
+    <aside class="lg:sticky lg:top-24">
+      <div class="space-y-8">
+
+        <div class="group/b transition-all duration-300 hover:translate-x-0.5">
+          <p class="flex items-center gap-2 text-[10px] font-medium tracking-[0.18em] text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
+            MOTOR
+          </p>
+          <p class="mt-2.5 text-[13px] leading-relaxed text-zinc-600">
+            Python corriendo dentro del navegador.
+            <span class="mt-1 block text-zinc-400">Pyodide · pandas · openpyxl</span>
+          </p>
+        </div>
+
+        <div class="group/b transition-all duration-300 hover:translate-x-0.5">
+          <p class="flex items-center gap-2 text-[10px] font-medium tracking-[0.18em] text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
+            FLUJO
+          </p>
+          <ol class="mt-3 space-y-2.5 text-[13px] text-zinc-600">
+            <li class="flex items-baseline gap-3">
+              <span class="text-[11px] tabular-nums text-zinc-400">01</span>
+              Control de calidad · C1–C9
+            </li>
+            <li class="flex items-baseline gap-3">
+              <span class="text-[11px] tabular-nums text-zinc-400">02</span>
+              Consolidación
+            </li>
+            <li class="flex items-baseline gap-3">
+              <span class="text-[11px] tabular-nums text-zinc-400">03</span>
+              Revisión · V0–V9
+            </li>
+          </ol>
+        </div>
+
+        <div class="group/b transition-all duration-300 hover:translate-x-0.5">
+          <p class="flex items-center gap-2 text-[10px] font-medium tracking-[0.18em] text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
+            BASE REAL
+          </p>
+          <p class="mt-2.5 text-[13px] leading-relaxed text-zinc-600">
+            <span class="font-medium text-tinta">No se modifica.</span>
+            La consolidación corre siempre en modo prueba.
+          </p>
+        </div>
+
+        <div class="group/b transition-all duration-300 hover:translate-x-0.5">
+          <p class="flex items-center gap-2 text-[10px] font-medium tracking-[0.18em] text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
+            PRIVACIDAD
+          </p>
+          <p class="mt-2.5 text-[13px] leading-relaxed text-zinc-600">
+            Los archivos se procesan localmente. No se suben a ningún servidor ni
+            quedan guardados en el repositorio.
+          </p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<footer class="border-t border-zinc-200 bg-white">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-[12px] text-zinc-400">
+    <span>Ambipar Chile · Inteligencia Circular · Sistema de Trazabilidad</span>
+    <span>App web con Pyodide</span>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.3/full/pyodide.js"></script>
 <script src="app.js"></script>
