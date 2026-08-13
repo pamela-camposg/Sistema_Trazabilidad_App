@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Consolidador de Trazabilidad · Ambipar Chile</title>
+<style>
+  :root{
+    --verde:#00953B;        /* verde Ambipar */
+    --verde-osc:#00722d;
+    --verde-claro:#e6f4ec;
+    --tinta:#12261b;         /* texto principal */
+    --gris:#5b6b62;
+    --linea:#d7e2db;
+    --fondo:#f6f8f7;
+    --alerta:#b4610a;
+    --alerta-fondo:#fdf1e3;
+    --ok:#00953B;
+    --radio:10px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--fondo); color:var(--tinta);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+  }
+  header{
+    background:var(--verde); color:#fff; padding:18px 24px;
+    display:flex; align-items:center; gap:14px;
+  }
+  header .logo{
+    font-weight:800; letter-spacing:.5px; font-size:20px; text-transform:lowercase;
+  }
+  header .sub{font-size:13px; opacity:.9}
+  main{max-width:860px; margin:0 auto; padding:24px 20px 60px}
+
+  h1{font-size:22px; margin:8px 0 4px}
+  .intro{color:var(--gris); margin:0 0 24px}
+
+  /* Pasos numerados: el orden aquí SÍ es real (1 subir → 2 procesar → 3 descargar) */
+  .paso{
+    background:#fff; border:1px solid var(--linea); border-radius:var(--radio);
+    padding:20px; margin-bottom:16px;
+  }
+  .paso h2{
+    font-size:15px; margin:0 0 12px; display:flex; align-items:center; gap:10px;
+    text-transform:uppercase; letter-spacing:.6px; color:var(--verde-osc);
+  }
+  .num{
+    background:var(--verde); color:#fff; width:26px; height:26px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700;
+    flex-shrink:0;
+  }
+
+  /* Selector de zona */
+  .zonas{display:flex; gap:8px; flex-wrap:wrap}
+  .zona-btn{
+    border:1.5px solid var(--linea); background:#fff; color:var(--tinta);
+    padding:8px 18px; border-radius:999px; cursor:pointer; font-size:14px; font-weight:600;
+  }
+  .zona-btn[aria-pressed="true"]{background:var(--verde); border-color:var(--verde); color:#fff}
+
+  /* Zona de carga */
+  .dropzone{
+    border:2px dashed var(--linea); border-radius:var(--radio); padding:28px;
+    text-align:center; color:var(--gris); cursor:pointer; transition:.15s;
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--verde); background:var(--verde-claro)}
+  .dropzone strong{color:var(--tinta)}
+  input[type=file]{display:none}
+
+  .lista-archivos{list-style:none; padding:0; margin:14px 0 0}
+  .lista-archivos li{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 12px; border:1px solid var(--linea); border-radius:8px; margin-bottom:6px; font-size:14px;
+  }
+  .lista-archivos .quitar{border:none; background:none; color:var(--alerta); cursor:pointer; font-size:13px}
+
+  /* Botones de acción */
+  .btn{
+    background:var(--verde); color:#fff; border:none; border-radius:8px;
+    padding:12px 22px; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  .btn:hover{background:var(--verde-osc)}
+  .btn:disabled{background:#b8c7be; cursor:not-allowed}
+  .btn.secundario{background:#fff; color:var(--verde-osc); border:1.5px solid var(--verde)}
+
+  /* Estado del motor */
+  #estado-motor{
+    font-size:13px; color:var(--gris); display:flex; align-items:center; gap:8px; margin-top:2px;
+  }
+  .punto{width:9px; height:9px; border-radius:50%; background:#c9a227; flex-shrink:0}
+  .punto.listo{background:var(--ok)}
+  .spin{
+    width:14px;height:14px;border:2px solid var(--linea);border-top-color:var(--verde);
+    border-radius:50%; animation:g .8s linear infinite;
+  }
+  @keyframes g{to{transform:rotate(360deg)}}
+
+  /* Resultados */
+  #resultado{display:none}
+  .resumen{
+    background:var(--verde-claro); border:1px solid #bfe0cd; border-radius:8px;
+    padding:14px 16px; margin-bottom:14px; font-size:14px;
+  }
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--linea)}
+  th{color:var(--gris); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:.5px}
+
+  .alertas{margin-top:6px}
+  .alerta{
+    background:var(--alerta-fondo); border:1px solid #f0d3ac; border-left:4px solid var(--alerta);
+    border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:13.5px;
+  }
+  .alerta b{color:var(--alerta)}
+
+  .registro{
+    background:#0f1a14; color:#c8e6d3; font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:12px; padding:14px; border-radius:8px; white-space:pre-wrap; max-height:280px; overflow:auto;
+    margin-top:14px;
+  }
+  .oculto{display:none !important}
+  footer{color:var(--gris); font-size:12px; text-align:center; padding:24px}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">ambipar</span>
+  <div>
+    <div style="font-weight:600">Consolidador de Trazabilidad</div>
+    <div class="sub">Inteligencia Circular · Chile</div>
+  </div>
+</header>
+
+<main>
+  <h1>Consolida los movimientos de residuos por zona</h1>
+  <p class="intro">Sube los archivos Excel de la zona, la página los procesa aquí mismo y te
+  entrega el consolidado listo para descargar. No se instala nada y los archivos no salen de este navegador.</p>
+  <div id="estado-motor"><span class="punto" id="punto-motor"></span><span id="txt-motor">Iniciando el motor…</span></div>
+
+  <!-- PASO 1 -->
+  <section class="paso">
+    <h2><span class="num">1</span> Elige la zona</h2>
+    <div class="zonas" id="zonas">
+      <button class="zona-btn" data-zona="RM" aria-pressed="false">RM</button>
+      <button class="zona-btn" data-zona="SUR" aria-pressed="false">Sur</button>
+      <button class="zona-btn" data-zona="NORTE" aria-pressed="false">Norte</button>
+    </div>
+  </section>
+
+  <!-- PASO 2 -->
+  <section class="paso">
+    <h2><span class="num">2</span> Sube los archivos Excel</h2>
+    <label class="dropzone" id="dropzone" for="input-archivos">
+      <strong>Haz clic para elegir archivos</strong> o arrástralos aquí<br />
+      <span style="font-size:13px">Formatos .xlsx — puedes subir varios a la vez</span>
+    </label>
+    <input type="file" id="input-archivos" multiple accept=".xlsx" />
+    <ul class="lista-archivos" id="lista-archivos"></ul>
+  </section>
+
+  <!-- PASO 3 -->
+  <section class="paso">
+    <h2><span class="num">3</span> Procesa y descarga</h2>
+    <button class="btn" id="btn-procesar" disabled>Procesar consolidado</button>
+    <div id="resultado">
+      <div class="resumen" id="resumen"></div>
+      <div class="alertas" id="alertas"></div>
+      <table id="tabla-fuentes"><thead><tr><th>Archivo</th><th>Hojas</th><th>Filas</th></tr></thead><tbody></tbody></table>
+      <button class="btn" id="btn-descargar" style="margin-top:16px">Descargar consolidado</button>
+      <button class="btn secundario" id="btn-log" style="margin-top:16px">Ver detalle técnico</button>
+      <pre class="registro oculto" id="registro"></pre>
+    </div>
+  </section>
+</main>
+
+<footer>Ambipar Chile · Inteligencia Circular · Sistema de Trazabilidad</footer>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.3/full/pyodide.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
