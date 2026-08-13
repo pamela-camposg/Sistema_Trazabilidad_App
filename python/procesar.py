@@ -3,15 +3,16 @@
 #
 # La app le pasa a la función procesar():
 #   - zona:            "RM", "SUR" o "NORTE"
-#   - carpeta_entrada: donde quedaron los Excel que subió la operadora
+#   - carpeta_entrada: donde quedaron los archivos que subió la operadora
 #   - carpeta_salida:  donde debe dejar los archivos generados
 #
 # Devuelve un diccionario con:
-#   resumen  -> texto que se muestra arriba
-#   fuentes  -> lista de {archivo, hojas, filas} para la tabla
-#   alertas  -> lista de {titulo, detalle} del control de calidad
-#   salida   -> nombre del consolidado que quedó en carpeta_salida
-#   log      -> texto largo con el detalle técnico
+#   resumen    -> texto que se muestra arriba
+#   fuentes    -> lista de {archivo, hojas, filas} para la tabla
+#   alertas    -> lista de {titulo, detalle} del control de calidad
+#   salida     -> nombre del consolidado (el archivo principal a descargar)
+#   descargas  -> lista de {archivo, etiqueta} con TODO lo descargable
+#   log        -> texto largo con el detalle técnico
 #
 # ESTADO DE LAS ZONAS
 #   RM     -> lógica REAL conectada (scripts de la Etapa 1)
@@ -34,6 +35,8 @@
 import os
 import sys
 import traceback
+import unicodedata
+import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -44,15 +47,30 @@ if "/work/py" not in sys.path:
 
 
 # -----------------------------------------------------------------------------
-# Archivos que consolidar.py necesita y que control_calidad.py no busca.
+# ARCHIVOS BASE (maestros)
 #
-# control_calidad.rutas_desde_carpeta() encuentra 8 archivos. consolidar()
-# necesita además el maestro de destinatarios y (opcionalmente) HOMOLOGACION.
-# Se agregan acá para no tener que modificar los scripts ya verificados.
+# Son los mismos para las tres zonas, por eso la app los guarda en el navegador
+# y la operadora no tiene que volver a subirlos en cada corrida.
 # -----------------------------------------------------------------------------
+NOMBRES_MAESTROS = {
+    "homologacion":   ["HOMOLOGACION.xlsx", "HOMOLOGACIÓN.xlsx"],
+    "destinatarios":  ["BBDD DESTINATARIO.xlsx", "BBDD DESTINATARIOS.xlsx"],
+    "sinader":        ["Clasificación_Residuos SINADER.xlsx",
+                       "Clasificacion_Residuos SINADER.xlsx"],
+    "transportistas": ["Transportistas.xlsx"],
+}
+
+ETIQUETAS_MAESTROS = {
+    "homologacion":   "Homologación",
+    "destinatarios":  "Destinatarios",
+    "sinader":        "Clasificación SINADER",
+    "transportistas": "Transportistas",
+}
+
+# Archivos que consolidar.py necesita y que control_calidad.py no busca
 NOMBRES_EXTRA = {
-    "destinatarios": ["BBDD DESTINATARIO.xlsx", "BBDD DESTINATARIOS.xlsx"],
-    "homologacion": ["HOMOLOGACION.xlsx", "HOMOLOGACIÓN.xlsx"],
+    "destinatarios": NOMBRES_MAESTROS["destinatarios"],
+    "homologacion": NOMBRES_MAESTROS["homologacion"],
 }
 
 # 'destinatarios' es obligatorio para consolidar; 'homologacion' no lo es
@@ -86,21 +104,103 @@ ETIQUETAS_REV = {
 
 
 # =============================================================================
-# UTILIDADES
+# UTILIDADES DE NOMBRES Y ARCHIVOS
 # =============================================================================
+def _clave(nombre):
+    """Normaliza un nombre de archivo para poder compararlo con seguridad.
+
+    Es la misma normalización que usa control_calidad.py: ignora tildes,
+    mayúsculas, espacios, puntos, guiones y paréntesis. Así da lo mismo si el
+    archivo llega como 'BBDD BO VALPARAÍSO.xlsx' o 'bbdd bo valparaiso.xlsx'.
+    """
+    n = unicodedata.normalize("NFKD", str(nombre))
+    n = n.encode("ascii", "ignore").decode("ascii")
+    n = n.upper()
+    for c in " ._-()":
+        n = n.replace(c, "")
+    return n
+
+
+def _es_temporal(nombre):
+    """Los archivos que Excel deja abiertos empiezan con ~$ y hay que ignorarlos."""
+    base = os.path.basename(nombre)
+    return base.startswith("~$") or base.startswith(".") or not base
+
+
 def _listar_archivos(carpeta):
     """Devuelve las rutas de todos los .xlsx de una carpeta, ordenadas."""
     return sorted(
         os.path.join(carpeta, f)
         for f in os.listdir(carpeta)
-        if f.lower().endswith(".xlsx")
+        if f.lower().endswith(".xlsx") and not _es_temporal(f)
     )
+
+
+def _nombre_en_zip(info):
+    """Recupera el nombre real de un archivo dentro de un ZIP.
+
+    Los ZIP creados en Windows a veces guardan los nombres en una codificación
+    antigua, y ahí las tildes salen rotas ('VALPARAÍSO' → 'VALPARAÍSO'). Si el
+    ZIP no declara UTF-8, se intenta reconstruir el nombre original.
+    """
+    nombre = info.filename
+    if not (info.flag_bits & 0x800):
+        try:
+            nombre = info.filename.encode("cp437").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+    return nombre
+
+
+def _expandir_zips(carpeta, log=None):
+    """Descomprime los ZIP de una carpeta y deja los .xlsx sueltos ahí mismo.
+
+    La operadora puede bajar una carpeta completa desde OneDrive (que llega
+    como .zip) y soltarla tal cual. Acá se saca lo que sirve:
+      · solo archivos .xlsx
+      · sin importar en qué subcarpeta venían dentro del ZIP
+      · ignorando temporales (~$) y basura del sistema
+
+    Si dos archivos dentro del ZIP se llaman igual, se conserva el primero.
+    El ZIP se borra después de expandirlo para no confundir al resto del código.
+    """
+    carpeta = Path(carpeta)
+    anotar = log.append if log is not None else (lambda *_: None)
+    extraidos = []
+
+    for zip_path in sorted(carpeta.glob("*.zip")):
+        try:
+            with zipfile.ZipFile(zip_path) as z:
+                anotar(f"  Abriendo {zip_path.name}...")
+                for info in z.infolist():
+                    if info.is_dir():
+                        continue
+                    nombre = os.path.basename(_nombre_en_zip(info))
+                    if not nombre.lower().endswith(".xlsx") or _es_temporal(nombre):
+                        continue
+                    destino = carpeta / nombre
+                    if destino.exists():
+                        anotar(f"    (ya existía, se conserva el primero) {nombre}")
+                        continue
+                    with z.open(info) as origen:
+                        destino.write_bytes(origen.read())
+                    extraidos.append(nombre)
+                    anotar(f"    ✓ {nombre}")
+        except zipfile.BadZipFile:
+            anotar(f"  ✗ {zip_path.name} no es un ZIP válido, se ignora.")
+        finally:
+            try:
+                zip_path.unlink()
+            except OSError:
+                pass
+
+    return extraidos
 
 
 def _inventario(rutas):
     """Arma la tabla 'Archivo / Hojas / Filas' sin cargar los datos.
 
-    Se usa openpyxl en modo solo lectura: lee el encabezado del archivo pero
+    Se usa openpyxl en modo solo lectura: lee la estructura del archivo pero
     no los valores, así la tabla aparece rápido aunque los Excel sean grandes.
     """
     from openpyxl import load_workbook
@@ -118,26 +218,10 @@ def _inventario(rutas):
             except Exception:
                 total = "—"
             wb.close()
-            filas.append({
-                "archivo": nombre,
-                "hojas": ", ".join(hojas),
-                "filas": total,
-            })
+            filas.append({"archivo": nombre, "hojas": ", ".join(hojas), "filas": total})
         except Exception as e:
             filas.append({"archivo": nombre, "hojas": "no se pudo leer", "filas": str(e)[:60]})
     return filas
-
-
-def _archivo_nuevo(carpeta, antes):
-    """Devuelve el archivo que apareció en 'carpeta' después de una operación.
-
-    consolidar() en modo prueba le agrega fecha y hora al nombre del archivo,
-    así que no se puede saber de antemano cómo se va a llamar. En vez de
-    adivinarlo, se mira qué archivo nuevo apareció.
-    """
-    ahora = {f.name for f in Path(carpeta).glob("*.xlsx")}
-    nuevos = sorted(ahora - antes)
-    return nuevos[-1] if nuevos else None
 
 
 def _sumar_kilos(df):
@@ -159,6 +243,84 @@ def _formato_miles(n, decimales=2):
     return texto.replace(",", "·").replace(".", ",").replace("·", ".")
 
 
+def _archivo_nuevo(carpeta, antes):
+    """Devuelve el archivo que apareció en 'carpeta' después de una operación.
+
+    consolidar() en modo prueba le agrega fecha y hora al nombre del archivo,
+    así que no se puede saber de antemano cómo se va a llamar. En vez de
+    adivinarlo, se mira qué archivo nuevo apareció.
+    """
+    ahora = {f.name for f in Path(carpeta).glob("*.xlsx")}
+    nuevos = sorted(ahora - antes)
+    return nuevos[-1] if nuevos else None
+
+
+# =============================================================================
+# ARCHIVOS BASE — lo que llama la app cuando la operadora los sube
+# =============================================================================
+def preparar_base(carpeta):
+    """Revisa lo que la operadora soltó en la zona de 'archivos base'.
+
+    Acepta archivos sueltos o un ZIP (por ejemplo, la carpeta 'Información
+    Base' bajada entera desde OneDrive). Expande los ZIP, se queda solo con
+    los cuatro maestros y borra todo lo demás.
+
+    Devuelve:
+        guardados : nombres de archivo de los maestros reconocidos
+        etiquetas : nombre legible de cada uno, para mostrar en pantalla
+        faltantes : maestros que no venían
+        ignorados : archivos que se soltaron pero no son maestros
+        log       : detalle de lo que pasó
+    """
+    carpeta = Path(carpeta)
+    log = ["── Revisando archivos base ──"]
+    _expandir_zips(carpeta, log)
+
+    presentes = {
+        _clave(f.name): f
+        for f in carpeta.iterdir()
+        if f.is_file() and not _es_temporal(f.name)
+    }
+    usados = set()
+    guardados, etiquetas, faltantes = [], [], []
+
+    for interno, posibles in NOMBRES_MAESTROS.items():
+        encontrado = None
+        for nombre in posibles:
+            encontrado = presentes.get(_clave(nombre))
+            if encontrado:
+                break
+        if encontrado:
+            guardados.append(encontrado.name)
+            etiquetas.append(ETIQUETAS_MAESTROS[interno])
+            usados.add(_clave(encontrado.name))
+            log.append(f"  ✓ {ETIQUETAS_MAESTROS[interno]}: {encontrado.name}")
+        else:
+            faltantes.append(posibles[0])
+            log.append(f"  ✗ falta: {posibles[0]}")
+
+    # Todo lo que no sea maestro se borra: no tiene sentido guardarlo
+    ignorados = []
+    for clave, ruta in presentes.items():
+        if clave not in usados:
+            ignorados.append(ruta.name)
+            try:
+                ruta.unlink()
+            except OSError:
+                pass
+
+    if ignorados:
+        log.append(f"  (se ignoraron {len(ignorados)} archivo(s) que no son base)")
+
+    return {
+        "guardados": guardados,
+        "etiquetas": etiquetas,
+        "faltantes": faltantes,
+        "ignorados": ignorados,
+        "log": "\n".join(log),
+    }
+
+
 # =============================================================================
 # ZONA RM — LÓGICA REAL
 # =============================================================================
@@ -171,10 +333,8 @@ def _rutas_rm(carpeta_entrada, control_calidad):
     """
     rutas = control_calidad.rutas_desde_carpeta(carpeta_entrada)
 
-    # Índice de lo que hay en la carpeta, con la misma normalización tolerante
-    # que usa control_calidad.py (_clave ignora tildes, espacios y mayúsculas)
     presentes = {
-        control_calidad._clave(f.name): f
+        _clave(f.name): f
         for f in Path(carpeta_entrada).iterdir()
         if f.is_file()
     }
@@ -183,7 +343,7 @@ def _rutas_rm(carpeta_entrada, control_calidad):
     for interno, posibles in NOMBRES_EXTRA.items():
         encontrado = None
         for nombre in posibles:
-            encontrado = presentes.get(control_calidad._clave(nombre))
+            encontrado = presentes.get(_clave(nombre))
             if encontrado:
                 break
         if encontrado:
@@ -214,8 +374,8 @@ def _alertas_rm(cc, rev):
         if df is not None and len(df) > 0:
             alertas.append({
                 "titulo": etiqueta,
-                "detalle": f"{len(df)} caso(s). Ver la hoja correspondiente "
-                           f"en CONTROL_CALIDAD_RM.xlsx.",
+                "detalle": f"{len(df)} caso(s). El detalle está en "
+                           f"CONTROL_CALIDAD_RM.xlsx.",
             })
 
     informativo = cc.get("c9_informativo")
@@ -251,8 +411,8 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
 
     salida = Path(carpeta_salida)
 
-    # ---- 1. Ubicar los archivos subidos -------------------------------------
-    log.append("── Buscando los archivos en la carpeta de subida ──")
+    # ---- 1. Ubicar los archivos --------------------------------------------
+    log.append("── Buscando los archivos ──")
     rutas = _rutas_rm(carpeta_entrada, mod_control)
     for clave in sorted(rutas):
         if clave != "destino_real":
@@ -313,6 +473,11 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
         "fuentes": _inventario(_listar_archivos(carpeta_entrada)),
         "alertas": _alertas_rm(cc, rev),
         "salida": nombre_consolidado,
+        "descargas": [
+            {"archivo": nombre_consolidado, "etiqueta": "Descargar consolidado"},
+            {"archivo": "CONTROL_CALIDAD_RM.xlsx", "etiqueta": "Control de calidad"},
+            {"archivo": "REVISION_CONSOLIDADO_RM.xlsx", "etiqueta": "Revisión del consolidado"},
+        ],
         "log": "\n".join(log),
     }
 
@@ -366,6 +531,8 @@ def _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log):
         "fuentes": fuentes,
         "alertas": alertas,
         "salida": salida,
+        "descargas": ([{"archivo": salida, "etiqueta": "Descargar consolidado"}]
+                      if salida else []),
         "log": "\n".join(log),
     }
 
@@ -378,6 +545,17 @@ def procesar(zona, carpeta_entrada, carpeta_salida):
     log = [f"Zona: {zona}", f"Carpeta de entrada: {carpeta_entrada}", ""]
 
     try:
+        # Si vino algún ZIP (una carpeta bajada de OneDrive), se expande antes
+        # de cualquier otra cosa. Después de esto, para el resto del código es
+        # como si la operadora hubiera subido los archivos sueltos.
+        log.append("── Preparando archivos ──")
+        extraidos = _expandir_zips(carpeta_entrada, log)
+        if extraidos:
+            log.append(f"  {len(extraidos)} archivo(s) sacados de ZIP")
+        else:
+            log.append("  (no venía ningún ZIP)")
+        log.append("")
+
         if zona == "RM":
             return _procesar_rm(carpeta_entrada, carpeta_salida, log)
         return _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log)
@@ -395,5 +573,6 @@ def procesar(zona, carpeta_entrada, carpeta_salida):
             "fuentes": _inventario(_listar_archivos(carpeta_entrada)),
             "alertas": [{"titulo": type(e).__name__, "detalle": str(e)}],
             "salida": None,
+            "descargas": [],
             "log": "\n".join(log),
         }
