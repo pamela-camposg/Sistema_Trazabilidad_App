@@ -17,6 +17,7 @@ let pyodide = null;          // el "motor" Python en el navegador
 let zonaElegida = null;      // "RM" | "SUR" | "NORTE"
 let archivos = [];           // movimientos del mes que subió la operadora
 let baseGuardada = [];       // archivos base que ya están en el navegador
+let hayPrepararBase = false; // ¿el procesar.py del repo sabe recibir archivos base?
 
 const $ = (id) => document.getElementById(id);
 
@@ -108,6 +109,9 @@ async function iniciarMotor() {
     const codigo = await (await fetch("python/procesar.py")).text();
     pyodide.runPython(codigo);
 
+    // Aviso claro si el procesar.py del repositorio es una versión anterior
+    hayPrepararBase = pyodide.runPython(`"preparar_base" in globals()`);
+
     $("punto-motor").classList.add("listo");
     $("txt-motor").textContent = "Motor listo";
 
@@ -152,12 +156,23 @@ function conectarZonaDeCarga(idZona, idInput, alSoltar) {
 
 async function recibirBase(fileList) {
   if (!pyodide) {
-    alert("El motor todavía se está iniciando. Espera unos segundos y vuelve a intentar.");
+    $("estado-base").textContent =
+      "El motor todavía se está iniciando. Espera unos segundos y vuelve a intentar.";
+    return;
+  }
+
+  if (!hayPrepararBase) {
+    $("estado-base").textContent =
+      "El archivo python/procesar.py del repositorio es una versión anterior " +
+      "y todavía no sabe recibir archivos base. Actualízalo y recarga la página.";
     return;
   }
 
   const utiles = [...fileList].filter((f) => esValido(f.name));
-  if (!utiles.length) return;
+  if (!utiles.length) {
+    $("estado-base").textContent = "Esos archivos no sirven: deben ser .xlsx o .zip.";
+    return;
+  }
 
   $("estado-base").textContent = "Revisando archivos…";
 
@@ -171,9 +186,10 @@ async function recibirBase(fileList) {
     }
 
     // Python expande los .zip y se queda solo con los cuatro maestros
-    const res = JSON.parse(
-      pyodide.runPython(`import json; json.dumps(preparar_base("/work/base"))`)
-    );
+    const res = JSON.parse(pyodide.runPython(`
+import json
+json.dumps(preparar_base("/work/base"))
+`));
 
     // Guardar en el navegador lo que quedó
     const fecha = new Date().toLocaleDateString("es-CL");
@@ -187,7 +203,10 @@ async function recibirBase(fileList) {
     if (items.length) await guardarBaseDB(items);
     await pintarBase(res.faltantes);
   } catch (e) {
-    $("estado-base").textContent = "No se pudieron guardar los archivos base.";
+    // Mostrar el error real: sin esto, cualquier problema se ve igual y no
+    // hay forma de saber qué pasó sin abrir la consola del navegador.
+    $("estado-base").textContent =
+      "No se pudieron guardar los archivos base → " + (e && e.message ? e.message : e);
     console.error(e);
   }
 }
