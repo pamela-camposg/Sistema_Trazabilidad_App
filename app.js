@@ -43,18 +43,28 @@ function alEvento(id, evento, fn) {
   return n;
 }
 
+/* Franja fija abajo: para los avisos que no se pueden perder de vista. */
+function mostrarFranja(texto) {
+  console.error(texto);
+  let aviso = $("franja-aviso");
+  if (!aviso) {
+    aviso = document.createElement("div");
+    aviso.id = "franja-aviso";
+    aviso.style.cssText =
+      "position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 16px;" +
+      "background:#B4610A;color:#fff;font-size:13px;line-height:1.5;" +
+      "font-family:inherit";
+    document.body.appendChild(aviso);
+  }
+  aviso.textContent = texto;
+}
+
 function avisarDesajuste() {
-  const texto =
+  mostrarFranja(
     "El index.html publicado no calza con app.js: faltan " +
     faltanElementos.join(", ") +
-    ". Sube el index.html nuevo y recarga con Ctrl+Shift+R.";
-  console.error(texto);
-  const aviso = document.createElement("div");
-  aviso.textContent = texto;
-  aviso.style.cssText =
-    "position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 16px;" +
-    "background:#B4610A;color:#fff;font-size:13px;line-height:1.5";
-  document.body.appendChild(aviso);
+    ". Sube el index.html nuevo y recarga con Ctrl+Shift+R."
+  );
 }
 
 /* Scripts refactorizados de cada zona que hay que dejar dentro del motor.
@@ -194,7 +204,20 @@ async function iniciarMotor() {
     // Mostrar el error completo en pantalla: sin esto no hay forma de saber
     // qué pasó sin abrir la consola del navegador.
     const detalle = e && e.stack ? e.stack : String(e);
+    const mensaje = (e && e.message) || String(e);
+
     $("txt-motor").textContent = "No se pudo iniciar el motor";
+
+    // El error va donde la persona está mirando: en el paso de archivos base
+    // y en una franja fija abajo. Antes solo aparecía en el bloque 04, que
+    // queda fuera de pantalla y por lo tanto no se leía.
+    if ($("estado-base")) {
+      $("estado-base").textContent =
+        `El motor no arrancó (falló en: ${paso}). Por eso los archivos base ` +
+        `no se pueden guardar todavía.`;
+    }
+    mostrarFranja(`No se pudo iniciar el motor · Falló en: ${paso} · ${mensaje}`);
+
     $("resultado").style.display = "block";
     $("resumen").innerHTML =
       `<b>No se pudo iniciar el motor.</b> Falló en: ${paso}.`;
