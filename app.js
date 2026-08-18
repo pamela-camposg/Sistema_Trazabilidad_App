@@ -21,6 +21,42 @@ let hayPrepararBase = false; // ¿el procesar.py del repo sabe recibir archivos 
 
 const $ = (id) => document.getElementById(id);
 
+/* =========================================================================
+   CABLEADO DEFENSIVO
+   -------------------------------------------------------------------------
+   Si el index.html publicado fuera una versión anterior y le faltara algún
+   elemento, antes se caía todo este archivo en la primera línea y la página
+   quedaba muda: ni avisaba ni arrancaba el motor. Ahora se anota qué falta,
+   se sigue con el resto, y se muestra el aviso en pantalla.
+   ========================================================================= */
+const faltanElementos = [];
+
+function nodo(id) {
+  const n = $(id);
+  if (!n) faltanElementos.push(id);
+  return n;
+}
+
+function alEvento(id, evento, fn) {
+  const n = nodo(id);
+  if (n) n.addEventListener(evento, fn);
+  return n;
+}
+
+function avisarDesajuste() {
+  const texto =
+    "El index.html publicado no calza con app.js: faltan " +
+    faltanElementos.join(", ") +
+    ". Sube el index.html nuevo y recarga con Ctrl+Shift+R.";
+  console.error(texto);
+  const aviso = document.createElement("div");
+  aviso.textContent = texto;
+  aviso.style.cssText =
+    "position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 16px;" +
+    "background:#B4610A;color:#fff;font-size:13px;line-height:1.5";
+  document.body.appendChild(aviso);
+}
+
 /* Scripts refactorizados de cada zona que hay que dejar dentro del motor.
    Cuando se conecten SUR y NORTE, se agregan acá igual que RM. */
 const MODULOS_PY = {
@@ -175,7 +211,7 @@ async function iniciarMotor() {
 /* =========================================================================
    2. ELEGIR ZONA
    ========================================================================= */
-$("zonas").addEventListener("click", (ev) => {
+alEvento("zonas", "click", (ev) => {
   const btn = ev.target.closest(".zona-btn");
   if (!btn) return;
   zonaElegida = btn.dataset.zona;
@@ -189,8 +225,11 @@ $("zonas").addEventListener("click", (ev) => {
    3. ARCHIVOS BASE — se suben una vez y quedan guardados
    ========================================================================= */
 function conectarZonaDeCarga(idZona, idInput, alSoltar) {
-  const dz = $(idZona);
-  $(idInput).addEventListener("change", (e) => {
+  const dz = nodo(idZona);
+  const input = nodo(idInput);
+  if (!dz || !input) return;
+
+  input.addEventListener("change", (e) => {
     alSoltar(e.target.files);
     e.target.value = "";           // permite volver a elegir el mismo archivo
   });
@@ -204,6 +243,13 @@ function conectarZonaDeCarga(idZona, idInput, alSoltar) {
 }
 
 async function recibirBase(fileList) {
+  // Acuse de recibo inmediato: si la pantalla no cambia al soltar archivos,
+  // significa que este código ni siquiera se está ejecutando, y eso ya es
+  // una pista en sí misma.
+  const eco = $("estado-base");
+  if (eco) eco.textContent = `Recibí ${fileList.length} archivo(s). Revisando…`;
+  console.info("[archivos base] recibidos:", [...fileList].map((f) => f.name));
+
   if (!pyodide) {
     $("estado-base").textContent =
       "El motor todavía se está iniciando. Espera unos segundos y vuelve a intentar.";
@@ -217,9 +263,13 @@ async function recibirBase(fileList) {
     return;
   }
 
+  const recibidos = [...fileList].map((f) => f.name);
   const utiles = [...fileList].filter((f) => esValido(f.name));
   if (!utiles.length) {
-    $("estado-base").textContent = "Esos archivos no sirven: deben ser .xlsx o .zip.";
+    $("estado-base").textContent =
+      "Ninguno de esos archivos sirve: tienen que ser .xlsx o .zip. " +
+      (recibidos.length ? "Recibí: " + recibidos.join(", ") + "." : "") +
+      " (Si son .xls antiguos, ábrelos en Excel y guárdalos como .xlsx.)";
     return;
   }
 
@@ -250,7 +300,9 @@ json.dumps(preparar_base("/work/base"))
     }));
 
     if (items.length) await guardarBaseDB(items);
-    await pintarBase(res.faltantes);
+    console.info("[archivos base]\n" + (res.log || ""));
+    res.enviados = utiles.map((f) => f.name);
+    await pintarBase(res);
   } catch (e) {
     // Mostrar el error real: sin esto, cualquier problema se ve igual y no
     // hay forma de saber qué pasó sin abrir la consola del navegador.
@@ -260,7 +312,9 @@ json.dumps(preparar_base("/work/base"))
   }
 }
 
-async function pintarBase(faltantes) {
+// `res` es lo que devolvió preparar_base(): guardados, faltantes, ignorados.
+// Llega solo cuando la operadora acaba de soltar archivos; al arrancar no.
+async function pintarBase(res) {
   baseGuardada = (await leerBaseDB()) || [];
   const ul = $("lista-base");
   ul.innerHTML = "";
@@ -276,21 +330,43 @@ async function pintarBase(faltantes) {
   const total = baseGuardada.length;
   $("btn-borrar-base").style.display = total ? "inline-block" : "none";
 
-  if (!total) {
-    $("estado-base").textContent =
-      "Todavía no hay archivos base guardados en este computador.";
-  } else if (total === 4) {
+  const faltantes = (res && res.faltantes) || [];
+  const ignorados = (res && res.ignorados) || [];
+  const esperados = "Los nombres tienen que ser exactamente: " +
+    "HOMOLOGACION.xlsx · BBDD DESTINATARIO.xlsx · " +
+    "Clasificación_Residuos SINADER.xlsx · Transportistas.xlsx";
+
+  if (total === 4) {
     $("estado-base").textContent =
       "Los 4 archivos base están guardados. No hay que volver a subirlos.";
+
+  } else if (!total && ignorados.length) {
+    // Caso que antes quedaba mudo: sí llegaron archivos, pero ninguno
+    // coincide con los cuatro maestros. Hay que decir cuáles llegaron.
+    $("estado-base").textContent =
+      `No reconocí ninguno de los ${ignorados.length} archivo(s) que soltaste: ` +
+      ignorados.join(", ") + ". " + esperados + ".";
+
+  } else if (!total && res && res.enviados && res.enviados.length) {
+    // Llegaron archivos, pero no salió ningún .xlsx utilizable de ellos
+    // (por ejemplo, un .zip sin Excel adentro).
+    $("estado-base").textContent =
+      `Recibí ${res.enviados.join(", ")}, pero no encontré ningún Excel ` +
+      `reconocible adentro. ` + esperados + ".";
+
+  } else if (!total) {
+    $("estado-base").textContent =
+      "Todavía no hay archivos base guardados en este computador.";
+
   } else {
-    const falta = (faltantes && faltantes.length)
-      ? ` Faltan: ${faltantes.join(", ")}.`
-      : "";
-    $("estado-base").textContent = `Hay ${total} de 4 archivos base guardados.${falta}`;
+    let msg = `Hay ${total} de 4 archivos base guardados.`;
+    if (faltantes.length) msg += ` Faltan: ${faltantes.join(", ")}.`;
+    if (ignorados.length) msg += ` No reconocí: ${ignorados.join(", ")}.`;
+    $("estado-base").textContent = msg;
   }
 }
 
-$("btn-borrar-base").addEventListener("click", async () => {
+alEvento("btn-borrar-base", "click", async () => {
   await borrarBaseDB();
   await pintarBase();
 });
@@ -335,7 +411,7 @@ function revisarSiPuedeProcesar() {
 /* =========================================================================
    5. PROCESAR
    ========================================================================= */
-$("btn-procesar").addEventListener("click", async () => {
+alEvento("btn-procesar", "click", async () => {
   const btn = $("btn-procesar");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin" style="display:inline-block;vertical-align:middle"></span> Procesando…';
@@ -439,4 +515,7 @@ function descargar(bytes, nombre) {
   URL.revokeObjectURL(url);
 }
 
+if (faltanElementos.length) avisarDesajuste();
+
+console.info("app.js — Sistema Trazabilidad Ambipar (versión con archivos base)");
 iniciarMotor();
