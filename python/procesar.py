@@ -33,6 +33,7 @@
 # =============================================================================
 
 import os
+import re
 import sys
 import traceback
 import unicodedata
@@ -197,6 +198,55 @@ def _expandir_zips(carpeta, log=None):
     return extraidos
 
 
+
+# Sufijos que agregan Windows y OneDrive al descargar un archivo que ya existía:
+#   "HOMOLOGACION (2).xlsx"  ·  "Transportistas - copia.xlsx"  ·  "... (1) - copia.xlsx"
+# La operadora no tiene por qué renombrar nada a mano: se limpian acá.
+_SUFIJOS_COPIA = re.compile(
+    r"(?:\s*\((\d+)\)|\s*-?\s*(?:copia|copy)(?:\s*\(\d+\))?)+$",
+    re.IGNORECASE,
+)
+
+
+def _nombre_limpio(nombre):
+    """Quita los sufijos de copia del nombre, conservando la extensión."""
+    base, ext = os.path.splitext(nombre)
+    limpio = _SUFIJOS_COPIA.sub("", base).strip()
+    return (limpio + ext) if limpio else nombre
+
+
+def _normalizar_nombres(carpeta, log=None):
+    """Renombra los archivos con sufijo de copia dentro de la carpeta.
+
+    Se hace ANTES de cualquier búsqueda, así tanto los archivos base como las
+    fuentes de cada zona quedan con el nombre que esperan los scripts, sin
+    tener que tocar los scripts verificados de la Etapa 1.
+    """
+    carpeta = Path(carpeta)
+    anotar = log.append if log is not None else (lambda *_: None)
+    renombrados = []
+
+    for ruta in sorted(carpeta.iterdir()):
+        if not ruta.is_file():
+            continue
+        limpio = _nombre_limpio(ruta.name)
+        if limpio == ruta.name:
+            continue
+        destino = carpeta / limpio
+        if destino.exists():
+            anotar(f"  (ya existía {limpio}, se descarta {ruta.name})")
+            try:
+                ruta.unlink()
+            except OSError:
+                pass
+            continue
+        ruta.rename(destino)
+        renombrados.append((ruta.name, limpio))
+        anotar(f"  {ruta.name} → {limpio}")
+
+    return renombrados
+
+
 def _inventario(rutas):
     """Arma la tabla 'Archivo / Hojas / Filas' sin cargar los datos.
 
@@ -275,6 +325,7 @@ def preparar_base(carpeta):
     carpeta = Path(carpeta)
     log = ["── Revisando archivos base ──"]
     _expandir_zips(carpeta, log)
+    _normalizar_nombres(carpeta, log)
 
     presentes = {
         _clave(f.name): f
@@ -550,6 +601,9 @@ def procesar(zona, carpeta_entrada, carpeta_salida):
         # como si la operadora hubiera subido los archivos sueltos.
         log.append("── Preparando archivos ──")
         extraidos = _expandir_zips(carpeta_entrada, log)
+        renombrados = _normalizar_nombres(carpeta_entrada, log)
+        if renombrados:
+            log.append(f"  {len(renombrados)} archivo(s) con sufijo de copia normalizados")
         if extraidos:
             log.append(f"  {len(extraidos)} archivo(s) sacados de ZIP")
         else:
