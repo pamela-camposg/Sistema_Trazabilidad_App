@@ -140,8 +140,23 @@ async function iniciarMotor() {
 
     pyodide = await loadPyodide();
 
-    paso = "cargando pandas y openpyxl";
-    await pyodide.loadPackage(["pandas", "openpyxl"]);
+    paso = "cargando pandas";
+    await pyodide.loadPackage(["pandas", "micropip"]);
+
+    // openpyxl NO viene incluido en Pyodide (0.26.3 trae 310 paquetes y ese
+    // no está). Se instala desde los wheels guardados en el propio repo, así
+    // no depende de PyPI ni de que la red de la empresa lo deje pasar.
+    paso = "instalando openpyxl";
+    const micropip = pyodide.pyimport("micropip");
+    try {
+      await micropip.install([
+        "python/wheels/et_xmlfile-2.0.0-py3-none-any.whl",
+        "python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl",
+      ]);
+    } catch (e) {
+      console.warn("Wheels locales no disponibles, se intenta desde PyPI:", e);
+      await micropip.install("openpyxl");
+    }
 
     paso = "preparando las carpetas de trabajo";
     pyodide.FS.mkdirTree("/work/uploads");
