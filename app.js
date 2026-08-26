@@ -19,7 +19,20 @@ let archivos = [];           // movimientos del mes que subió la operadora
 let baseGuardada = [];       // archivos base que ya están en el navegador
 let hayPrepararBase = false; // ¿el procesar.py del repo sabe recibir archivos base?
 
+/* Los cuatro archivos base. procesar.py devuelve esta misma lista y la
+   reemplaza, así el nombre canónico vive en un solo lugar (Python). */
+let esperadosBase = [
+  { etiqueta: "Homologación",          nombre: "HOMOLOGACION.xlsx" },
+  { etiqueta: "Destinatarios",         nombre: "BBDD DESTINATARIO.xlsx" },
+  { etiqueta: "Clasificación SINADER", nombre: "Clasificación_Residuos SINADER.xlsx" },
+  { etiqueta: "Transportistas",        nombre: "Transportistas.xlsx" },
+];
+
 const $ = (id) => document.getElementById(id);
+
+/* Se sube al cambiar los archivos de python/, para que el navegador
+   no siga usando una copia vieja guardada en caché. */
+const VERSION = "3";
 
 /* =========================================================================
    CABLEADO DEFENSIVO
@@ -116,9 +129,11 @@ function operarDB(modo, accion) {
 
 const leerBaseDB = () => operarDB("readonly", (s) => s.getAll());
 const borrarBaseDB = () => operarDB("readwrite", (s) => s.clear());
+// Suma a lo que ya había. Antes hacía clear() primero, y por eso subir los
+// archivos de a uno iba borrando los anteriores. Un archivo con el mismo
+// nombre sí se reemplaza (la clave del almacén es el nombre).
 const guardarBaseDB = (items) =>
   operarDB("readwrite", (s) => {
-    s.clear();
     items.forEach((i) => s.put(i));
   });
 
@@ -148,13 +163,26 @@ async function iniciarMotor() {
     // no depende de PyPI ni de que la red de la empresa lo deje pasar.
     paso = "instalando openpyxl";
     const micropip = pyodide.pyimport("micropip");
+
+    // URL absoluta: una ruta relativa depende de cómo resuelva micropip y
+    // eso es una fuente de fallos difícil de ver. Así no queda duda.
+    const wheels = [
+      new URL("python/wheels/et_xmlfile-2.0.0-py3-none-any.whl", document.baseURI).href,
+      new URL("python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl", document.baseURI).href,
+    ];
+
     try {
-      await micropip.install([
-        "python/wheels/et_xmlfile-2.0.0-py3-none-any.whl",
-        "python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl",
-      ]);
+      // Comprobar primero que los archivos existen: si faltan, el mensaje
+      // dice cuál, en vez de un error genérico de micropip.
+      for (const w of wheels) {
+        const r = await fetch(w, { cache: "no-store" });
+        if (!r.ok) throw new Error(`No se encontró ${w} (error ${r.status})`);
+      }
+      await micropip.install(wheels);
     } catch (e) {
-      console.warn("Wheels locales no disponibles, se intenta desde PyPI:", e);
+      console.warn("Wheels del repositorio no utilizables:", e);
+      paso = "instalando openpyxl desde PyPI (los wheels del repo fallaron: " +
+             ((e && e.message) || e) + ")";
       await micropip.install("openpyxl");
     }
 
@@ -172,7 +200,7 @@ async function iniciarMotor() {
       pyodide.FS.mkdirTree("/work/py/" + carpeta);
       pyodide.FS.writeFile(`/work/py/${carpeta}/__init__.py`, enc.encode(""));
       for (const nombre of nombres) {
-        const r = await fetch(`python/${carpeta}/${nombre}`);
+        const r = await fetch(`python/${carpeta}/${nombre}?v=${VERSION}`, { cache: "no-store" });
         if (!r.ok) {
           console.warn(`No se encontró python/${carpeta}/${nombre}`);
           continue;
@@ -183,7 +211,7 @@ async function iniciarMotor() {
 
     // Traer procesar.py y dejarlo disponible dentro del motor
     paso = "descargando python/procesar.py";
-    const resp = await fetch("python/procesar.py");
+    const resp = await fetch(`python/procesar.py?v=${VERSION}`, { cache: "no-store" });
     if (!resp.ok) {
       throw new Error(
         `No se encontró python/procesar.py en el sitio (error ${resp.status}). ` +
@@ -312,6 +340,7 @@ async function recibirBase(fileList) {
   }
 
   $("estado-base").textContent = "Revisando archivos…";
+  $("btn-borrar-base").style.display = "inline-block";
 
   try {
     // Dejar los archivos en una carpeta aparte del motor
@@ -368,15 +397,23 @@ async function pintarBase(res) {
   const total = baseGuardada.length;
   $("btn-borrar-base").style.display = total ? "inline-block" : "none";
 
-  const faltantes = (res && res.faltantes) || [];
-  const ignorados = (res && res.ignorados) || [];
-  const esperados = "Los nombres tienen que ser exactamente: " +
-    "HOMOLOGACION.xlsx · BBDD DESTINATARIO.xlsx · " +
-    "Clasificación_Residuos SINADER.xlsx · Transportistas.xlsx";
+  if (res && res.esperados && res.esperados.length) esperadosBase = res.esperados;
 
-  if (total === 4) {
+  // Qué falta se calcula sobre TODO lo guardado, no sobre este envío: si sube
+  // los archivos de a uno, cada uno se suma a los anteriores.
+  const guardadas = new Set(baseGuardada.map((i) => i.etiqueta));
+  const faltantes = esperadosBase
+    .filter((e) => !guardadas.has(e.etiqueta))
+    .map((e) => e.nombre);
+
+  const ignorados = (res && res.ignorados) || [];
+  const cuantos = esperadosBase.length;
+  const esperados = "Los nombres tienen que ser exactamente: " +
+    esperadosBase.map((e) => e.nombre).join(" · ");
+
+  if (total >= cuantos) {
     $("estado-base").textContent =
-      "Los 4 archivos base están guardados. No hay que volver a subirlos.";
+      `Los ${cuantos} archivos base están guardados. No hay que volver a subirlos.`;
 
   } else if (!total && ignorados.length) {
     // Caso que antes quedaba mudo: sí llegaron archivos, pero ninguno
@@ -397,7 +434,7 @@ async function pintarBase(res) {
       "Todavía no hay archivos base guardados en este computador.";
 
   } else {
-    let msg = `Hay ${total} de 4 archivos base guardados.`;
+    let msg = `Hay ${total} de ${cuantos} archivos base guardados.`;
     if (faltantes.length) msg += ` Faltan: ${faltantes.join(", ")}.`;
     if (ignorados.length) msg += ` No reconocí: ${ignorados.join(", ")}.`;
     $("estado-base").textContent = msg;
