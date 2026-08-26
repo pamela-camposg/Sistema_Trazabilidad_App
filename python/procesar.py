@@ -368,6 +368,12 @@ def preparar_base(carpeta):
         "etiquetas": etiquetas,
         "faltantes": faltantes,
         "ignorados": ignorados,
+        # Lista completa de los cuatro maestros. La app la necesita para saber
+        # qué falta mirando TODO lo guardado, no solo lo de este envío.
+        "esperados": [
+            {"clave": k, "etiqueta": ETIQUETAS_MAESTROS[k], "nombre": v[0]}
+            for k, v in NOMBRES_MAESTROS.items()
+        ],
         "log": "\n".join(log),
     }
 
