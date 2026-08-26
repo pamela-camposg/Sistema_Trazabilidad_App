@@ -477,9 +477,18 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
     log.append("")
 
     # ---- 2. Control de calidad (C1 a C9) ------------------------------------
+    #
+    # OJO: control_calidad.verificar_rutas() comprueba que exista TODA clave
+    # del diccionario que recibe, no una lista fija. Si se le pasa el
+    # diccionario completo de consolidar(), reclama por 'destino_real', que a
+    # propósito apunta a un archivo inexistente. Por eso se le entregan solo
+    # las claves que ese script declara como suyas.
+    claves_cc = set(getattr(mod_control, "NOMBRES_ARCHIVO", {}))
+    rutas_cc = {k: v for k, v in rutas.items() if k in claves_cc} or rutas
+
     log.append("── Control de calidad ──")
     cc = mod_control.controlar(
-        rutas,
+        rutas_cc,
         ruta_salida=salida / "CONTROL_CALIDAD_RM.xlsx",
         mostrar=False,
     )
