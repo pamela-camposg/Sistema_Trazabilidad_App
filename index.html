@@ -397,6 +397,15 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.3/full/pyodide.js"></script>
-<script src="app.js"></script>
+<!-- app.js se pide siempre con una marca distinta para que el navegador no
+     use una copia vieja guardada en caché. Son 24 KB: no se nota, y evita que
+     la operadora quede corriendo una versión anterior sin darse cuenta. -->
+<script>
+  (function () {
+    var s = document.createElement("script");
+    s.src = "app.js?v=" + Date.now();
+    document.body.appendChild(s);
+  })();
+</script>
 </body>
 </html>
