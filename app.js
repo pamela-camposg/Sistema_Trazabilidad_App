@@ -129,6 +129,8 @@ function operarDB(modo, accion) {
 
 const leerBaseDB = () => operarDB("readonly", (s) => s.getAll());
 const borrarBaseDB = () => operarDB("readwrite", (s) => s.clear());
+const borrarUnoBaseDB = (nombre) =>
+  operarDB("readwrite", (s) => { s.delete(nombre); });
 // Suma a lo que ya había. Antes hacía clear() primero, y por eso subir los
 // archivos de a uno iba borrando los anteriores. Un archivo con el mismo
 // nombre sí se reemplaza (la clave del almacén es el nombre).
@@ -388,14 +390,48 @@ async function pintarBase(res) {
 
   baseGuardada.forEach((item) => {
     const li = document.createElement("li");
-    li.innerHTML =
-      `<span><b>${item.etiqueta}</b> · ${item.nombre}</span>` +
-      `<span class="fecha">guardado el ${item.fecha}</span>`;
+
+    // Se arma con nodos, no con innerHTML: los nombres de archivo son texto
+    // de la operadora y no tienen por qué interpretarse como HTML.
+    const info = document.createElement("span");
+    const etiqueta = document.createElement("b");
+    etiqueta.textContent = item.etiqueta;
+    info.append(etiqueta, document.createTextNode(" · " + item.nombre));
+
+    const fecha = document.createElement("span");
+    fecha.className = "fecha";
+    fecha.textContent = "guardado el " + item.fecha;
+
+    const equis = document.createElement("button");
+    equis.className = "quitar";
+    equis.textContent = "✕";
+    equis.style.fontSize = "14px";
+    equis.title = "Quitar " + item.etiqueta;
+    equis.setAttribute("aria-label", "Quitar " + item.etiqueta);
+    equis.onclick = async () => {
+      equis.disabled = true;
+      try {
+        await borrarUnoBaseDB(item.nombre);
+        await pintarBase();
+      } catch (e) {
+        $("estado-base").textContent =
+          "No se pudo quitar " + item.nombre + " → " + ((e && e.message) || e);
+      }
+    };
+
+    const derecha = document.createElement("span");
+    derecha.style.cssText = "display:flex;align-items:center;gap:.85rem";
+    derecha.append(fecha, equis);
+
+    li.append(info, derecha);
     ul.appendChild(li);
   });
 
   const total = baseGuardada.length;
-  $("btn-borrar-base").style.display = total ? "inline-block" : "none";
+  const botonTodos = $("btn-borrar-base");
+  botonTodos.style.display = total ? "inline-block" : "none";
+  // Con la equis por fila, este botón pasa a ser el "borrar todo"
+  botonTodos.textContent = "Borrar los " + total + " archivos base";
 
   if (res && res.esperados && res.esperados.length) esperadosBase = res.esperados;
 
