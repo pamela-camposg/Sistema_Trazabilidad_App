@@ -381,10 +381,16 @@ def _recorte_mensual(df, periodo, carpeta_salida, log):
     hoja_mes = f"{_MESES[mes]}_{anio}"[:31]
     with pd.ExcelWriter(ruta, engine="openpyxl") as w:
         del_mes.to_excel(w, sheet_name=hoja_mes, index=False)
-        resumen_meses.to_excel(w, sheet_name="RESUMEN_POR_MES", index=False)
 
     log.append(f"  Recorte de {etiqueta}: {len(del_mes)} fila(s) → {nombre}")
-    log.append(f"  Resumen por mes: {len(resumen_meses)} mes(es) en el consolidado")
+
+    # El desglose por mes va al registro de abajo, no al Excel: sirve para
+    # comparar con la corrida anterior y detectar cargas registradas tarde,
+    # pero no es algo que la operadora tenga que pegar en ninguna parte.
+    log.append("  Desglose del consolidado completo:")
+    for _, fila in resumen_meses.iterrows():
+        log.append(f"    {fila['MES']}  {int(fila['FILAS']):>7} fila(s)"
+                   f"  {_formato_miles(float(fila['PESO_TOTAL_KG']))} kg")
 
     # ---- Avisos ------------------------------------------------------------
     alertas = []
@@ -423,6 +429,108 @@ def _recorte_mensual(df, periodo, carpeta_salida, log):
         "alertas": alertas,
         "meses": len(resumen_meses),
     }
+
+
+# =============================================================================
+# REVISIONES ACOTADAS AL MES
+# -----------------------------------------------------------------------------
+# El control de calidad y la revisión del consolidado miran SIEMPRE el año
+# completo (el filtro de los scripts es AÑO_DESDE, nunca un mes). Eso significa
+# que un RUT mal escrito en marzo vuelve a aparecer en julio, en agosto y en
+# septiembre, hasta que alguien lo corrija en el origen.
+#
+# Para que la operadora revise lo del mes que está cerrando, acá se recortan
+# las hojas que tienen fecha, dejando solo las filas de ese mes. No se toca ni
+# un cálculo: los scripts corren igual y sobre el año completo. Esto pasa
+# DESPUÉS, sobre los Excel ya generados.
+#
+# Lo que NO se recorta:
+#   · RESUMEN e INFO — son las cabeceras del archivo
+#   · las hojas que ya son un resumen por mes (DESTINOS_POR_MES, V6, …)
+#   · las hojas sin fecha (conflictos de RUT, variantes de nombre, columnas):
+#     no son de un mes, son del catálogo completo
+#
+# Y para que nada quede escondido, se agrega una hoja RESUMEN_DEL_MES que dice,
+# hoja por hoja, cuántos casos son del mes y cuántos hay en todo el año.
+# =============================================================================
+_HOJAS_SIN_RECORTE = ("RESUMEN", "INFO")
+
+
+def _columna_fecha(df):
+    """Encuentra la columna de fecha de una hoja, si la tiene."""
+    for col in df.columns:
+        # _clave() deja el nombre en mayúsculas y sin espacios ni guiones bajos:
+        # "Fec_salida" queda "FECSALIDA" y "Fecha" queda "FECHA".
+        limpio = _clave(str(col))
+        if limpio.startswith("FECHA") or limpio == "FECSALIDA":
+            return col
+    return None
+
+
+def _recortar_revision(ruta, anio, mes, etiqueta, log):
+    """Deja en el Excel solo las filas del mes, en las hojas que tienen fecha.
+
+    Devuelve el nombre del archivo nuevo, o None si no se pudo procesar.
+    """
+    ruta = Path(ruta)
+    if not ruta.exists():
+        return None
+
+    try:
+        hojas = pd.read_excel(ruta, sheet_name=None)
+    except Exception as e:
+        log.append(f"  ⚠ No se pudo abrir {ruta.name} para recortar: {e}")
+        return None
+
+    resumen, salida = [], {}
+    for nombre, df in hojas.items():
+        arriba = nombre.upper()
+        col = _columna_fecha(df)
+        recortable = (
+            col is not None
+            and not df.empty
+            and arriba not in _HOJAS_SIN_RECORTE
+            and not arriba.endswith("POR_MES")
+            and "MENSUAL" not in arriba
+        )
+
+        if not recortable:
+            salida[nombre] = df
+            resumen.append({
+                "HOJA": nombre,
+                "CASOS DEL MES": "—",
+                "CASOS EN EL AÑO": len(df),
+                "RECORTADA": "no",
+            })
+            continue
+
+        fechas = pd.to_datetime(df[col], errors="coerce")
+        del_mes = df[(fechas.dt.year == anio) & (fechas.dt.month == mes)].copy()
+        del_mes.insert(0, "MES", f"{anio}-{mes:02d}")
+        salida[nombre] = del_mes
+        resumen.append({
+            "HOJA": nombre,
+            "CASOS DEL MES": len(del_mes),
+            "CASOS EN EL AÑO": len(df),
+            "RECORTADA": "sí",
+        })
+
+    nuevo = ruta.with_name(f"{ruta.stem}_{anio}-{mes:02d}{ruta.suffix}")
+    with pd.ExcelWriter(nuevo, engine="openpyxl") as w:
+        pd.DataFrame({
+            "Campo": ["Mes revisado", "Alcance de los cálculos"],
+            "Valor": [etiqueta,
+                      "Los scripts revisan el año completo. Las hojas con "
+                      "fecha se recortaron a este mes; el total del año está "
+                      "en RESUMEN_DEL_MES."],
+        }).to_excel(w, sheet_name="MES_REVISADO", index=False)
+        pd.DataFrame(resumen).to_excel(w, sheet_name="RESUMEN_DEL_MES", index=False)
+        for nombre, df in salida.items():
+            df.to_excel(w, sheet_name=nombre[:31], index=False)
+
+    recortadas = sum(1 for r in resumen if r["RECORTADA"] == "sí")
+    log.append(f"  {ruta.name} → {nuevo.name} ({recortadas} hoja(s) recortada(s) a {etiqueta})")
+    return nuevo.name
 
 
 def _sumar_kilos(df):
@@ -831,17 +939,31 @@ def _rutas_rm(carpeta_entrada, control_calidad):
     return rutas
 
 
-def _alertas_rm(cc, rev):
-    """Traduce los resultados de los scripts a la lista de alertas de pantalla."""
+def _alertas_rm(cc, rev, periodo_txt=None):
+    """Traduce los resultados de los scripts a la lista de alertas de pantalla.
+
+    Las cifras son SIEMPRE del año completo, porque así corren los scripts. Si
+    hay un mes elegido, se dice explícitamente, para que nadie confunda estos
+    números con los del archivo recortado.
+    """
     alertas = []
+    if periodo_txt:
+        alertas.append({
+            "titulo": f"Las cifras de abajo son del año completo, no de {periodo_txt}",
+            "detalle": "Los scripts revisan todo 2026 en cada corrida, así que "
+                       "los errores de meses anteriores siguen apareciendo hasta "
+                       "que se corrijan en el origen. Cuántos son de "
+                       f"{periodo_txt} está en la hoja RESUMEN_DEL_MES de cada "
+                       "archivo de revisión.",
+        })
 
     for clave, etiqueta in ETIQUETAS_CC.items():
         df = cc.get(clave)
         if df is not None and len(df) > 0:
             alertas.append({
                 "titulo": etiqueta,
-                "detalle": f"{len(df)} caso(s). El detalle está en "
-                           f"CONTROL_CALIDAD_RM.xlsx.",
+                "detalle": f"{len(df)} caso(s) en el año. El detalle está en el "
+                           f"archivo de control de calidad.",
             })
 
     informativo = cc.get("c9_informativo")
@@ -962,6 +1084,15 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     log.append("── Recorte del mes ──")
     mensual = _recorte_mensual(res["consolidado"], periodo, salida, log)
 
+    # Las revisiones también se acotan al mes que está cerrando la operadora.
+    cc_mes = rev_mes = None
+    if par:
+        etiqueta = _etiqueta_periodo(*par)
+        cc_mes = _recortar_revision(
+            salida / "CONTROL_CALIDAD_RM.xlsx", par[0], par[1], etiqueta, log)
+        rev_mes = _recortar_revision(
+            salida / "REVISION_CONSOLIDADO_RM.xlsx", par[0], par[1], etiqueta, log)
+
     # ---- 6. Armar lo que se muestra en pantalla -----------------------------
     kilos = _sumar_kilos(res["consolidado"])
     resumen = (
@@ -983,15 +1114,26 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     if mensual:
         descargas.append({
             "archivo": mensual["archivo"],
-            "etiqueta": f"Filas de {mensual['etiqueta_periodo']} (para pegar)",
+            "etiqueta": f"Mes {mensual['etiqueta_periodo']}",
         })
     descargas += [
+        {"archivo": cc_mes or "CONTROL_CALIDAD_RM.xlsx",
+         "etiqueta": "Control de calidad" + (f" · {mensual['etiqueta_periodo']}"
+                                             if cc_mes and mensual else "")},
+        {"archivo": rev_mes or "REVISION_CONSOLIDADO_RM.xlsx",
+         "etiqueta": "Revisión del consolidado" + (f" · {mensual['etiqueta_periodo']}"
+                                                   if rev_mes and mensual else "")},
         {"archivo": nombre_consolidado, "etiqueta": "Consolidado completo del año"},
-        {"archivo": "CONTROL_CALIDAD_RM.xlsx", "etiqueta": "Control de calidad"},
-        {"archivo": "REVISION_CONSOLIDADO_RM.xlsx", "etiqueta": "Revisión del consolidado"},
     ]
+    if cc_mes:
+        descargas.append({"archivo": "CONTROL_CALIDAD_RM.xlsx",
+                          "etiqueta": "Control de calidad · año completo"})
+    if rev_mes:
+        descargas.append({"archivo": "REVISION_CONSOLIDADO_RM.xlsx",
+                          "etiqueta": "Revisión del consolidado · año completo"})
 
-    alertas = (mensual["alertas"] if mensual else []) + _alertas_rm(cc, rev)
+    alertas = (mensual["alertas"] if mensual else []) + _alertas_rm(
+        cc, rev, mensual["etiqueta_periodo"] if mensual else None)
 
     return {
         "resumen": resumen,
