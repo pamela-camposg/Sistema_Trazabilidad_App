@@ -22,7 +22,7 @@ const WHEELS = [
   "python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl",
 ];
 
-const VERSION = "4";
+const VERSION = "6";
 
 let pyodide = null;
 let base = self.location.href;   // la reemplaza el mensaje "iniciar"
@@ -143,7 +143,7 @@ json.dumps(preparar_base("/work/base"))
 }
 
 /* ---------------------------------------------------------------------- */
-async function procesarZona(zona, archivosBase, movimientos) {
+async function procesarZona(zona, archivosBase, movimientos, periodo) {
   limpiar("/work/uploads");
   limpiar("/work/salida");
 
@@ -152,9 +152,10 @@ async function procesarZona(zona, archivosBase, movimientos) {
 
   avisar(`Procesando zona ${zona}…`);
   pyodide.globals.set("ZONA_JS", zona);
+  pyodide.globals.set("PERIODO_JS", periodo || null);
   const r = JSON.parse(await pyodide.runPythonAsync(`
 import json
-json.dumps(procesar(ZONA_JS, "/work/uploads", "/work/salida"))
+json.dumps(procesar(ZONA_JS, "/work/uploads", "/work/salida", PERIODO_JS))
 `));
 
   // Los archivos generados viajan de vuelta como bytes: la página no tiene
@@ -185,7 +186,7 @@ onmessage = async (ev) => {
     } else if (m.tipo === "preparar-base") {
       await prepararBase(m.archivos);
     } else if (m.tipo === "procesar") {
-      await procesarZona(m.zona, m.base, m.movimientos);
+      await procesarZona(m.zona, m.base, m.movimientos, m.periodo);
     }
   } catch (e) {
     postMessage({
