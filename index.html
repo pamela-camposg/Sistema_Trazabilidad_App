@@ -296,6 +296,15 @@
           carpeta completa desde OneDrive y soltar el .zip tal cual.
         </p>
 
+        <div class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <label for="periodo" class="text-[13px] font-medium text-tinta">Mes a consolidar</label>
+          <input type="month" id="periodo"
+                 class="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[13px] text-tinta transition-colors focus:border-neon focus:outline-none" />
+          <span class="text-[12px] text-zinc-400">
+            Nombra el archivo y define qué filas se entregan aparte para pegar en la base.
+          </span>
+        </div>
+
         <label id="dropzone" for="input-archivos"
                class="dropzone mt-5 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-6 py-12 text-center">
           <span class="text-[13px] font-medium text-tinta">Arrastra los archivos aquí</span>
