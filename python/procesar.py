@@ -183,8 +183,14 @@ def _expandir_zips(carpeta, log=None):
                     if destino.exists():
                         anotar(f"    (ya existía, se conserva el primero) {nombre}")
                         continue
-                    with z.open(info) as origen:
-                        destino.write_bytes(origen.read())
+                    # Se copia por trozos: un solo archivo del ZIP puede pesar
+                    # decenas de MB y leerlo entero de golpe duplica la memoria.
+                    with z.open(info) as origen, open(destino, "wb") as salida:
+                        while True:
+                            trozo = origen.read(1 << 20)
+                            if not trozo:
+                                break
+                            salida.write(trozo)
                     extraidos.append(nombre)
                     anotar(f"    ✓ {nombre}")
         except zipfile.BadZipFile:
@@ -247,31 +253,176 @@ def _normalizar_nombres(carpeta, log=None):
     return renombrados
 
 
+def _dimension(z, ruta_hoja):
+    """Rango que ocupa una hoja, leyendo solo el encabezado de su XML."""
+    import xml.etree.ElementTree as ET
+
+    with z.open(ruta_hoja) as fh:
+        for ev, el in ET.iterparse(fh, events=("start",)):
+            if el.tag == _NS + "dimension":
+                return el.get("ref")
+            if el.tag == _NS + "sheetData":
+                return None
+    return None
+
+
 def _inventario(rutas):
-    """Arma la tabla 'Archivo / Hojas / Filas' sin cargar los datos.
+    """Arma la tabla 'Archivo / Hojas / Filas' sin abrir los libros.
 
-    Se usa openpyxl en modo solo lectura: lee la estructura del archivo pero
-    no los valores, así la tabla aparece rápido aunque los Excel sean grandes.
+    Se leen los metadatos del .xlsx (que por dentro es un .zip con XML): los
+    nombres de las hojas y el rango declarado de la primera. No se carga ni una
+    celda, así que da lo mismo si el archivo pesa 60 MB.
     """
-    from openpyxl import load_workbook
-
     filas = []
     for ruta in rutas:
         nombre = os.path.basename(ruta)
         try:
-            wb = load_workbook(ruta, read_only=True, data_only=True)
-            hojas = wb.sheetnames
-            try:
-                # max_row incluye la fila de encabezado: se descuenta para
-                # que la cifra sea comparable con la del resto del sistema
-                total = max(0, (wb[hojas[0]].max_row or 0) - 1)
-            except Exception:
+            with zipfile.ZipFile(ruta) as z:
+                hojas, nombres_hojas = _hojas_del_libro(z)
                 total = "—"
-            wb.close()
-            filas.append({"archivo": nombre, "hojas": ", ".join(hojas), "filas": total})
+                if hojas:
+                    ref = _dimension(z, hojas[0])
+                    if ref and ":" in ref:
+                        # se descuenta la fila de encabezado, para que la cifra
+                        # sea comparable con la del resto del sistema
+                        total = max(0, _partes_ref(ref.split(":")[1])[1] - 1)
+            filas.append({"archivo": nombre,
+                          "hojas": ", ".join(nombres_hojas),
+                          "filas": total})
         except Exception as e:
-            filas.append({"archivo": nombre, "hojas": "no se pudo leer", "filas": str(e)[:60]})
+            filas.append({"archivo": nombre,
+                          "hojas": "no se pudo leer",
+                          "filas": f"{type(e).__name__}: {e}"[:200]})
     return filas
+
+
+# =============================================================================
+# RECORTE MENSUAL
+# -----------------------------------------------------------------------------
+# El consolidado que producen los scripts NO es "el mes": es todo el año
+# rehecho desde cero (el único filtro de tiempo es AÑO_DESDE). Eso no se toca,
+# porque es exactamente lo que quedó verificado en la Etapa 1.
+#
+# Pero la operadora no pega el año entero: pega SOLO las filas del mes en la
+# base maestra. Así que además del consolidado completo, acá se genera un
+# archivo aparte con el recorte del mes elegido, listo para copiar y pegar.
+#
+# El recorte se hace por la columna 'Fecha' (que es una fecha de verdad), NO
+# por la columna 'Mes': esa última guarda el nombre del mes sin el año
+# ("agosto"), así que no distingue agosto de 2026 de agosto de 2027.
+# =============================================================================
+_MESES = {
+    1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
+    7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE",
+    12: "DICIEMBRE",
+}
+
+
+def _leer_periodo(periodo):
+    """Convierte '2026-08' en (2026, 8). Devuelve None si no vino nada válido."""
+    if not periodo:
+        return None
+    m = re.match(r"^\s*(\d{4})-(\d{1,2})\s*$", str(periodo))
+    if not m:
+        return None
+    anio, mes = int(m.group(1)), int(m.group(2))
+    if not 1 <= mes <= 12:
+        return None
+    return anio, mes
+
+
+def _etiqueta_periodo(anio, mes):
+    return f"{_MESES[mes]} {anio}"
+
+
+def _recorte_mensual(df, periodo, carpeta_salida, log):
+    """Genera el archivo con solo las filas del mes elegido.
+
+    Devuelve {archivo, filas, kilos, alertas, resumen_meses} o None si no se
+    pidió período o el consolidado no trae columna 'Fecha'.
+    """
+    par = _leer_periodo(periodo)
+    if par is None:
+        log.append("  (no se eligió período: no se genera el recorte mensual)")
+        return None
+    anio, mes = par
+    etiqueta = _etiqueta_periodo(anio, mes)
+
+    if "Fecha" not in df.columns:
+        log.append("  ⚠ El consolidado no tiene columna 'Fecha': no se puede recortar.")
+        return None
+
+    fechas = pd.to_datetime(df["Fecha"], errors="coerce")
+    sin_fecha = int(fechas.isna().sum())
+
+    del_mes = df[(fechas.dt.year == anio) & (fechas.dt.month == mes)]
+    posteriores = df[(fechas.dt.year > anio) |
+                     ((fechas.dt.year == anio) & (fechas.dt.month > mes))]
+
+    # Resumen de todo el consolidado, mes por mes. Es la herramienta para
+    # detectar filas atrasadas: si un mes ya pegado creció respecto de la
+    # corrida anterior, esas filas nuevas son cargas registradas tarde.
+    col_peso = next((c for c in df.columns if "PESO" in str(c).upper()), None)
+    resumen = pd.DataFrame({"MES": fechas.dt.to_period("M").astype(str)})
+    resumen["PESO"] = (
+        pd.to_numeric(df[col_peso], errors="coerce").fillna(0).values
+        if col_peso else 0
+    )
+    resumen_meses = (
+        resumen[resumen["MES"] != "NaT"]
+        .groupby("MES")
+        .agg(FILAS=("MES", "size"), PESO_TOTAL_KG=("PESO", "sum"))
+        .reset_index()
+        .sort_values("MES")
+    )
+
+    nombre = f"MES_{anio}-{mes:02d}_RM.xlsx"
+    ruta = Path(carpeta_salida) / nombre
+    hoja_mes = f"{_MESES[mes]}_{anio}"[:31]
+    with pd.ExcelWriter(ruta, engine="openpyxl") as w:
+        del_mes.to_excel(w, sheet_name=hoja_mes, index=False)
+        resumen_meses.to_excel(w, sheet_name="RESUMEN_POR_MES", index=False)
+
+    log.append(f"  Recorte de {etiqueta}: {len(del_mes)} fila(s) → {nombre}")
+    log.append(f"  Resumen por mes: {len(resumen_meses)} mes(es) en el consolidado")
+
+    # ---- Avisos ------------------------------------------------------------
+    alertas = []
+    if len(del_mes) == 0:
+        alertas.append({
+            "titulo": f"No hay ninguna fila de {etiqueta}",
+            "detalle": "El consolidado no contiene datos de ese mes. Revisa si "
+                       "la carpeta que subiste es la del mes correcto, o si "
+                       "elegiste bien el período.",
+        })
+    if len(posteriores) > 0:
+        meses_post = sorted(set(
+            pd.to_datetime(posteriores["Fecha"], errors="coerce")
+            .dt.to_period("M").astype(str)
+        ))
+        alertas.append({
+            "titulo": f"Hay {len(posteriores)} fila(s) con fecha posterior a {etiqueta}",
+            "detalle": "Meses encontrados: " + ", ".join(meses_post) +
+                       ". Esas filas NO están en el archivo del mes. Puede ser "
+                       "un error de tipeo en la fecha, o que subiste una "
+                       "carpeta más nueva de la que creías.",
+        })
+    if sin_fecha > 0:
+        alertas.append({
+            "titulo": f"Hay {sin_fecha} fila(s) sin fecha válida",
+            "detalle": "No se pueden asignar a ningún mes, así que quedaron "
+                       "fuera del archivo del mes. Aparecen en el control de "
+                       "calidad como campo crítico vacío.",
+        })
+
+    return {
+        "archivo": nombre,
+        "etiqueta_periodo": etiqueta,
+        "filas": len(del_mes),
+        "kilos": _sumar_kilos(del_mes),
+        "alertas": alertas,
+        "meses": len(resumen_meses),
+    }
 
 
 def _sumar_kilos(df):
@@ -303,6 +454,264 @@ def _archivo_nuevo(carpeta, antes):
     ahora = {f.name for f in Path(carpeta).glob("*.xlsx")}
     nuevos = sorted(ahora - antes)
     return nuevos[-1] if nuevos else None
+
+
+
+# =============================================================================
+# LECTURA LIVIANA DE TABLAS CON NOMBRE
+# -----------------------------------------------------------------------------
+# Los scripts leen las tablas con load_workbook(path), que carga el libro ENTERO
+# en memoria creando un objeto por cada celda. En un computador con 16 GB eso da
+# lo mismo; dentro del navegador el motor tiene un techo mucho más bajo y
+# revienta con MemoryError.
+#
+# El caso que lo destapó: BBDD TRADICIONALES.xlsx pesa 61 MB comprimido y 450 MB
+# descomprimido, pero el 97% de ese peso está en una hoja ("Base", 234.104 filas)
+# que los scripts NUNCA leen. La tabla que sí se necesita ("Analizado") tiene
+# 4.171 filas. Es decir: el navegador se moría cargando datos que no hacen falta.
+#
+# Estas funciones leen el .xlsx como lo que realmente es —un .zip con XML
+# adentro— y recorren SOLO la hoja donde vive la tabla pedida, fila por fila,
+# deteniéndose al llegar al final del rango. Nunca abren las hojas grandes.
+#
+# El resultado es idéntico al de openpyxl (verificado celda por celda sobre el
+# archivo real y sobre un libro de prueba con fechas, horas, booleanos, decimales
+# y celdas vacías). Los scripts de la Etapa 1 no se tocan: se les reemplaza el
+# lector en el momento de usarlos.
+# =============================================================================
+_NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+_NSR = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
+
+
+def _hojas_del_libro(z):
+    """Devuelve la lista de rutas internas de las hojas, en el orden del libro."""
+    import xml.etree.ElementTree as ET
+
+    rels = {}
+    if "xl/_rels/workbook.xml.rels" in z.namelist():
+        for rel in ET.fromstring(z.read("xl/_rels/workbook.xml.rels")):
+            rels[rel.get("Id")] = rel.get("Target", "").lstrip("/")
+
+    hojas, nombres = [], []
+    libro = ET.fromstring(z.read("xl/workbook.xml"))
+    for hoja in libro.find(_NS + "sheets"):
+        destino = rels.get(hoja.get(_NSR + "id"), "")
+        if destino:
+            hojas.append(destino if destino.startswith("xl/") else "xl/" + destino)
+            nombres.append(hoja.get("name"))
+    return hojas, nombres
+
+
+def _hojas_y_tablas(ruta):
+    """Devuelve {nombre_de_tabla: (ruta_interna_de_la_hoja, rango)}."""
+    import xml.etree.ElementTree as ET
+
+    resultado = {}
+    with zipfile.ZipFile(ruta) as z:
+        nombres = set(z.namelist())
+        hojas, _ = _hojas_del_libro(z)
+
+        # Definición de cada tabla: nombre y rango
+        tablas = {}
+        for n in nombres:
+            if n.startswith("xl/tables/") and n.endswith(".xml"):
+                t = ET.fromstring(z.read(n))
+                tablas[n.split("/")[-1]] = (
+                    t.get("name") or t.get("displayName"), t.get("ref")
+                )
+
+        # Qué tabla pertenece a qué hoja
+        for hoja in hojas:
+            archivo = hoja.split("/")[-1]
+            rels = f"xl/worksheets/_rels/{archivo}.rels"
+            if rels not in nombres:
+                continue
+            for rel in ET.fromstring(z.read(rels)):
+                destino = rel.get("Target", "")
+                if "tables/" in destino:
+                    nombre, ref = tablas.get(destino.split("/")[-1], (None, None))
+                    if nombre and ref:
+                        resultado[nombre] = (hoja, ref)
+
+    return resultado
+
+
+def _col_a_numero(letras):
+    n = 0
+    for ch in letras:
+        n = n * 26 + (ord(ch.upper()) - 64)
+    return n
+
+
+def _partes_ref(ref):
+    m = re.match(r"([A-Za-z]+)(\d+)", ref)
+    return _col_a_numero(m.group(1)), int(m.group(2))
+
+
+def _estilos_de_fecha(z):
+    """Qué estilos de celda representan fechas/horas (para convertir el número)."""
+    import xml.etree.ElementTree as ET
+    from openpyxl.styles.numbers import is_date_format, BUILTIN_FORMATS
+
+    if "xl/styles.xml" not in z.namelist():
+        return set(), set()
+
+    raiz = ET.fromstring(z.read("xl/styles.xml"))
+    propios = {}
+    fmts = raiz.find(_NS + "numFmts")
+    if fmts is not None:
+        for f in fmts:
+            propios[int(f.get("numFmtId"))] = f.get("formatCode")
+
+    fechas, duraciones = set(), set()
+    xfs = raiz.find(_NS + "cellXfs")
+    if xfs is None:
+        return fechas, duraciones
+    for i, xf in enumerate(xfs):
+        nid = int(xf.get("numFmtId", 0))
+        codigo = propios.get(nid) or BUILTIN_FORMATS.get(nid)
+        if codigo and is_date_format(codigo):
+            fechas.add(i)
+            if re.search(r"\[(h+|m+|s+)\]", codigo):
+                duraciones.add(i)
+    return fechas, duraciones
+
+
+def _a_numero(txt):
+    if "." in txt or "E" in txt or "e" in txt:
+        return float(txt)
+    try:
+        return int(txt)
+    except ValueError:
+        return float(txt)
+
+
+def _leer_rango(ruta, ruta_hoja, ref):
+    """Lee un rango recorriendo el XML de la hoja. Devuelve lista de tuplas."""
+    import xml.etree.ElementTree as ET
+    from openpyxl.utils.datetime import from_excel, CALENDAR_WINDOWS_1900
+
+    ini, fin = ref.split(":") if ":" in ref else (ref, ref)
+    c_min, f_min = _partes_ref(ini)
+    c_max, f_max = _partes_ref(fin)
+    ancho = c_max - c_min + 1
+
+    with zipfile.ZipFile(ruta) as z:
+        fechas, duraciones = _estilos_de_fecha(z)
+
+        # --- Pasada 1: la hoja. Los textos quedan anotados como pendientes.
+        filas, pendientes = {}, set()
+        with z.open(ruta_hoja) as fh:
+            n_fila = 0
+            for _, el in ET.iterparse(fh, events=("end",)):
+                if el.tag != _NS + "row":
+                    if el.tag == _NS + "sheetData":
+                        el.clear()
+                    continue
+                n_fila = int(el.get("r") or (n_fila + 1))
+                if f_min <= n_fila <= f_max:
+                    vals = [None] * ancho
+                    for c in el:
+                        if c.tag != _NS + "c":
+                            continue
+                        r = c.get("r")
+                        if not r:
+                            continue
+                        ci = _partes_ref(r)[0]
+                        if not (c_min <= ci <= c_max):
+                            continue
+                        t = c.get("t")
+                        if t == "inlineStr":
+                            bloque = c.find(_NS + "is")
+                            v = ("".join(x.text or "" for x in bloque.iter(_NS + "t"))
+                                 if bloque is not None else None)
+                        else:
+                            nodo = c.find(_NS + "v")
+                            v = nodo.text if nodo is not None else None
+                            if v is None or t in ("str", "e"):
+                                pass
+                            elif t == "s":
+                                idx = int(v)
+                                pendientes.add(idx)
+                                v = ("\x00SST", idx)
+                            elif t == "b":
+                                v = v == "1"
+                            else:
+                                v = _a_numero(v)
+                                sid = int(c.get("s") or 0)
+                                if sid in fechas:
+                                    v = from_excel(v, CALENDAR_WINDOWS_1900,
+                                                   timedelta=sid in duraciones)
+                        vals[ci - c_min] = v
+                    filas[n_fila] = vals
+                el.clear()
+                if n_fila > f_max:
+                    break
+
+        # --- Pasada 2: SOLO los textos que el rango realmente usa.
+        sst = {}
+        if pendientes and "xl/sharedStrings.xml" in z.namelist():
+            with z.open("xl/sharedStrings.xml") as fh:
+                i = 0
+                for _, el in ET.iterparse(fh, events=("end",)):
+                    if el.tag != _NS + "si":
+                        continue
+                    if i in pendientes:
+                        sst[i] = "".join(x.text or "" for x in el.iter(_NS + "t"))
+                    i += 1
+                    el.clear()
+
+    salida = []
+    for n in range(f_min, f_max + 1):
+        vals = filas.get(n)
+        if vals is None:
+            salida.append(tuple([None] * ancho))
+        else:
+            salida.append(tuple(
+                sst.get(v[1]) if type(v) is tuple and v[0] == "\x00SST" else v
+                for v in vals
+            ))
+    return salida
+
+
+def _tabla_a_dataframe(ruta, nombre_tabla, p, limpiar_encabezados):
+    ruta = Path(ruta)
+    p(f"  Leyendo {ruta.name} → tabla {nombre_tabla}...")
+
+    tablas = _hojas_y_tablas(ruta)
+    if nombre_tabla not in tablas:
+        raise ValueError(
+            f"El archivo {ruta.name} no tiene una tabla llamada '{nombre_tabla}'.\n"
+            f"  Revisa que la tabla no haya sido renombrada o eliminada en Excel."
+        )
+
+    hoja, ref = tablas[nombre_tabla]
+    filas = _leer_rango(ruta, hoja, ref)
+    if not filas:
+        return pd.DataFrame()
+
+    df = pd.DataFrame(list(filas[1:]), columns=list(filas[0]))
+    if limpiar_encabezados:
+        df.columns = df.columns.astype(str).str.strip()
+    return df.dropna(how="all").reset_index(drop=True)
+
+
+def _instalar_lectores_livianos(mod_control, mod_consolidar, log=None):
+    """Reemplaza los lectores de tabla por las versiones que no agotan la memoria.
+
+    Cada uno conserva el post-proceso de su script original: control_calidad
+    limpia los espacios de los encabezados y consolidar no, y eso NO se cambia.
+    """
+    def leer_tabla(path, nombre_tabla, p):
+        return _tabla_a_dataframe(path, nombre_tabla, p, limpiar_encabezados=True)
+
+    def leer_tabla_nombrada(path, nombre_tabla, p):
+        return _tabla_a_dataframe(path, nombre_tabla, p, limpiar_encabezados=False)
+
+    mod_control.leer_tabla = leer_tabla
+    mod_consolidar.leer_tabla_nombrada = leer_tabla_nombrada
+    if log is not None:
+        log.append("  (lectura de tablas en modo liviano, para no agotar la memoria)")
 
 
 # =============================================================================
@@ -460,11 +869,15 @@ def _alertas_rm(cc, rev):
     return alertas
 
 
-def _procesar_rm(carpeta_entrada, carpeta_salida, log):
+def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     """Ejecuta el flujo completo de RM: control de calidad → consolidar → revisar."""
+    import gc
+
     from rm import consolidar as mod_consolidar
     from rm import control_calidad as mod_control
     from rm import revisar_consolidado as mod_revisar
+
+    _instalar_lectores_livianos(mod_control, mod_consolidar, log)
 
     salida = Path(carpeta_salida)
 
@@ -495,6 +908,13 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
     log.append(cc.get("log", ""))
     log.append("")
 
+    # Se sueltan los DataFrames del control de calidad antes de consolidar:
+    # dentro del navegador la memoria es el recurso escaso.
+    for clave in list(cc):
+        if clave.startswith(("c", "v")) and clave not in ("total",):
+            pass
+    gc.collect()
+
     # ---- 3. Consolidación (modo prueba: no toca la base real) ---------------
     log.append("── Consolidación ──")
     antes = {f.name for f in salida.glob("*.xlsx")}
@@ -513,6 +933,19 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
         raise RuntimeError(
             "La consolidación terminó pero no se encontró el archivo generado."
         )
+
+    # consolidar() le pone al archivo la fecha y hora de la corrida. Eso dice
+    # CUÁNDO se generó, no QUÉ período cubre. Si la operadora eligió un mes, el
+    # archivo se renombra para que se entienda solo dentro de tres meses.
+    par = _leer_periodo(periodo)
+    if par:
+        nuevo = f"TRAZABILIDAD_RM_{par[0]}-{par[1]:02d}.xlsx"
+        try:
+            (salida / nombre_consolidado).replace(salida / nuevo)
+            log.append(f"  Archivo renombrado a {nuevo}")
+            nombre_consolidado = nuevo
+        except OSError as e:
+            log.append(f"  (no se pudo renombrar el consolidado: {e})")
     log.append("")
 
     # ---- 4. Revisión del consolidado (V0 a V9) ------------------------------
@@ -524,7 +957,12 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
     )
     log.append(rev.get("log", ""))
 
-    # ---- 5. Armar lo que se muestra en pantalla -----------------------------
+    # ---- 5. Recorte del mes elegido -----------------------------------------
+    log.append("")
+    log.append("── Recorte del mes ──")
+    mensual = _recorte_mensual(res["consolidado"], periodo, salida, log)
+
+    # ---- 6. Armar lo que se muestra en pantalla -----------------------------
     kilos = _sumar_kilos(res["consolidado"])
     resumen = (
         f"<b>Zona RM consolidada.</b> "
@@ -533,17 +971,34 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
         + f" · control de calidad: {cc.get('total', 0)} conflicto(s)"
         + f" · revisión: {rev.get('total_alertas', 0)} alerta(s)."
     )
+    if mensual:
+        resumen += (
+            f"<br><b>{mensual['etiqueta_periodo']}:</b> "
+            f"{_formato_miles(mensual['filas'], 0)} fila(s) para pegar en la base"
+            + (f" · {_formato_miles(mensual['kilos'])} kg" if mensual["kilos"] else "")
+            + "."
+        )
+
+    descargas = []
+    if mensual:
+        descargas.append({
+            "archivo": mensual["archivo"],
+            "etiqueta": f"Filas de {mensual['etiqueta_periodo']} (para pegar)",
+        })
+    descargas += [
+        {"archivo": nombre_consolidado, "etiqueta": "Consolidado completo del año"},
+        {"archivo": "CONTROL_CALIDAD_RM.xlsx", "etiqueta": "Control de calidad"},
+        {"archivo": "REVISION_CONSOLIDADO_RM.xlsx", "etiqueta": "Revisión del consolidado"},
+    ]
+
+    alertas = (mensual["alertas"] if mensual else []) + _alertas_rm(cc, rev)
 
     return {
         "resumen": resumen,
         "fuentes": _inventario(_listar_archivos(carpeta_entrada)),
-        "alertas": _alertas_rm(cc, rev),
-        "salida": nombre_consolidado,
-        "descargas": [
-            {"archivo": nombre_consolidado, "etiqueta": "Descargar consolidado"},
-            {"archivo": "CONTROL_CALIDAD_RM.xlsx", "etiqueta": "Control de calidad"},
-            {"archivo": "REVISION_CONSOLIDADO_RM.xlsx", "etiqueta": "Revisión del consolidado"},
-        ],
+        "alertas": alertas,
+        "salida": mensual["archivo"] if mensual else nombre_consolidado,
+        "descargas": descargas,
         "log": "\n".join(log),
     }
 
@@ -606,9 +1061,15 @@ def _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log):
 # =============================================================================
 # PUNTO DE ENTRADA — es lo que llama app.js
 # =============================================================================
-def procesar(zona, carpeta_entrada, carpeta_salida):
+def procesar(zona, carpeta_entrada, carpeta_salida, periodo=None):
     zona = (zona or "").strip().upper()
-    log = [f"Zona: {zona}", f"Carpeta de entrada: {carpeta_entrada}", ""]
+    par = _leer_periodo(periodo)
+    log = [
+        f"Zona: {zona}",
+        f"Período: {_etiqueta_periodo(*par) if par else '(no elegido)'}",
+        f"Carpeta de entrada: {carpeta_entrada}",
+        "",
+    ]
 
     try:
         # Si vino algún ZIP (una carpeta bajada de OneDrive), se expande antes
@@ -626,7 +1087,7 @@ def procesar(zona, carpeta_entrada, carpeta_salida):
         log.append("")
 
         if zona == "RM":
-            return _procesar_rm(carpeta_entrada, carpeta_salida, log)
+            return _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo)
         return _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log)
 
     except Exception as e:
