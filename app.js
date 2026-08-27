@@ -13,7 +13,6 @@
    scripts de python/rm/.
    ========================================================================= */
 
-let pyodide = null;          // el "motor" Python en el navegador
 let zonaElegida = null;      // "RM" | "SUR" | "NORTE"
 let archivos = [];           // movimientos del mes que subió la operadora
 let baseGuardada = [];       // archivos base que ya están en el navegador
@@ -140,140 +139,101 @@ const guardarBaseDB = (items) =>
   });
 
 /* =========================================================================
-   1. ARRANCAR EL MOTOR
+   1. EL MOTOR, EN UN HILO APARTE
+   -------------------------------------------------------------------------
+   Pyodide ya no corre en esta página sino en worker.js. Antes, mientras
+   pandas consolidaba, el navegador no podía repintar y Chrome mostraba "La
+   página no responde". Ahora la página queda libre y además puede ir
+   mostrando en qué paso va el proceso.
    ========================================================================= */
-async function iniciarMotor() {
-  // Se va anotando en qué paso vamos: si algo falla, el mensaje dice
-  // exactamente dónde, en vez de un "no se pudo iniciar" a ciegas.
-  let paso = "descargando Pyodide";
+let worker = null;
+let motorListo = false;
+let pendiente = null;      // la operación que está esperando respuesta
 
-  try {
-    if (typeof loadPyodide !== "function") {
-      throw new Error(
-        "No se pudo descargar Pyodide desde internet. Puede estar bloqueado " +
-        "por la red de la empresa (cdn.jsdelivr.net)."
-      );
-    }
+function enviarAlMotor(mensaje) {
+  return new Promise((resolve, reject) => {
+    if (!worker) return reject(new Error("El motor no está disponible."));
+    pendiente = { resolve, reject };
+    worker.postMessage(mensaje);
+  });
+}
 
-    pyodide = await loadPyodide();
+/* Muestra en vivo lo que va informando el motor. */
+function mostrarProgreso(texto) {
+  if (!texto) return;
+  const limpio = String(texto).trim();
+  if (!limpio) return;
 
-    paso = "cargando pandas";
-    await pyodide.loadPackage(["pandas", "micropip"]);
+  // La línea corta va arriba, en el indicador del motor
+  if (motorListo) $("txt-motor").textContent = limpio.slice(0, 60);
 
-    // openpyxl NO viene incluido en Pyodide (0.26.3 trae 310 paquetes y ese
-    // no está). Se instala desde los wheels guardados en el propio repo, así
-    // no depende de PyPI ni de que la red de la empresa lo deje pasar.
-    paso = "instalando openpyxl";
-    const micropip = pyodide.pyimport("micropip");
-
-    // URL absoluta: una ruta relativa depende de cómo resuelva micropip y
-    // eso es una fuente de fallos difícil de ver. Así no queda duda.
-    const wheels = [
-      new URL("python/wheels/et_xmlfile-2.0.0-py3-none-any.whl", document.baseURI).href,
-      new URL("python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl", document.baseURI).href,
-    ];
-
-    try {
-      // Comprobar primero que los archivos existen: si faltan, el mensaje
-      // dice cuál, en vez de un error genérico de micropip.
-      for (const w of wheels) {
-        const r = await fetch(w, { cache: "no-store" });
-        if (!r.ok) throw new Error(`No se encontró ${w} (error ${r.status})`);
-      }
-      await micropip.install(wheels);
-    } catch (e) {
-      console.warn("Wheels del repositorio no utilizables:", e);
-      paso = "instalando openpyxl desde PyPI (los wheels del repo fallaron: " +
-             ((e && e.message) || e) + ")";
-      await micropip.install("openpyxl");
-    }
-
-    paso = "preparando las carpetas de trabajo";
-    pyodide.FS.mkdirTree("/work/uploads");
-    pyodide.FS.mkdirTree("/work/salida");
-    pyodide.FS.mkdirTree("/work/base");
-
-    // Copiar los scripts de cada zona al motor, en /work/py/<zona>/,
-    // para que procesar.py pueda importarlos con "from rm import consolidar".
-    paso = "copiando los scripts de zona (python/rm/…)";
-    const enc = new TextEncoder();
-    pyodide.FS.mkdirTree("/work/py");
-    for (const [carpeta, nombres] of Object.entries(MODULOS_PY)) {
-      pyodide.FS.mkdirTree("/work/py/" + carpeta);
-      pyodide.FS.writeFile(`/work/py/${carpeta}/__init__.py`, enc.encode(""));
-      for (const nombre of nombres) {
-        const r = await fetch(`python/${carpeta}/${nombre}?v=${VERSION}`, { cache: "no-store" });
-        if (!r.ok) {
-          console.warn(`No se encontró python/${carpeta}/${nombre}`);
-          continue;
-        }
-        pyodide.FS.writeFile(`/work/py/${carpeta}/${nombre}`, enc.encode(await r.text()));
-      }
-    }
-
-    // Traer procesar.py y dejarlo disponible dentro del motor
-    paso = "descargando python/procesar.py";
-    const resp = await fetch(`python/procesar.py?v=${VERSION}`, { cache: "no-store" });
-    if (!resp.ok) {
-      throw new Error(
-        `No se encontró python/procesar.py en el sitio (error ${resp.status}). ` +
-        "Revisa que el archivo esté dentro de la carpeta python/ del repositorio."
-      );
-    }
-
-    paso = "ejecutando procesar.py";
-    pyodide.runPython(await resp.text());
-
-    // Aviso claro si el procesar.py del repositorio es una versión anterior
-    paso = "revisando la versión de procesar.py";
-    hayPrepararBase = pyodide.runPython(`"preparar_base" in globals()`);
-
-    $("punto-motor").classList.add("listo");
-    $("txt-motor").textContent = "Motor listo";
-
-    // La memoria del navegador es opcional: si este navegador no la permite,
-    // la app igual tiene que poder consolidar subiendo todos los archivos.
-    paso = "leyendo los archivos base guardados";
-    try {
-      await pintarBase();
-    } catch (e) {
-      $("estado-base").textContent =
-        "Este navegador no permite guardar archivos base (" +
-        (e && e.message ? e.message : e) +
-        "). Puedes seguir usando la app subiendo todos los archivos cada vez.";
-      console.warn(e);
-    }
-
-    revisarSiPuedeProcesar();
-  } catch (e) {
-    // Mostrar el error completo en pantalla: sin esto no hay forma de saber
-    // qué pasó sin abrir la consola del navegador.
-    const detalle = e && e.stack ? e.stack : String(e);
-    const mensaje = (e && e.message) || String(e);
-
-    $("txt-motor").textContent = "No se pudo iniciar el motor";
-
-    // El error va donde la persona está mirando: en el paso de archivos base
-    // y en una franja fija abajo. Antes solo aparecía en el bloque 04, que
-    // queda fuera de pantalla y por lo tanto no se leía.
-    if ($("estado-base")) {
-      $("estado-base").textContent =
-        `El motor no arrancó (falló en: ${paso}). Por eso los archivos base ` +
-        `no se pueden guardar todavía.`;
-    }
-    mostrarFranja(`No se pudo iniciar el motor · Falló en: ${paso} · ${mensaje}`);
-
-    $("resultado").style.display = "block";
-    $("resumen").innerHTML =
-      `<b>No se pudo iniciar el motor.</b> Falló en: ${paso}.`;
-    $("alertas").innerHTML =
-      `<div class="alerta"><b>${(e && e.name) || "Error"}</b> — ${
-        (e && e.message) || e
-      }</div>`;
-    $("registro").textContent = `Paso: ${paso}\n\n${detalle}`;
-    $("registro").classList.remove("oculto");
-    console.error(e);
+  // Y el detalle completo se va acumulando en el registro
+  const reg = $("registro");
+  if (reg) {
+    reg.classList.remove("oculto");
+    reg.textContent += (reg.textContent ? "\n" : "") + limpio;
+    reg.scrollTop = reg.scrollHeight;
   }
+}
+
+function iniciarMotor() {
+  try {
+    worker = new Worker("worker.js?v=" + Date.now());
+  } catch (e) {
+    mostrarFranja("Este navegador no pudo abrir el motor: " + ((e && e.message) || e));
+    return;
+  }
+
+  worker.onerror = (e) => {
+    mostrarFranja("Error en el motor: " + (e.message || "no se pudo cargar worker.js"));
+  };
+
+  worker.onmessage = (ev) => {
+    const m = ev.data || {};
+
+    if (m.tipo === "progreso") {
+      mostrarProgreso(m.texto);
+
+    } else if (m.tipo === "listo") {
+      motorListo = true;
+      hayPrepararBase = m.hayPrepararBase;
+      $("punto-motor").classList.add("listo");
+      $("txt-motor").textContent = "Motor listo";
+      if ($("registro")) {
+        $("registro").textContent = "";
+        $("registro").classList.add("oculto");
+      }
+      pintarBase().catch((e) => {
+        $("estado-base").textContent =
+          "Este navegador no permite guardar archivos base (" +
+          ((e && e.message) || e) + "). Puedes seguir subiéndolos cada vez.";
+      });
+      revisarSiPuedeProcesar();
+
+    } else if (m.tipo === "error-motor") {
+      $("txt-motor").textContent = "No se pudo iniciar el motor";
+      if ($("estado-base")) {
+        $("estado-base").textContent =
+          `El motor no arrancó (falló en: ${m.paso}). Por eso los archivos ` +
+          `base no se pueden guardar todavía.`;
+      }
+      mostrarFranja(`No se pudo iniciar el motor · Falló en: ${m.paso} · ${m.mensaje}`);
+      $("resultado").style.display = "block";
+      $("resumen").innerHTML = `<b>No se pudo iniciar el motor.</b> Falló en: ${m.paso}.`;
+      $("registro").textContent = `Paso: ${m.paso}\n\n${m.detalle}`;
+      $("registro").classList.remove("oculto");
+
+    } else if (m.tipo === "error") {
+      if (pendiente) { pendiente.reject(new Error(m.mensaje)); pendiente = null; }
+      console.error(m.detalle);
+
+    } else if (pendiente) {
+      pendiente.resolve(m);
+      pendiente = null;
+    }
+  };
+
+  worker.postMessage({ tipo: "iniciar", base: document.baseURI });
 }
 
 /* =========================================================================
@@ -318,7 +278,7 @@ async function recibirBase(fileList) {
   if (eco) eco.textContent = `Recibí ${fileList.length} archivo(s). Revisando…`;
   console.info("[archivos base] recibidos:", [...fileList].map((f) => f.name));
 
-  if (!pyodide) {
+  if (!motorListo) {
     $("estado-base").textContent =
       "El motor todavía se está iniciando. Espera unos segundos y vuelve a intentar.";
     return;
@@ -345,38 +305,31 @@ async function recibirBase(fileList) {
   $("btn-borrar-base").style.display = "inline-block";
 
   try {
-    // Dejar los archivos en una carpeta aparte del motor
-    for (const f of pyodide.FS.readdir("/work/base")) {
-      if (f !== "." && f !== "..") pyodide.FS.unlink("/work/base/" + f);
-    }
+    // Los archivos viajan al worker como bytes
+    const archivosBase = [];
     for (const f of utiles) {
-      pyodide.FS.writeFile("/work/base/" + f.name, new Uint8Array(await f.arrayBuffer()));
+      archivosBase.push({ nombre: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
     }
 
-    // Python expande los .zip y se queda solo con los cuatro maestros
-    const res = JSON.parse(pyodide.runPython(`
-import json
-json.dumps(preparar_base("/work/base"))
-`));
+    const m = await enviarAlMotor({ tipo: "preparar-base", archivos: archivosBase });
 
-    // Guardar en el navegador lo que quedó
     const fecha = new Date().toLocaleDateString("es-CL");
-    const items = res.guardados.map((nombre, i) => ({
-      nombre,
-      etiqueta: res.etiquetas[i],
+    const items = (m.guardados || []).map((g) => ({
+      nombre: g.nombre,
+      etiqueta: g.etiqueta,
       fecha,
-      bytes: pyodide.FS.readFile("/work/base/" + nombre),
+      bytes: g.bytes,
     }));
 
     if (items.length) await guardarBaseDB(items);
-    console.info("[archivos base]\n" + (res.log || ""));
+    console.info("[archivos base]\n" + ((m.res && m.res.log) || ""));
+
+    const res = m.res || {};
     res.enviados = utiles.map((f) => f.name);
     await pintarBase(res);
   } catch (e) {
-    // Mostrar el error real: sin esto, cualquier problema se ve igual y no
-    // hay forma de saber qué pasó sin abrir la consola del navegador.
     $("estado-base").textContent =
-      "No se pudieron guardar los archivos base → " + (e && e.message ? e.message : e);
+      "No se pudieron guardar los archivos base → " + ((e && e.message) || e);
     console.error(e);
   }
 }
@@ -516,7 +469,7 @@ function pintarLista() {
 conectarZonaDeCarga("dropzone", "input-archivos", agregarArchivos);
 
 function revisarSiPuedeProcesar() {
-  $("btn-procesar").disabled = !(pyodide && zonaElegida && archivos.length > 0);
+  $("btn-procesar").disabled = !(motorListo && zonaElegida && archivos.length > 0);
 }
 
 /* =========================================================================
@@ -527,39 +480,39 @@ alEvento("btn-procesar", "click", async () => {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin" style="display:inline-block;vertical-align:middle"></span> Procesando…';
 
+  // El registro pasa a ser el avance en vivo mientras dura el proceso
+  $("resultado").style.display = "block";
+  $("resumen").innerHTML =
+    "<b>Procesando…</b> Esto puede tardar varios minutos. " +
+    "Puedes seguir usando la página: abajo se va viendo el avance.";
+  $("alertas").innerHTML = "";
+  $("descargas").innerHTML = "";
+  $("registro").textContent = "";
+  $("registro").classList.remove("oculto");
+
   try {
-    // Limpiar las carpetas de la corrida anterior
-    for (const carpeta of ["/work/uploads", "/work/salida"]) {
-      for (const f of pyodide.FS.readdir(carpeta)) {
-        if (f !== "." && f !== "..") pyodide.FS.unlink(carpeta + "/" + f);
-      }
-    }
-
-    // Primero los archivos base guardados…
-    for (const item of baseGuardada) {
-      pyodide.FS.writeFile("/work/uploads/" + item.nombre, item.bytes);
-    }
-    // …y encima los movimientos del mes
+    const movimientos = [];
     for (const f of archivos) {
-      const buf = new Uint8Array(await f.arrayBuffer());
-      pyodide.FS.writeFile("/work/uploads/" + f.name, buf);
+      movimientos.push({ nombre: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
     }
 
-    pyodide.globals.set("ZONA_JS", zonaElegida);
-    const jsonTexto = await pyodide.runPythonAsync(`
-import json
-json.dumps(procesar(ZONA_JS, "/work/uploads", "/work/salida"))
-`);
-    mostrarResultado(JSON.parse(jsonTexto));
+    const m = await enviarAlMotor({
+      tipo: "procesar",
+      zona: zonaElegida,
+      base: baseGuardada.map((i) => ({ nombre: i.nombre, bytes: i.bytes })),
+      movimientos,
+    });
+
+    mostrarResultado(m.r || {}, m.descargas || []);
   } catch (e) {
-    $("resultado").style.display = "block";
-    $("resumen").innerHTML = "<b>Ocurrió un error al procesar.</b> Revisa el detalle técnico.";
-    $("registro").textContent = String(e);
-    $("registro").classList.remove("oculto");
+    $("resumen").innerHTML =
+      "<b>Ocurrió un error al procesar.</b> El detalle está abajo.";
+    mostrarProgreso("ERROR: " + ((e && e.message) || e));
     console.error(e);
   } finally {
     btn.disabled = false;
     btn.textContent = "Procesar consolidado";
+    $("txt-motor").textContent = "Motor listo";
     revisarSiPuedeProcesar();
   }
 });
@@ -567,7 +520,7 @@ json.dumps(procesar(ZONA_JS, "/work/uploads", "/work/salida"))
 /* =========================================================================
    6. MOSTRAR RESULTADO Y PREPARAR LAS DESCARGAS
    ========================================================================= */
-function mostrarResultado(r) {
+function mostrarResultado(r, descargas) {
   $("resultado").style.display = "block";
   $("resumen").innerHTML = r.resumen || "Proceso terminado.";
 
@@ -575,7 +528,13 @@ function mostrarResultado(r) {
   const tb = $("tabla-fuentes").querySelector("tbody");
   tb.innerHTML = "";
   (r.fuentes || []).forEach((f) => {
-    tb.innerHTML += `<tr><td>${f.archivo}</td><td>${f.hojas}</td><td>${f.filas}</td></tr>`;
+    const tr = document.createElement("tr");
+    [f.archivo, f.hojas, f.filas].forEach((valor) => {
+      const td = document.createElement("td");
+      td.textContent = valor;
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
   });
 
   // Alertas del control de calidad
@@ -584,26 +543,23 @@ function mostrarResultado(r) {
   (r.alertas || []).forEach((a) => {
     const div = document.createElement("div");
     div.className = "alerta";
-    div.innerHTML = `<b>${a.titulo}</b> — ${a.detalle}`;
+    const t = document.createElement("b");
+    t.textContent = a.titulo;
+    div.append(t, document.createTextNode(" — " + a.detalle));
     cont.appendChild(div);
   });
 
   $("registro").textContent = r.log || "";
+  $("registro").classList.add("oculto");
 
-  // Un botón por cada archivo que Python dejó listo para descargar
+  // Un botón por cada archivo que el motor dejó listo
   const zona = $("descargas");
   zona.innerHTML = "";
-  (r.descargas || []).forEach((d, i) => {
-    let bytes;
-    try {
-      bytes = pyodide.FS.readFile("/work/salida/" + d.archivo);
-    } catch (e) {
-      return;   // ese archivo no se generó, no se muestra el botón
-    }
+  (descargas || []).forEach((d, i) => {
     const b = document.createElement("button");
     b.className = i === 0 ? "btn" : "btn secundario";
     b.textContent = d.etiqueta;
-    b.onclick = () => descargar(bytes, d.archivo);
+    b.onclick = () => descargar(d.bytes, d.archivo);
     zona.appendChild(b);
   });
 
