@@ -490,7 +490,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
     cc = mod_control.controlar(
         rutas_cc,
         ruta_salida=salida / "CONTROL_CALIDAD_RM.xlsx",
-        mostrar=False,
+        mostrar=True,   # el avance se ve en pantalla mientras corre
     )
     log.append(cc.get("log", ""))
     log.append("")
@@ -504,7 +504,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
         ruta_log=None,
         modo_reset=False,
         modo_prueba=True,     # nunca escribe sobre BBDD_TRAZABILIDAD_RM.xlsx
-        mostrar=False,
+        mostrar=True,
     )
     log.append(res.get("log", ""))
 
@@ -520,7 +520,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log):
     rev = mod_revisar.revisar(
         salida / nombre_consolidado,
         ruta_salida=salida / "REVISION_CONSOLIDADO_RM.xlsx",
-        mostrar=False,
+        mostrar=True,
     )
     log.append(rev.get("log", ""))
 
