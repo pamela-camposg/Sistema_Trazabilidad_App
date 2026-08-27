@@ -236,6 +236,23 @@ function iniciarMotor() {
   worker.postMessage({ tipo: "iniciar", base: document.baseURI });
 }
 
+/* -------------------------------------------------------------------------
+   Período por defecto: el mes anterior.
+   La consolidación se hace a mes cerrado, así que lo normal el 3 de
+   septiembre es querer agosto. Igual se puede cambiar a mano.
+   ------------------------------------------------------------------------- */
+(function periodoPorDefecto() {
+  const campo = $("periodo");
+  if (!campo || campo.value) return;
+  const hoy = new Date();
+  const anterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  const mes = String(anterior.getMonth() + 1).padStart(2, "0");
+  campo.value = `${anterior.getFullYear()}-${mes}`;
+  // No se puede pedir un mes que todavía no termina
+  const maxMes = String(hoy.getMonth() + 1).padStart(2, "0");
+  campo.max = `${hoy.getFullYear()}-${maxMes}`;
+})();
+
 /* =========================================================================
    2. ELEGIR ZONA
    ========================================================================= */
@@ -499,6 +516,7 @@ alEvento("btn-procesar", "click", async () => {
     const m = await enviarAlMotor({
       tipo: "procesar",
       zona: zonaElegida,
+      periodo: ($("periodo") && $("periodo").value) || null,
       base: baseGuardada.map((i) => ({ nombre: i.nombre, bytes: i.bytes })),
       movimientos,
     });
