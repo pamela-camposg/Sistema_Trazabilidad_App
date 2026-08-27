@@ -22,7 +22,7 @@ const WHEELS = [
   "python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl",
 ];
 
-const VERSION = "6";
+const VERSION = "8";
 
 let pyodide = null;
 let base = self.location.href;   // la reemplaza el mensaje "iniciar"
