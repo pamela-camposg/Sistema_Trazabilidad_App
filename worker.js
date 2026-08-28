@@ -16,6 +16,7 @@ const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.3/full/pyodide.js";
 const MODULOS_PY = {
   rm: ["consolidar.py", "control_calidad.py", "revisar_consolidado.py"],
   sur: ["consolidar.py", "control_calidad.py", "revisar_consolidado.py"],
+  norte: ["consolidar.py", "control_calidad.py", "revisar_consolidado.py"],
 };
 
 const WHEELS = [
@@ -23,7 +24,7 @@ const WHEELS = [
   "python/wheels/openpyxl-3.1.5-py2.py3-none-any.whl",
 ];
 
-const VERSION = "11";
+const VERSION = "12";
 
 let pyodide = null;
 let base = self.location.href;   // la reemplaza el mensaje "iniciar"
