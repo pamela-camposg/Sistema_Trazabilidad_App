@@ -2,7 +2,7 @@
 # procesar.py — el puente entre la app y los scripts refactorizados.
 #
 # La app le pasa a la función procesar():
-#   - zona:            "RM", "SUR" o "NORTE"
+#   - zona:            "RM", "SUR", "NORTE" o "UNIR"
 #   - carpeta_entrada: donde quedaron los archivos que subió la operadora
 #   - carpeta_salida:  donde debe dejar los archivos generados
 #
@@ -18,6 +18,7 @@
 #   RM     -> lógica REAL conectada (scripts de la Etapa 1)
 #   SUR    -> lógica REAL conectada (scripts de la Etapa 1)
 #   NORTE  -> lógica REAL conectada (scripts de la Etapa 1)
+#   UNIR   -> no consolida: apila lo que ya generaron las zonas
 #
 # CÓMO SE CONECTAN LOS SCRIPTS
 #   app.js descarga los módulos de python/rm/ y los deja dentro del motor,
@@ -599,6 +600,208 @@ def _recortar_revision(ruta, anio, mes, etiqueta, log, formatear=None):
     recortadas = sum(1 for r in resumen if r["RECORTADA"] == "sí")
     log.append(f"  {ruta.name} → {nuevo.name} ({recortadas} hoja(s) recortada(s) a {etiqueta})")
     return nuevo.name
+
+
+# =============================================================================
+# UNIR ZONAS — juntar en un archivo lo que ya generó cada zona
+# -----------------------------------------------------------------------------
+# Esto NO vuelve a consolidar nada. Toma archivos que la app ya produjo —los de
+# RM, Sur y Norte— y los apila en uno solo. Como las tres zonas entregan
+# exactamente las mismas 24 columnas y en el mismo orden, apilar es seguro.
+#
+# Sirve con dos tipos de archivo:
+#   · los del mes    (MES_2026-07_RM.xlsx)          → el mes de todo Chile
+#   · los del año    (TRAZABILIDAD_RM_2026-07.xlsx) → el año de todo Chile
+#
+# No se pueden mezclar: apilar el mes de una zona con el año de otra daría un
+# archivo sin sentido, así que eso se avisa y no se hace.
+#
+# Se agrega una columna ZONA al final, para que después de apilar se sepa de
+# dónde vino cada fila. Va al final y no al principio para que las 24 columnas
+# de siempre queden en la misma posición de siempre.
+# =============================================================================
+_ZONAS_VALIDAS = ("NORTE", "SUR", "RM")
+_RE_ZONA = re.compile(r"(?<![A-Z])(NORTE|SUR|RM)(?![A-Z])")
+_RE_PERIODO = re.compile(r"(\d{4})-(\d{2})")
+
+
+def _zona_de_archivo(nombre):
+    """Deduce la zona a partir del nombre del archivo. None si no se puede."""
+    n = unicodedata.normalize("NFKD", str(nombre))
+    n = n.encode("ascii", "ignore").decode("ascii").upper()
+    m = _RE_ZONA.search(n)
+    return m.group(1) if m else None
+
+
+def _tipo_de_archivo(nombre, hojas):
+    """'mes' o 'anual'. Se mira el nombre y, si no alcanza, el nombre de la hoja."""
+    base = os.path.basename(str(nombre)).upper()
+    if base.startswith("MES_"):
+        return "mes"
+    if base.startswith("TRAZABILIDAD"):
+        return "anual"
+    if hojas and hojas[0].upper() == "TRAZABILIDAD":
+        return "anual"
+    return "mes"
+
+
+def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
+    """Apila los archivos ya generados por las zonas en uno solo."""
+    from rm import consolidar as mod_consolidar   # solo para los colores
+
+    salida = Path(carpeta_salida)
+    rutas = _listar_archivos(carpeta_entrada)
+    fuentes, alertas, partes = [], [], []
+    tipos, periodos, zonas_vistas = set(), set(), {}
+    columnas_ref = None
+
+    log.append("── Revisando lo que se soltó ──")
+
+    for ruta in rutas:
+        nombre = os.path.basename(ruta)
+        zona = _zona_de_archivo(nombre)
+
+        if zona is None:
+            alertas.append({
+                "titulo": f"No se pudo saber de qué zona es {nombre}",
+                "detalle": "El nombre del archivo tiene que contener RM, SUR o "
+                           "NORTE, como los que genera la app. Este archivo "
+                           "quedó fuera.",
+            })
+            fuentes.append({"archivo": nombre, "hojas": "sin zona reconocible", "filas": "—"})
+            log.append(f"  ✗ {nombre}: no se reconoce la zona")
+            continue
+
+        try:
+            with zipfile.ZipFile(ruta) as z:
+                _, hojas = _hojas_del_libro(z)
+            df = pd.read_excel(ruta, sheet_name=0)
+        except Exception as e:
+            alertas.append({"titulo": f"No se pudo leer {nombre}",
+                            "detalle": f"{type(e).__name__}: {e}"})
+            fuentes.append({"archivo": nombre, "hojas": "no se pudo leer",
+                            "filas": f"{type(e).__name__}: {e}"[:200]})
+            log.append(f"  ✗ {nombre}: {e}")
+            continue
+
+        tipo = _tipo_de_archivo(nombre, hojas)
+        m = _RE_PERIODO.search(nombre)
+        if m:
+            periodos.add(m.group(0))
+
+        # Las columnas del primer archivo mandan. Si otro no las tiene todas,
+        # apilar produciría filas corridas: mejor dejarlo fuera y avisar.
+        if columnas_ref is None:
+            columnas_ref = list(df.columns)
+        elif set(df.columns) != set(columnas_ref):
+            faltan = [c for c in columnas_ref if c not in df.columns]
+            sobran = [c for c in df.columns if c not in columnas_ref]
+            alertas.append({
+                "titulo": f"{nombre} no tiene las mismas columnas que los demás",
+                "detalle": (f"Le faltan: {', '.join(map(str, faltan)) or '—'}. "
+                            f"Le sobran: {', '.join(map(str, sobran)) or '—'}. "
+                            "Quedó fuera del archivo unido."),
+            })
+            fuentes.append({"archivo": nombre, "hojas": ", ".join(hojas), "filas": "columnas distintas"})
+            log.append(f"  ✗ {nombre}: columnas distintas")
+            continue
+
+        if zona in zonas_vistas:
+            alertas.append({
+                "titulo": f"La zona {zona} viene dos veces",
+                "detalle": f"Ya se había leído {zonas_vistas[zona]} y ahora "
+                           f"{nombre}. Las filas se van a repetir. Deja solo "
+                           f"un archivo por zona.",
+            })
+        zonas_vistas[zona] = nombre
+
+        tipos.add(tipo)
+        df = df.reindex(columns=columnas_ref)
+        df["ZONA"] = zona
+        partes.append(df)
+        fuentes.append({"archivo": nombre, "hojas": ", ".join(hojas), "filas": len(df)})
+        log.append(f"  ✓ {nombre}: zona {zona}, tipo {tipo}, {len(df)} filas")
+
+    if not partes:
+        return {
+            "resumen": "<b>No se pudo unir nada.</b> Revisa los avisos de abajo.",
+            "fuentes": fuentes,
+            "alertas": alertas or [{
+                "titulo": "No se soltó ningún archivo válido",
+                "detalle": "Suelta acá los archivos que ya generó la app para "
+                           "cada zona: los del mes (MES_2026-07_RM.xlsx) o los "
+                           "del año (TRAZABILIDAD_RM_2026-07.xlsx).",
+            }],
+            "salida": None, "descargas": [], "log": "\n".join(log),
+        }
+
+    if len(tipos) > 1:
+        alertas.insert(0, {
+            "titulo": "Se mezclaron archivos del mes con archivos del año",
+            "detalle": "Unir el mes de una zona con el año completo de otra da "
+                       "un archivo que no significa nada. Vuelve a soltar solo "
+                       "archivos del mismo tipo.",
+        })
+    if len(periodos) > 1:
+        alertas.insert(0, {
+            "titulo": "Los archivos son de meses distintos",
+            "detalle": "Períodos encontrados: " + ", ".join(sorted(periodos)) +
+                       ". Revisa que sean todos del mismo cierre.",
+        })
+
+    unido = pd.concat(partes, ignore_index=True)
+
+    tipo = "MES" if tipos == {"mes"} else ("ANUAL" if tipos == {"anual"} else "MIXTO")
+    sufijo = sorted(periodos)[0] if len(periodos) == 1 else ""
+    # RM, Sur y Norte son las tres zonas de Chile: el archivo unido es
+    # el país completo, no la región.
+    nombre_salida = f"CHILE_{tipo}" + (f"_{sufijo}" if sufijo else "") + ".xlsx"
+
+    ruta_salida = salida / nombre_salida
+    with pd.ExcelWriter(ruta_salida, engine="openpyxl") as w:
+        unido.to_excel(w, sheet_name="TRAZABILIDAD", index=False)
+        _pintar(w, "TRAZABILIDAD", unido.columns,
+                getattr(mod_consolidar, "formatear_encabezado", None))
+        # ZONA la agrega la app, no el consolidador: se marca en crema como el
+        # resto de las columnas derivadas.
+        try:
+            from openpyxl.styles import Font, PatternFill
+            celda = w.sheets["TRAZABILIDAD"].cell(row=1, column=len(unido.columns))
+            celda.font = Font(bold=True, color=mod_consolidar.COLOR_TEAL)
+            celda.fill = PatternFill("solid", fgColor=mod_consolidar.COLOR_CREMA)
+        except Exception:
+            pass
+
+    por_zona = unido["ZONA"].value_counts().to_dict()
+    detalle = " · ".join(f"{z}: {_formato_miles(n, 0)}"
+                         for z, n in sorted(por_zona.items()))
+    kilos = _sumar_kilos(unido)
+
+    log.append("")
+    log.append(f"── Archivo unido: {nombre_salida} ──")
+    log.append(f"  {len(unido)} filas × {len(unido.columns)} columnas")
+    for z, n in sorted(por_zona.items()):
+        log.append(f"    {z:<6} {n:>8} filas")
+
+    if not alertas:
+        alertas.append({
+            "titulo": "Sin problemas",
+            "detalle": f"Se unieron {len(partes)} zona(s) sin conflictos de "
+                       f"columnas ni de período.",
+        })
+
+    return {
+        "resumen": (f"<b>{len(partes)} zona(s) unidas.</b> "
+                    f"{_formato_miles(len(unido), 0)} filas × "
+                    f"{len(unido.columns)} columnas"
+                    + (f" · {_formato_miles(kilos)} kg" if kilos else "")
+                    + f"<br>{detalle}"),
+        "fuentes": fuentes,
+        "alertas": alertas,
+        "salida": nombre_salida,
+        "descargas": [{"archivo": nombre_salida, "etiqueta": "Descargar archivo unido"}],
+        "log": "\n".join(log),
+    }
 
 
 def _sumar_kilos(df):
@@ -1404,6 +1607,8 @@ def procesar(zona, carpeta_entrada, carpeta_salida, periodo=None):
             log.append("  (no venía ningún ZIP)")
         log.append("")
 
+        if zona == "UNIR":
+            return _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo)
         if zona in ZONAS_CONECTADAS:
             return _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo)
         return _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log)
