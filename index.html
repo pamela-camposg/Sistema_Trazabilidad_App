@@ -137,6 +137,20 @@
   .btn{ will-change: transform }
   .btn:hover:not(:disabled){ transform: translateY(-1px) }
   .btn:active:not(:disabled){ transform: translateY(0) }
+
+  /* ---------------------------------------------------------
+     TÍTULO PRINCIPAL
+     El título pasó de "Trazabilidad." a "Sistema Trazabilidad
+     Ambipar": es mucho más largo, así que en pantallas angostas
+     hay que bajarle el cuerpo para que no ocupe media pantalla.
+     Va acá y no como clase de Tailwind porque la hoja de estilos
+     viene precompilada: solo existen las clases que ya estaban
+     en uso, y text-3xl no es una de ellas.
+     --------------------------------------------------------- */
+  h1.premium-heading { line-height: 1.1; }
+  @media (max-width: 640px) {
+    h1.premium-heading { font-size: 1.75rem; }
+  }
 </style>
 </head>
 
@@ -212,7 +226,7 @@
     <div>
       <span class="mb-4 block h-[3px] w-10 bg-neon"></span>
       <h1 class="premium-heading text-4xl font-medium text-tinta">
-        Trazabilidad.
+        Sistema Trazabilidad Ambipar
       </h1>
       <p class="mt-2.5 max-w-lg text-sm leading-relaxed text-zinc-500">
         Subir archivos Excel por zona. El sistema los procesa y entrega
