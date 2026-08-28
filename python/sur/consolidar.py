@@ -42,6 +42,7 @@ from pathlib import Path
 
 import pandas as pd
 from openpyxl import load_workbook, Workbook
+from openpyxl.styles import Font, PatternFill
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -77,14 +78,19 @@ PLANTAS_PROPIAS_ACTIVAS = {
 
 COLUMNAS_FINALES = [
     "Fecha", "Mes", "Cliente", "RUT", "Gestor", "Contrato", "Generador",
-    "Transportista", "Rut transportista", "Patente de Camión", "Ticket de pesaje",
+    "Transportista", "Rut transportista", "Patente de Camión", "ID", "Origen ID",
     "Peso neto (kg)", "Destino", "Comuna Destino", "RUT DESTINATARIO",
     "TIPO", "CÓDIGOS SINADER", "Movimiento", "Movimiento interempresa",
     "CÓDIGO ESTABLECIMIENTO SINADER", "CÓDIGO DE TRATAMIENTO SINADER",
     "Región", "Destino inferido",
 ]
 
-CLAVE_DEDUP = ["Fecha", "Cliente", "Ticket de pesaje", "TIPO", "Destino"]
+# El ticket sale del archivo, así que la clave pasa a usar ID. Se suma
+# "Peso neto (kg)" porque una guía puede amparar varios movimientos con
+# distinto peso: sin el peso, esas filas legítimas se leerían como
+# duplicadas. Medido sobre las bases actuales, esta clave marca MENOS
+# duplicados que la anterior en todas las fuentes.
+CLAVE_DEDUP = ["Fecha", "Cliente", "ID", "TIPO", "Destino", "Peso neto (kg)"]
 
 MAX_REINTENTOS = 5
 ESPERA_REINTENTO = 30
@@ -572,6 +578,38 @@ def cargar_lookups(rutas, p):
     return transportistas, materiales, df_d
 
 
+# ══════════════════════════════════════════════════════════════════
+# FORMATO DEL ENCABEZADO
+# ══════════════════════════════════════════════════════════════════
+# Estas columnas se destacan con otro color porque no vienen tal cual de
+# la planilla de origen: son derivadas o inferidas por el consolidador.
+# Verlas distinto al abrir el archivo evita tratarlas como dato de terreno.
+COLUMNAS_DESTACADAS = {
+    "Origen ID",
+    "Comuna Destino",
+    "Movimiento",
+    "Movimiento interempresa",
+    "Destino inferido",
+}
+
+# Paleta Ambipar
+COLOR_TEAL = "FF032024"   # fondo del encabezado normal
+COLOR_LIMA = "FFCDFF00"   # texto del encabezado normal
+COLOR_CREMA = "FFF5F4ED"  # fondo de las columnas destacadas
+
+
+def formatear_encabezado(ws, columnas):
+    """Pinta la fila 1: teal por defecto, crema en las columnas derivadas."""
+    for i, nombre in enumerate(columnas, start=1):
+        celda = ws.cell(row=1, column=i)
+        if nombre in COLUMNAS_DESTACADAS:
+            celda.font = Font(bold=True, color=COLOR_TEAL)
+            celda.fill = PatternFill("solid", fgColor=COLOR_CREMA)
+        else:
+            celda.font = Font(bold=True, color=COLOR_LIMA)
+            celda.fill = PatternFill("solid", fgColor=COLOR_TEAL)
+    ws.freeze_panes = "A2"
+
 def guardar_excel(df, ruta, p):
     for intento in range(1, MAX_REINTENTOS + 1):
         try:
@@ -587,6 +625,8 @@ def guardar_excel(df, ruta, p):
             ws.append(list(df.columns))
             for fila in df.itertuples(index=False):
                 ws.append([None if str(v) in ("nan", "NaT", "None") else v for v in fila])
+
+            formatear_encabezado(ws, list(df.columns))
             wb.save(ruta)
             p(f"  ✓ Guardado en: {ruta}")
             return
@@ -597,6 +637,79 @@ def guardar_excel(df, ruta, p):
     raise PermissionError(f"No se pudo guardar {ruta}. Ciérralo en Excel.")
 
 
+
+# ══════════════════════════════════════════════════════════════════
+# ID DE TRAZABILIDAD
+# ══════════════════════════════════════════════════════════════════
+# El consolidado ya no publica "Ticket de pesaje". En su lugar sale "ID",
+# que toma el primer valor disponible en este orden de prioridad:
+#     1) N° Guía Cliente   2) N° Guía Ecofibras   3) Ticket de pesaje
+# y "N/A" si ninguna de las tres trae dato.
+#
+# "Origen ID" registra cuál de las tres se usó. Sin esa columna, un número
+# en ID puede ser tres documentos distintos y no habría forma de saber cuál,
+# que es justo lo que importa al reportar a SINADER.
+#
+# Cada procesar_*() deja las columnas de trabajo _guia_cliente y
+# _guia_ecofibras; construir_id() las consume y luego las elimina.
+VALORES_NULOS_ID = {
+    "", "-", "--", ".", "0", "S/I", "N/A", "NA", "NONE", "NAN", "NAT",
+    "SIN GUIA", "SIN GUÍA", "SIN TICKET", "SIN INFORMACION",
+    "SIN INFORMACIÓN", "SIN HR ASOCIADO",
+}
+
+
+def _valor_id(v):
+    """Normaliza un identificador. Devuelve None si está vacío o es placeholder."""
+    if v is None:
+        return None
+    try:
+        if pd.isna(v):
+            return None
+    except (TypeError, ValueError):
+        pass
+    s = str(v).strip()
+    if s.upper() in VALORES_NULOS_ID:
+        return None
+    # Excel entrega los correlativos como float: "45954.0" → "45954"
+    if s.endswith(".0") and s[:-2].isdigit():
+        s = s[:-2]
+    return s or None
+
+
+def construir_id(df, p):
+    """Crea ID y Origen ID según la cadena de prioridad y descarta las auxiliares."""
+    for col in ("_guia_cliente", "_guia_ecofibras"):
+        if col not in df.columns:
+            df[col] = None
+
+    vacio = pd.Series([None] * len(df), index=df.index, dtype=object)
+    cliente = df["_guia_cliente"].map(_valor_id)
+    ecofibras = df["_guia_ecofibras"].map(_valor_id)
+    ticket = df["Ticket de pesaje"].map(_valor_id) if "Ticket de pesaje" in df.columns else vacio
+
+    df["ID"] = cliente.fillna(ecofibras).fillna(ticket).fillna("N/A")
+
+    origen = vacio.copy()
+    origen = origen.mask(ticket.notna(), "Ticket de pesaje")
+    origen = origen.mask(ecofibras.notna(), "Guía Ecofibras")
+    origen = origen.mask(cliente.notna(), "Guía cliente")
+    df["Origen ID"] = origen.fillna("N/A")
+
+    p("\n── Construcción de ID (Guía cliente → Guía Ecofibras → Ticket) ──")
+    total = len(df)
+    reparto = df["Origen ID"].value_counts().to_dict()
+    for etiqueta in ("Guía cliente", "Guía Ecofibras", "Ticket de pesaje", "N/A"):
+        n = int(reparto.get(etiqueta, 0))
+        pct = f"{100 * n / total:.1f}%" if total else "0.0%"
+        p(f"  • {etiqueta:<18} {n:>6} filas ({pct})")
+    n_na = int((df["ID"] == "N/A").sum())
+    if n_na:
+        p(f"  ⚠ {n_na} filas sin identificador en ninguna de las tres columnas. REVISAR.")
+
+    return df.drop(columns=["_guia_cliente", "_guia_ecofibras"])
+
+
 # ══════════════════════════════════════════════════════════════════
 # FUENTES
 # ══════════════════════════════════════════════════════════════════
@@ -604,6 +717,7 @@ def base_final(n):
     return pd.DataFrame(index=range(n), columns=[
         "Fecha", "Mes", "Cliente", "RUT", "Gestor", "Contrato", "Generador",
         "Transportista", "Rut transportista", "Patente de Camión", "Ticket de pesaje",
+        "_guia_cliente", "_guia_ecofibras",
         "Peso neto", "Unidad", "Destino", "Comuna Destino", "TIPO", "Movimiento",
         "Movimiento interempresa", "Región", "Destino inferido",
     ])
@@ -728,6 +842,11 @@ def _procesar_ecofibras(
     out["Rut transportista"] = out["Transportista"].map(transportistas)
     out["Patente de Camión"] = tomar_columna(df, ["PATENTE CAMIÓN", "PATENTE", "Patente"]).apply(limpiar_texto).values
     out["Ticket de pesaje"]  = tomar_columna(df, ["TICKET DE PESAJE", "Ticket de pesaje"]).apply(limpiar_texto).values
+
+    # Coronel, Planta Trapén y San Joaquín llevan las dos guías: la del
+    # cliente y la propia de despacho. La prioridad la aplica construir_id().
+    out["_guia_cliente"]   = tomar_columna(df, ["N° GUÍA CLIENTE", "N° GUIA CLIENTE"]).apply(limpiar_texto).values
+    out["_guia_ecofibras"] = tomar_columna(df, ["N° GUÍA ECOFIBRAS", "N° GUIA ECOFIBRAS"]).apply(limpiar_texto).values
     out["Peso neto"]         = tomar_columna(df, ["PESO NETO KG", "Peso neto", "Peso neto (kg)"]).apply(limpiar_numero).values
     out["Unidad"]            = "kg"
     out["Movimiento"]        = tmp["Movimiento_final"].values
@@ -783,6 +902,10 @@ def procesar_bo_trapen(rutas, transportistas, homolog_c, homolog_g, p):
     out["Rut transportista"] = out["Transportista"].map(transportistas)
     out["Patente de Camión"] = tomar_columna(df, ["PATENTE CAMIÓN", "PATENTE", "Patente"]).apply(limpiar_texto).values
     out["Ticket de pesaje"]  = tomar_columna(df, ["TICKET DE PESAJE", "Ticket de pesaje"]).apply(limpiar_texto).values
+
+    # BO Trapén también trae ambas columnas de guía.
+    out["_guia_cliente"]   = tomar_columna(df, ["N° GUÍA CLIENTE", "N° GUIA CLIENTE"]).apply(limpiar_texto).values
+    out["_guia_ecofibras"] = tomar_columna(df, ["N° GUÍA ECOFIBRAS", "N° GUIA ECOFIBRAS"]).apply(limpiar_texto).values
     out["Peso neto"]         = tomar_columna(df, ["PESO NETO KG", "Peso neto", "Peso neto (kg)"]).apply(limpiar_numero).values
     out["Unidad"]            = "kg"
     out["Movimiento"]        = "Traslado"
@@ -851,6 +974,10 @@ def procesar_irar_los_angeles(rutas, transportistas, homolog_c, homolog_g, p):
     out["Rut transportista"] = out["Transportista"].map(transportistas)
     out["Patente de Camión"] = tomar_columna(df, ["PATENTE", "PATENTE CAMIÓN", "Patente de Camión"]).apply(limpiar_texto).values
     out["Ticket de pesaje"]  = tomar_columna(df, ["TICKET DE PESAJE", "Ticket de pesaje"]).apply(limpiar_texto).values
+
+    # IRAR Los Ángeles rotula la guía propia como 'N° GUÍA' (sin sufijo).
+    out["_guia_cliente"]   = tomar_columna(df, ["N° GUÍA CLIENTE", "N° GUIA CLIENTE"]).apply(limpiar_texto).values
+    out["_guia_ecofibras"] = tomar_columna(df, ["N° GUÍA", "N° GUIA"]).apply(limpiar_texto).values
     out["Peso neto"]         = tomar_columna(df, ["PESO NETO KG", "Peso neto", "PESO NETO"]).apply(limpiar_numero).values
     out["Unidad"]            = "kg"
     out["Movimiento"]        = tmp["Movimiento_final"].values
@@ -896,6 +1023,10 @@ def procesar_bo_chillan(rutas, transportistas, homolog_c, homolog_g, p):
     out["Rut transportista"] = "96824110-9"
     out["Patente de Camión"] = tomar_columna(df, ["Patente de Camión", "PATENTE DE CAMIÓN", "Patente"]).apply(limpiar_texto).values
     out["Ticket de pesaje"]  = tomar_columna(df, ["Ticket de pesaje", "TICKET DE PESAJE"]).apply(limpiar_texto).values
+
+    # BO Chillán (hoja TRASLADOS BO) no registra guía: el ID sale del ticket.
+    out["_guia_cliente"]   = None
+    out["_guia_ecofibras"] = None
     out["Peso neto"]         = tomar_columna(df, ["Peso neto", "PESO NETO KG", "Peso neto (kg)"]).apply(limpiar_numero).values
     out["Unidad"]            = tomar_columna(df, ["Unidad", "UNIDAD"], default="kg").apply(limpiar_texto).fillna("kg").values
     out["Movimiento"]        = "Traslado"
@@ -942,6 +1073,10 @@ def procesar_temuco(rutas, homolog_c, homolog_g, p):
     out["Rut transportista"]= "96824110-9"
     out["Patente de Camión"]= tomar_columna(df, ["Patente de Camión", "PATENTE DE CAMIÓN", "PATENTE", "Patente"]).apply(limpiar_texto).values
     out["Ticket de pesaje"] = tomar_columna(df, ["Ticket de pesaje", "TICKET DE PESAJE"]).apply(limpiar_texto).values
+
+    # Temuco no registra guía: el ID sale del ticket de pesaje.
+    out["_guia_cliente"]   = None
+    out["_guia_ecofibras"] = None
     out["Peso neto"]        = tomar_columna(df, ["Peso neto", "PESO NETO KG", "Peso neto (kg)"]).apply(limpiar_numero).values
     out["Unidad"]           = tomar_columna(df, ["Unidad", "UNIDAD"], default="kg").apply(limpiar_texto).fillna("kg").values
     out["Destino"]          = tomar_columna(df, ["Destino", "DESTINO"]).apply(lambda x: normalizar_destino(x)).values
@@ -996,6 +1131,11 @@ def procesar_proveedores(rutas, transportistas, homolog_c, homolog_g, p):
     )
     out["Patente de Camión"] = df["Patente"].apply(limpiar_texto).values
     out["Ticket de pesaje"]  = df["N° Guía"].apply(limpiar_texto).values
+
+    # Proveedores MOWI rotula 'N° Guía' pero ese número opera como ticket de
+    # pesaje; la fuente no aporta guía de despacho.
+    out["_guia_cliente"]   = None
+    out["_guia_ecofibras"] = None
     out["Peso neto"]         = df["Cantidad (Kg)"].apply(limpiar_numero).values
     out["Unidad"]            = "kg"
     out["Destino"]           = df["Destinatario"].apply(lambda x: normalizar_destino(x)).values
@@ -1059,6 +1199,10 @@ def procesar_bo_chiloe(rutas, homolog_c, homolog_g, p):
     out["Rut transportista"]= "96824110-9"
     out["Patente de Camión"]= tomar_columna(df, ["Patente de Camión", "PATENTE DE CAMIÓN", "PATENTE", "Patente"]).apply(limpiar_texto).values
     out["Ticket de pesaje"] = tomar_columna(df, ["Ticket de pesaje", "TICKET DE PESAJE"]).apply(limpiar_texto).values
+
+    # BO Chiloé tiene una sola columna de guía y es la del cliente.
+    out["_guia_cliente"]   = tomar_columna(df, ["N° guía", "N° GUÍA", "N° guia"]).apply(limpiar_texto).values
+    out["_guia_ecofibras"] = None
     out["Peso neto"]        = tomar_columna(df, ["Peso neto [kg]", "Peso neto", "PESO NETO KG", "Peso neto (kg)"]).apply(limpiar_numero).values
     out["Unidad"]           = tomar_columna(df, ["Unidad", "UNIDAD"], default="kg").apply(limpiar_texto).fillna("kg").values
     out["Destino"]          = tomar_columna(df, ["Destino", "DESTINO"]).apply(lambda x: normalizar_destino(x)).values
@@ -1440,6 +1584,8 @@ def consolidar(rutas, ruta_prueba=None, ruta_log=None, modo_reset=False,
     df["Mes"]   = df["Fecha"].apply(nombre_mes)
 
     df = limpiar_filas_invalidas(df, p)
+
+    df = construir_id(df, p)
 
     for col in COLUMNAS_FINALES:
         if col not in df.columns:
