@@ -16,8 +16,8 @@
 #
 # ESTADO DE LAS ZONAS
 #   RM     -> lógica REAL conectada (scripts de la Etapa 1)
-#   SUR    -> modo demostración (pendiente de conectar)
-#   NORTE  -> modo demostración (pendiente de conectar)
+#   SUR    -> lógica REAL conectada (scripts de la Etapa 1)
+#   NORTE  -> solo lectura (pendiente de conectar)
 #
 # CÓMO SE CONECTAN LOS SCRIPTS
 #   app.js descarga los módulos de python/rm/ y los deja dentro del motor,
@@ -68,15 +68,32 @@ ETIQUETAS_MAESTROS = {
     "transportistas": "Transportistas",
 }
 
-# Archivos que consolidar.py necesita y que control_calidad.py no busca
-NOMBRES_EXTRA = {
-    "destinatarios": NOMBRES_MAESTROS["destinatarios"],
-    "homologacion": NOMBRES_MAESTROS["homologacion"],
+# Archivos que consolidar.py necesita y que control_calidad.py no busca.
+# Cada zona tiene los suyos: Sur suma la base de proveedores, que su
+# control de calidad no mira pero su consolidación sí.
+NOMBRES_EXTRA_ZONA = {
+    "RM": {
+        "destinatarios": NOMBRES_MAESTROS["destinatarios"],
+        "homologacion": NOMBRES_MAESTROS["homologacion"],
+    },
+    "SUR": {
+        "destinatarios": NOMBRES_MAESTROS["destinatarios"],
+        "homologacion": NOMBRES_MAESTROS["homologacion"],
+        "proveedores": ["BBDD PROVEEDORES MOWI.xlsx", "BBDD PROVEEDORES.xlsx"],
+    },
 }
 
 # 'destinatarios' es obligatorio para consolidar; 'homologacion' no lo es
-# (el script original avisa y sigue sin aplicar correcciones).
-EXTRA_OBLIGATORIOS = ["destinatarios"]
+# (el script original avisa y sigue sin aplicar correcciones). En Sur,
+# 'proveedores' también es opcional: consolidar_sur lo omite si no está.
+EXTRA_OBLIGATORIOS_ZONA = {"RM": ["destinatarios"], "SUR": ["destinatarios"]}
+
+# Nombre base del consolidado que genera cada zona en modo prueba
+NOMBRE_CONSOLIDADO = {"RM": "TRAZABILIDAD_RM.xlsx", "SUR": "TRAZABILIDAD_SUR.xlsx"}
+
+# Zonas con la lógica real conectada. Las que no están acá entran en modo
+# solo lectura: se comprueba que los archivos se puedan abrir y nada más.
+ZONAS_CONECTADAS = ("RM", "SUR")
 
 # Nombres legibles de los controles de calidad (C1–C9)
 ETIQUETAS_CC = {
@@ -89,6 +106,20 @@ ETIQUETAS_CC = {
     "c8": "C8 — Movimientos no reconocidos (se descartan al consolidar)",
     "c9": "C9 — Destinos vacíos sin explicación (se descartan al consolidar)",
 }
+
+# Sur devuelve otras claves: su control de calidad no está numerado C1–C9.
+ETIQUETAS_CC_SUR = {
+    "c1": "Cliente con mismo nombre y RUT distinto",
+    "c2": "Cliente con mismo RUT y nombre distinto",
+    "c3": "Generador con variantes de nombre",
+    "c_tipo": "TIPO sin código SINADER",
+    "c_trans": "Transportistas sin RUT",
+    "c_vacios": "Vacíos críticos",
+    "c_mov": "Movimientos no reconocidos (se descartan al consolidar)",
+    "c_dest": "Destinos vacíos sin explicación (se descartan al consolidar)",
+}
+
+ETIQUETAS_CC_ZONA = {"RM": ETIQUETAS_CC, "SUR": ETIQUETAS_CC_SUR}
 
 # Nombres legibles de las validaciones del consolidado (V0–V9)
 ETIQUETAS_REV = {
@@ -804,11 +835,51 @@ def _tabla_a_dataframe(ruta, nombre_tabla, p, limpiar_encabezados):
     return df.dropna(how="all").reset_index(drop=True)
 
 
-def _instalar_lectores_livianos(mod_control, mod_consolidar, log=None):
-    """Reemplaza los lectores de tabla por las versiones que no agotan la memoria.
+def _primera_tabla_de_hoja(ruta, nombre_hoja):
+    """Devuelve ((ruta_interna, rango), titulos) de la primera tabla de una hoja.
 
-    Cada uno conserva el post-proceso de su script original: control_calidad
-    limpia los espacios de los encabezados y consolidar no, y eso NO se cambia.
+    Es el equivalente liviano de abrir el libro y mirar ws.tables. Si la hoja
+    existe pero no tiene ninguna tabla, la primera parte viene en None.
+    """
+    import xml.etree.ElementTree as ET
+
+    with zipfile.ZipFile(ruta) as z:
+        nombres = set(z.namelist())
+        hojas, titulos = _hojas_del_libro(z)
+        if nombre_hoja not in titulos:
+            return None, titulos
+
+        hoja = hojas[titulos.index(nombre_hoja)]
+        rels = f"xl/worksheets/_rels/{hoja.split('/')[-1]}.rels"
+        if rels not in nombres:
+            return None, titulos
+
+        for rel in ET.fromstring(z.read(rels)):
+            destino = rel.get("Target", "")
+            if "tables/" in destino:
+                parte = "xl/tables/" + destino.split("/")[-1]
+                if parte in nombres:
+                    ref = ET.fromstring(z.read(parte)).get("ref")
+                    if ref:
+                        return (hoja, ref), titulos
+    return None, titulos
+
+
+def _instalar_lectores_livianos(mod_control, mod_consolidar, log=None):
+    """Reemplaza los lectores por versiones que no agotan la memoria.
+
+    Hay dos formatos de lector, uno por zona:
+
+      · RM lee por NOMBRE DE TABLA        → leer_tabla / leer_tabla_nombrada
+      · Sur lee por NOMBRE DE HOJA        → leer_fuente
+
+    Cada uno conserva el post-proceso de su script original: control_calidad de
+    RM limpia los espacios de los encabezados y consolidar no, y eso NO se
+    cambia. En Sur los dos limpian, igual que el original.
+
+    Si una hoja de Sur no tiene tabla Excel, se deja correr el lector original:
+    ahí el script adivina la fila de encabezado probando varias, y esa lógica
+    no se toca.
     """
     def leer_tabla(path, nombre_tabla, p):
         return _tabla_a_dataframe(path, nombre_tabla, p, limpiar_encabezados=True)
@@ -816,8 +887,41 @@ def _instalar_lectores_livianos(mod_control, mod_consolidar, log=None):
     def leer_tabla_nombrada(path, nombre_tabla, p):
         return _tabla_a_dataframe(path, nombre_tabla, p, limpiar_encabezados=False)
 
-    mod_control.leer_tabla = leer_tabla
-    mod_consolidar.leer_tabla_nombrada = leer_tabla_nombrada
+    if hasattr(mod_control, "leer_tabla"):
+        mod_control.leer_tabla = leer_tabla
+    if hasattr(mod_consolidar, "leer_tabla_nombrada"):
+        mod_consolidar.leer_tabla_nombrada = leer_tabla_nombrada
+
+    def hacer_leer_fuente(original):
+        def leer_fuente(path, hoja, p, headers_fallback=(0, 7, 8, 9)):
+            ruta = Path(path)
+            encontrada, titulos = _primera_tabla_de_hoja(ruta, hoja)
+
+            if hoja not in titulos:
+                raise ValueError(
+                    f"No existe la hoja '{hoja}' en {ruta.name}. Hojas: {titulos}"
+                )
+            if encontrada is None:
+                # Sin tabla: lo resuelve el lector original, que prueba varias
+                # filas de encabezado y se queda con la que más columnas
+                # conocidas encuentra.
+                return original(path, hoja, p, headers_fallback=headers_fallback)
+
+            p(f"  Leyendo {ruta.name} → hoja {hoja}...")
+            ruta_hoja, ref = encontrada
+            filas = _leer_rango(ruta, ruta_hoja, ref)
+            if not filas:
+                return pd.DataFrame()
+
+            df = pd.DataFrame(list(filas[1:]), columns=list(filas[0]))
+            df.columns = df.columns.astype(str).str.strip()
+            return df.dropna(how="all").reset_index(drop=True)
+        return leer_fuente
+
+    for modulo in (mod_control, mod_consolidar):
+        if hasattr(modulo, "leer_fuente"):
+            modulo.leer_fuente = hacer_leer_fuente(modulo.leer_fuente)
+
     if log is not None:
         log.append("  (lectura de tablas en modo liviano, para no agotar la memoria)")
 
@@ -898,13 +1002,16 @@ def preparar_base(carpeta):
 # =============================================================================
 # ZONA RM — LÓGICA REAL
 # =============================================================================
-def _rutas_rm(carpeta_entrada, control_calidad):
-    """Arma el diccionario de rutas que necesitan los scripts de RM.
+def _rutas_zona(zona, carpeta_entrada, control_calidad):
+    """Arma el diccionario de rutas que necesitan los scripts de una zona.
 
-    Parte de rutas_desde_carpeta() de control_calidad.py (que ya encuentra las
-    8 fuentes tolerando tildes y mayúsculas) y le agrega los archivos que solo
-    necesita consolidar().
+    Parte de rutas_desde_carpeta() del control de calidad de esa zona (que ya
+    encuentra las fuentes tolerando tildes y mayúsculas) y le agrega los
+    archivos que solo necesita consolidar().
     """
+    NOMBRES_EXTRA = NOMBRES_EXTRA_ZONA.get(zona, {})
+    EXTRA_OBLIGATORIOS = EXTRA_OBLIGATORIOS_ZONA.get(zona, [])
+
     rutas = control_calidad.rutas_desde_carpeta(carpeta_entrada)
 
     presentes = {
@@ -939,7 +1046,7 @@ def _rutas_rm(carpeta_entrada, control_calidad):
     return rutas
 
 
-def _alertas_rm(cc, rev, periodo_txt=None):
+def _alertas_zona(zona, cc, rev, periodo_txt=None):
     """Traduce los resultados de los scripts a la lista de alertas de pantalla.
 
     Las cifras son SIEMPRE del año completo, porque así corren los scripts. Si
@@ -957,7 +1064,7 @@ def _alertas_rm(cc, rev, periodo_txt=None):
                        "archivo de revisión.",
         })
 
-    for clave, etiqueta in ETIQUETAS_CC.items():
+    for clave, etiqueta in ETIQUETAS_CC_ZONA.get(zona, ETIQUETAS_CC).items():
         df = cc.get(clave)
         if df is not None and len(df) > 0:
             alertas.append({
@@ -991,21 +1098,31 @@ def _alertas_rm(cc, rev, periodo_txt=None):
     return alertas
 
 
-def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
-    """Ejecuta el flujo completo de RM: control de calidad → consolidar → revisar."""
-    import gc
+def _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo=None):
+    """Ejecuta el flujo completo de una zona: control de calidad → consolidar → revisar.
 
-    from rm import consolidar as mod_consolidar
-    from rm import control_calidad as mod_control
-    from rm import revisar_consolidado as mod_revisar
+    Sirve igual para RM y para Sur. Lo único que cambia entre zonas está en las
+    tablas de configuración de arriba (qué archivos extra pide la consolidación,
+    cómo se llaman los controles) y en la carpeta de la que se importan los
+    scripts: python/rm/ o python/sur/.
+    """
+    import gc
+    import importlib
+
+    paquete = zona.lower()
+    mod_consolidar = importlib.import_module(f"{paquete}.consolidar")
+    mod_control = importlib.import_module(f"{paquete}.control_calidad")
+    mod_revisar = importlib.import_module(f"{paquete}.revisar_consolidado")
 
     _instalar_lectores_livianos(mod_control, mod_consolidar, log)
 
     salida = Path(carpeta_salida)
+    nombre_cc = f"CONTROL_CALIDAD_{zona}.xlsx"
+    nombre_rev = f"REVISION_CONSOLIDADO_{zona}.xlsx"
 
     # ---- 1. Ubicar los archivos --------------------------------------------
     log.append("── Buscando los archivos ──")
-    rutas = _rutas_rm(carpeta_entrada, mod_control)
+    rutas = _rutas_zona(zona, carpeta_entrada, mod_control)
     for clave in sorted(rutas):
         if clave != "destino_real":
             log.append(f"  {clave:<15} → {Path(rutas[clave]).name}")
@@ -1024,7 +1141,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     log.append("── Control de calidad ──")
     cc = mod_control.controlar(
         rutas_cc,
-        ruta_salida=salida / "CONTROL_CALIDAD_RM.xlsx",
+        ruta_salida=salida / nombre_cc,
         mostrar=True,   # el avance se ve en pantalla mientras corre
     )
     log.append(cc.get("log", ""))
@@ -1042,7 +1159,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     antes = {f.name for f in salida.glob("*.xlsx")}
     res = mod_consolidar.consolidar(
         rutas,
-        ruta_prueba=salida / "TRAZABILIDAD_RM.xlsx",
+        ruta_prueba=salida / NOMBRE_CONSOLIDADO.get(zona, f"TRAZABILIDAD_{zona}.xlsx"),
         ruta_log=None,
         modo_reset=False,
         modo_prueba=True,     # nunca escribe sobre BBDD_TRAZABILIDAD_RM.xlsx
@@ -1061,7 +1178,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     # archivo se renombra para que se entienda solo dentro de tres meses.
     par = _leer_periodo(periodo)
     if par:
-        nuevo = f"TRAZABILIDAD_RM_{par[0]}-{par[1]:02d}.xlsx"
+        nuevo = f"TRAZABILIDAD_{zona}_{par[0]}-{par[1]:02d}.xlsx"
         try:
             (salida / nombre_consolidado).replace(salida / nuevo)
             log.append(f"  Archivo renombrado a {nuevo}")
@@ -1074,7 +1191,7 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     log.append("── Revisión del consolidado ──")
     rev = mod_revisar.revisar(
         salida / nombre_consolidado,
-        ruta_salida=salida / "REVISION_CONSOLIDADO_RM.xlsx",
+        ruta_salida=salida / nombre_rev,
         mostrar=True,
     )
     log.append(rev.get("log", ""))
@@ -1089,14 +1206,14 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
     if par:
         etiqueta = _etiqueta_periodo(*par)
         cc_mes = _recortar_revision(
-            salida / "CONTROL_CALIDAD_RM.xlsx", par[0], par[1], etiqueta, log)
+            salida / nombre_cc, par[0], par[1], etiqueta, log)
         rev_mes = _recortar_revision(
-            salida / "REVISION_CONSOLIDADO_RM.xlsx", par[0], par[1], etiqueta, log)
+            salida / nombre_rev, par[0], par[1], etiqueta, log)
 
     # ---- 6. Armar lo que se muestra en pantalla -----------------------------
     kilos = _sumar_kilos(res["consolidado"])
     resumen = (
-        f"<b>Zona RM consolidada.</b> "
+        f"<b>Zona {zona} consolidada.</b> "
         f"{_formato_miles(res['filas'], 0)} filas × {res['columnas']} columnas"
         + (f" · {_formato_miles(kilos)} kg" if kilos else "")
         + f" · control de calidad: {cc.get('total', 0)} conflicto(s)"
@@ -1117,23 +1234,23 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
             "etiqueta": f"Mes {mensual['etiqueta_periodo']}",
         })
     descargas += [
-        {"archivo": cc_mes or "CONTROL_CALIDAD_RM.xlsx",
+        {"archivo": cc_mes or nombre_cc,
          "etiqueta": "Control de calidad" + (f" · {mensual['etiqueta_periodo']}"
                                              if cc_mes and mensual else "")},
-        {"archivo": rev_mes or "REVISION_CONSOLIDADO_RM.xlsx",
+        {"archivo": rev_mes or nombre_rev,
          "etiqueta": "Revisión del consolidado" + (f" · {mensual['etiqueta_periodo']}"
                                                    if rev_mes and mensual else "")},
         {"archivo": nombre_consolidado, "etiqueta": "Consolidado completo del año"},
     ]
     if cc_mes:
-        descargas.append({"archivo": "CONTROL_CALIDAD_RM.xlsx",
+        descargas.append({"archivo": nombre_cc,
                           "etiqueta": "Control de calidad · año completo"})
     if rev_mes:
-        descargas.append({"archivo": "REVISION_CONSOLIDADO_RM.xlsx",
+        descargas.append({"archivo": nombre_rev,
                           "etiqueta": "Revisión del consolidado · año completo"})
 
-    alertas = (mensual["alertas"] if mensual else []) + _alertas_rm(
-        cc, rev, mensual["etiqueta_periodo"] if mensual else None)
+    alertas = (mensual["alertas"] if mensual else []) + _alertas_zona(
+        zona, cc, rev, mensual["etiqueta_periodo"] if mensual else None)
 
     return {
         "resumen": resumen,
@@ -1149,53 +1266,73 @@ def _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo=None):
 # ZONAS SUR Y NORTE — TODAVÍA EN DEMOSTRACIÓN
 # =============================================================================
 def _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log):
-    """Combina los Excel subidos sin aplicar reglas de negocio.
+    """Revisa que los archivos de la zona se puedan leer. NO consolida nada.
 
-    Se mantiene para SUR y NORTE mientras no se conecten sus scripts, para que
-    la app siga funcionando de punta a punta en las tres zonas.
+    Se mantiene para SUR y NORTE mientras no se conecten sus scripts. Antes
+    esta función pegaba las primeras hojas una debajo de otra y dejaba un
+    CONSOLIDADO_<ZONA>.xlsx para descargar. Ese archivo parecía un resultado
+    real y no lo era: no tenía control de calidad, ni homologación, ni filtros,
+    ni recorte del mes. Si alguien lo pegaba en la base de trazabilidad, metía
+    basura sin darse cuenta.
+
+    Por eso ahora la zona en demostración solo INFORMA: dice qué archivos leyó,
+    qué hojas tiene cada uno y cuántas filas trae la primera. No genera ningún
+    Excel descargable.
     """
     rutas = _listar_archivos(carpeta_entrada)
-    fuentes, alertas, marcos = [], [], []
+    fuentes, alertas = [], []
+    total_filas = 0
 
     for ruta in rutas:
         nombre = os.path.basename(ruta)
         try:
-            hojas = pd.ExcelFile(ruta).sheet_names
-            df = pd.read_excel(ruta, sheet_name=hojas[0])
-            fuentes.append({"archivo": nombre, "hojas": ", ".join(hojas), "filas": len(df)})
-            log.append(f"  {nombre}: hojas={hojas}, filas primera hoja={len(df)}")
-            df["_archivo_origen"] = nombre
-            marcos.append(df)
+            with zipfile.ZipFile(ruta) as z:
+                hojas_int, nombres_hojas = _hojas_del_libro(z)
+                filas = 0
+                if hojas_int:
+                    ref = _dimension(z, hojas_int[0])
+                    if ref and ":" in ref:
+                        filas = max(0, _partes_ref(ref.split(":")[1])[1] - 1)
+            fuentes.append({"archivo": nombre,
+                            "hojas": ", ".join(nombres_hojas),
+                            "filas": filas})
+            total_filas += filas
+            log.append(f"  {nombre}: hojas={nombres_hojas}, filas primera hoja={filas}")
         except Exception as e:
+            fuentes.append({"archivo": nombre, "hojas": "no se pudo leer",
+                            "filas": f"{type(e).__name__}: {e}"[:200]})
             alertas.append({"titulo": f"No se pudo leer {nombre}", "detalle": str(e)})
             log.append(f"  ERROR en {nombre}: {e}")
 
-    salida = None
-    if marcos:
-        df_todo = pd.concat(marcos, ignore_index=True)
-        salida = f"CONSOLIDADO_{zona}.xlsx"
-        df_todo.to_excel(os.path.join(carpeta_salida, salida), index=False)
-        log.append(f"\nConsolidado de demostración: {len(df_todo)} filas")
+    ok = sum(1 for f in fuentes if f["hojas"] != "no se pudo leer")
+    if fuentes:
         resumen = (
-            f"<b>Zona {zona}</b> · {len(rutas)} archivo(s) leídos · "
-            f"{len(df_todo)} filas combinadas (versión de demostración)."
+            f"<b>Zona {zona} — solo lectura.</b> {ok} de {len(rutas)} archivo(s) "
+            f"se abrieron sin problema. <b>No se generó ningún consolidado</b>, "
+            f"porque la lógica de esta zona todavía no está conectada."
         )
     else:
         resumen = "No se leyó ningún archivo válido."
 
     alertas.insert(0, {
-        "titulo": f"Zona {zona}: versión de demostración",
-        "detalle": "Todavía no está conectada la lógica real de esta zona. "
-                   "El consolidado es solo una combinación de prueba.",
+        "titulo": f"Zona {zona}: todavía no está conectada",
+        "detalle": "Por ahora la app solo comprueba que los archivos de esta "
+                   "zona se puedan abrir. No hay control de calidad, ni "
+                   "homologación, ni consolidación, ni recorte del mes: eso "
+                   "llega cuando se conecten los scripts de la zona. "
+                   "La única zona operativa es RM.",
     })
+
+    log.append("")
+    log.append(f"Lectura de prueba: {len(rutas)} archivo(s), {total_filas} fila(s) "
+               f"en las primeras hojas. No se generó ningún archivo.")
 
     return {
         "resumen": resumen,
         "fuentes": fuentes,
         "alertas": alertas,
-        "salida": salida,
-        "descargas": ([{"archivo": salida, "etiqueta": "Descargar consolidado"}]
-                      if salida else []),
+        "salida": None,
+        "descargas": [],
         "log": "\n".join(log),
     }
 
@@ -1228,8 +1365,8 @@ def procesar(zona, carpeta_entrada, carpeta_salida, periodo=None):
             log.append("  (no venía ningún ZIP)")
         log.append("")
 
-        if zona == "RM":
-            return _procesar_rm(carpeta_entrada, carpeta_salida, log, periodo)
+        if zona in ZONAS_CONECTADAS:
+            return _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo)
         return _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log)
 
     except Exception as e:
