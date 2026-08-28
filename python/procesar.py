@@ -349,6 +349,22 @@ _MESES = {
 }
 
 
+def _pintar(writer, hoja, columnas, formatear):
+    """Aplica a una hoja recién escrita el mismo encabezado que usa la zona.
+
+    'formatear' es formatear_encabezado() del consolidar.py de la zona: teal con
+    texto lima, y crema en las columnas derivadas. Se reutiliza esa función en
+    vez de repetir los colores acá, para que si mañana cambia la paleta en el
+    script, cambie también en los archivos que arma la app.
+    """
+    if formatear is None:
+        return
+    try:
+        formatear(writer.sheets[hoja[:31]], list(columnas))
+    except Exception:
+        pass   # el formato es cosmético: si falla, el archivo igual sirve
+
+
 def _leer_periodo(periodo):
     """Convierte '2026-08' en (2026, 8). Devuelve None si no vino nada válido."""
     if not periodo:
@@ -366,7 +382,7 @@ def _etiqueta_periodo(anio, mes):
     return f"{_MESES[mes]} {anio}"
 
 
-def _recorte_mensual(df, periodo, carpeta_salida, log):
+def _recorte_mensual(df, periodo, carpeta_salida, log, formatear=None, zona="RM"):
     """Genera el archivo con solo las filas del mes elegido.
 
     Devuelve {archivo, filas, kilos, alertas, resumen_meses} o None si no se
@@ -407,11 +423,12 @@ def _recorte_mensual(df, periodo, carpeta_salida, log):
         .sort_values("MES")
     )
 
-    nombre = f"MES_{anio}-{mes:02d}_RM.xlsx"
+    nombre = f"MES_{anio}-{mes:02d}_{zona}.xlsx"
     ruta = Path(carpeta_salida) / nombre
     hoja_mes = f"{_MESES[mes]}_{anio}"[:31]
     with pd.ExcelWriter(ruta, engine="openpyxl") as w:
         del_mes.to_excel(w, sheet_name=hoja_mes, index=False)
+        _pintar(w, hoja_mes, del_mes.columns, formatear)
 
     log.append(f"  Recorte de {etiqueta}: {len(del_mes)} fila(s) → {nombre}")
 
@@ -498,7 +515,7 @@ def _columna_fecha(df):
     return None
 
 
-def _recortar_revision(ruta, anio, mes, etiqueta, log):
+def _recortar_revision(ruta, anio, mes, etiqueta, log, formatear=None):
     """Deja en el Excel solo las filas del mes, en las hojas que tienen fecha.
 
     Devuelve el nombre del archivo nuevo, o None si no se pudo procesar.
@@ -548,16 +565,23 @@ def _recortar_revision(ruta, anio, mes, etiqueta, log):
 
     nuevo = ruta.with_name(f"{ruta.stem}_{anio}-{mes:02d}{ruta.suffix}")
     with pd.ExcelWriter(nuevo, engine="openpyxl") as w:
-        pd.DataFrame({
+        cabecera = pd.DataFrame({
             "Campo": ["Mes revisado", "Alcance de los cálculos"],
             "Valor": [etiqueta,
                       "Los scripts revisan el año completo. Las hojas con "
                       "fecha se recortaron a este mes; el total del año está "
                       "en RESUMEN_DEL_MES."],
-        }).to_excel(w, sheet_name="MES_REVISADO", index=False)
-        pd.DataFrame(resumen).to_excel(w, sheet_name="RESUMEN_DEL_MES", index=False)
+        })
+        cabecera.to_excel(w, sheet_name="MES_REVISADO", index=False)
+        _pintar(w, "MES_REVISADO", cabecera.columns, formatear)
+
+        df_resumen = pd.DataFrame(resumen)
+        df_resumen.to_excel(w, sheet_name="RESUMEN_DEL_MES", index=False)
+        _pintar(w, "RESUMEN_DEL_MES", df_resumen.columns, formatear)
+
         for nombre, df in salida.items():
             df.to_excel(w, sheet_name=nombre[:31], index=False)
+            _pintar(w, nombre, df.columns, formatear)
 
     recortadas = sum(1 for r in resumen if r["RECORTADA"] == "sí")
     log.append(f"  {ruta.name} → {nuevo.name} ({recortadas} hoja(s) recortada(s) a {etiqueta})")
@@ -1199,16 +1223,17 @@ def _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo=None):
     # ---- 5. Recorte del mes elegido -----------------------------------------
     log.append("")
     log.append("── Recorte del mes ──")
-    mensual = _recorte_mensual(res["consolidado"], periodo, salida, log)
+    formatear = getattr(mod_consolidar, "formatear_encabezado", None)
+    mensual = _recorte_mensual(res["consolidado"], periodo, salida, log, formatear, zona)
 
     # Las revisiones también se acotan al mes que está cerrando la operadora.
     cc_mes = rev_mes = None
     if par:
         etiqueta = _etiqueta_periodo(*par)
         cc_mes = _recortar_revision(
-            salida / nombre_cc, par[0], par[1], etiqueta, log)
+            salida / nombre_cc, par[0], par[1], etiqueta, log, formatear)
         rev_mes = _recortar_revision(
-            salida / nombre_rev, par[0], par[1], etiqueta, log)
+            salida / nombre_rev, par[0], par[1], etiqueta, log, formatear)
 
     # ---- 6. Armar lo que se muestra en pantalla -----------------------------
     kilos = _sumar_kilos(res["consolidado"])
