@@ -17,7 +17,7 @@
 # ESTADO DE LAS ZONAS
 #   RM     -> lógica REAL conectada (scripts de la Etapa 1)
 #   SUR    -> lógica REAL conectada (scripts de la Etapa 1)
-#   NORTE  -> solo lectura (pendiente de conectar)
+#   NORTE  -> lógica REAL conectada (scripts de la Etapa 1)
 #
 # CÓMO SE CONECTAN LOS SCRIPTS
 #   app.js descarga los módulos de python/rm/ y los deja dentro del motor,
@@ -81,19 +81,27 @@ NOMBRES_EXTRA_ZONA = {
         "homologacion": NOMBRES_MAESTROS["homologacion"],
         "proveedores": ["BBDD PROVEEDORES MOWI.xlsx", "BBDD PROVEEDORES.xlsx"],
     },
+    # Norte no necesita ninguno: su consolidación pide exactamente las mismas
+    # claves que ya encuentra su control de calidad.
+    "NORTE": {},
 }
 
 # 'destinatarios' es obligatorio para consolidar; 'homologacion' no lo es
 # (el script original avisa y sigue sin aplicar correcciones). En Sur,
 # 'proveedores' también es opcional: consolidar_sur lo omite si no está.
-EXTRA_OBLIGATORIOS_ZONA = {"RM": ["destinatarios"], "SUR": ["destinatarios"]}
+EXTRA_OBLIGATORIOS_ZONA = {"RM": ["destinatarios"], "SUR": ["destinatarios"],
+                           "NORTE": []}
 
 # Nombre base del consolidado que genera cada zona en modo prueba
-NOMBRE_CONSOLIDADO = {"RM": "TRAZABILIDAD_RM.xlsx", "SUR": "TRAZABILIDAD_SUR.xlsx"}
+NOMBRE_CONSOLIDADO = {
+    "RM": "TRAZABILIDAD_RM.xlsx",
+    "SUR": "TRAZABILIDAD_SUR.xlsx",
+    "NORTE": "TRAZABILIDAD_NORTE.xlsx",
+}
 
 # Zonas con la lógica real conectada. Las que no están acá entran en modo
 # solo lectura: se comprueba que los archivos se puedan abrir y nada más.
-ZONAS_CONECTADAS = ("RM", "SUR")
+ZONAS_CONECTADAS = ("RM", "SUR", "NORTE")
 
 # Nombres legibles de los controles de calidad (C1–C9)
 ETIQUETAS_CC = {
@@ -107,7 +115,8 @@ ETIQUETAS_CC = {
     "c9": "C9 — Destinos vacíos sin explicación (se descartan al consolidar)",
 }
 
-# Sur devuelve otras claves: su control de calidad no está numerado C1–C9.
+# Sur y Norte devuelven otras claves: sus controles de calidad no están
+# numerados C1–C9, y entre ellos dos son idénticos.
 ETIQUETAS_CC_SUR = {
     "c1": "Cliente con mismo nombre y RUT distinto",
     "c2": "Cliente con mismo RUT y nombre distinto",
@@ -119,7 +128,11 @@ ETIQUETAS_CC_SUR = {
     "c_dest": "Destinos vacíos sin explicación (se descartan al consolidar)",
 }
 
-ETIQUETAS_CC_ZONA = {"RM": ETIQUETAS_CC, "SUR": ETIQUETAS_CC_SUR}
+ETIQUETAS_CC_ZONA = {
+    "RM": ETIQUETAS_CC,
+    "SUR": ETIQUETAS_CC_SUR,
+    "NORTE": ETIQUETAS_CC_SUR,
+}
 
 # Nombres legibles de las validaciones del consolidado (V0–V9)
 ETIQUETAS_REV = {
@@ -1288,12 +1301,13 @@ def _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo=None):
 
 
 # =============================================================================
-# ZONAS SUR Y NORTE — TODAVÍA EN DEMOSTRACIÓN
+# ZONAS SIN CONECTAR — MODO SOLO LECTURA
 # =============================================================================
 def _procesar_demostracion(zona, carpeta_entrada, carpeta_salida, log):
     """Revisa que los archivos de la zona se puedan leer. NO consolida nada.
 
-    Se mantiene para SUR y NORTE mientras no se conecten sus scripts. Antes
+    Hoy las tres zonas están conectadas, así que esta función no se usa. Se
+    deja lista para cuando aparezca una zona nueva. Antes
     esta función pegaba las primeras hojas una debajo de otra y dejaba un
     CONSOLIDADO_<ZONA>.xlsx para descargar. Ese archivo parecía un resultado
     real y no lo era: no tenía control de calidad, ni homologación, ni filtros,
