@@ -52,7 +52,7 @@ AÑO_DESDE    = 2026
 
 COLUMNAS_FINALES = [
     "Fecha", "Mes", "Cliente", "RUT", "Gestor", "Contrato", "Generador",
-    "Transportista", "Rut transportista", "Patente de Camión", "Ticket de pesaje",
+    "Transportista", "Rut transportista", "Patente de Camión", "ID", "Origen ID",
     "Peso neto (kg)", "Destino", "Comuna Destino", "RUT DESTINATARIO",
     "TIPO", "CÓDIGOS SINADER", "Movimiento", "Movimiento interempresa",
     "CÓDIGO ESTABLECIMIENTO SINADER", "CÓDIGO DE TRATAMIENTO SINADER",
@@ -75,7 +75,8 @@ REGIONES_VALIDAS = {
 
 MOVIMIENTOS_VALIDOS = {"Ingreso", "Traslado", "Traslado externo"}
 
-CLAVE_DUPLICADO = ["Fecha", "Cliente", "Ticket de pesaje", "TIPO", "Destino", "Peso neto (kg)", "Contrato"]
+# El consolidado ya no publica "Ticket de pesaje"; su lugar lo toma "ID".
+CLAVE_DUPLICADO = ["Fecha", "Cliente", "ID", "TIPO", "Destino", "Peso neto (kg)", "Contrato"]
 
 
 # ══════════════════════════════════════════════════════════════════
