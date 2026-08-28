@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#031716" />
-<title>Sistema Trazabilidad Ambipar</title>
+<title>Sistema Trazabilidad Ambipar Chile</title>
 
 <!-- =========================================================================
      NEO SANS — hoja de estilos de Monotype
@@ -208,7 +208,7 @@
       <p class="premium-heading truncate text-[17px] font-medium text-tinta">
         Sistema Trazabilidad Ambipar
       </p>
-      <p class="mt-0.5 text-[13px] text-tinta/70">Inteligencia Circular · LATAM</p>
+      <p class="mt-0.5 text-[13px] text-tinta/70">Inteligencia Circular LATAM</p>
     </div>
 
     <div id="estado-motor"
@@ -226,7 +226,7 @@
     <div>
       <span class="mb-4 block h-[3px] w-10 bg-neon"></span>
       <h1 class="premium-heading text-4xl font-medium text-tinta">
-        Sistema Trazabilidad Ambipar
+        Sistema Trazabilidad Ambipar Chile
       </h1>
       <p class="mt-2.5 max-w-lg text-sm leading-relaxed text-zinc-500">
         Subir archivos Excel por zona. El sistema los procesa y entrega
@@ -257,11 +257,26 @@
                   data-zona="RM" aria-pressed="false">RM</button>
           <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
                          hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
-                  data-zona="SUR" aria-pressed="false">Sur</button>
+                  data-zona="SUR" aria-pressed="false">SUR</button>
           <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
                          hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
-                  data-zona="NORTE" aria-pressed="false">Norte</button>
+                  data-zona="NORTE" aria-pressed="false">NORTE</button>
+          <!-- Separador: "Unir zonas" no es una zona más. El color va inline
+               porque la hoja de Tailwind viene precompilada y no trae la
+               clase bg-zinc-200 (no se usa en ninguna otra parte). -->
+          <span class="mx-1 my-1 w-px" style="background:#e4e4e7"></span>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="UNIR" aria-pressed="false">UNIR ZONAS</button>
         </div>
+
+        <p id="aviso-unir" class="mt-4 hidden rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-600">
+          <b>Unir zonas no vuelve a consolidar nada.</b> Suelta abajo los archivos
+          que la app ya generó — los del mes (<code>MES_2026-07_RM.xlsx</code>) o los
+          del año (<code>TRAZABILIDAD_RM_2026-07.xlsx</code>) — y los apila en uno solo,
+          con una columna <b>ZONA</b> al final. Pueden ser dos o tres. No mezcles los
+          del mes con los del año.
+        </p>
       </section>
 
       <!-- 02 · ARCHIVOS BASE -->
