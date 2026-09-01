@@ -13,7 +13,7 @@
    scripts de python/rm/.
    ========================================================================= */
 
-let zonaElegida = null;      // "RM" | "SUR" | "NORTE" | "UNIR"
+let zonaElegida = null;      // "RM" | "SUR" | "NORTE" | "UNIR" | "SIMPLE_ROUTE"
 let archivos = [];           // movimientos del mes que subió la operadora
 let baseGuardada = [];       // archivos base que ya están en el navegador
 let hayPrepararBase = false; // ¿el procesar.py del repo sabe recibir archivos base?
@@ -263,10 +263,15 @@ alEvento("zonas", "click", (ev) => {
    pasos se esconden para no confundir a quien lo use.
    ------------------------------------------------------------------------- */
 function ajustarPantallaSegunZona() {
-  const unir = zonaElegida === "UNIR";
+  const sr = zonaElegida === "SIMPLE_ROUTE";
+  // Unir y Simple Route comparten la misma forma: ninguna consolida, ninguna
+  // necesita los archivos base ni el mes. Cambia el texto, no la mecánica.
+  const unir = zonaElegida === "UNIR" || sr;
 
   const aviso = $("aviso-unir");
-  if (aviso) aviso.classList.toggle("hidden", !unir);
+  if (aviso) aviso.classList.toggle("hidden", zonaElegida !== "UNIR");
+  const avisoSr = $("aviso-sr");
+  if (avisoSr) avisoSr.classList.toggle("hidden", !sr);
 
   // paso 02 (archivos base) — la sección que contiene la lista de base
   const pasoBase = $("lista-base") && $("lista-base").closest("section");
@@ -280,9 +285,11 @@ function ajustarPantallaSegunZona() {
 
   const zonaDrop = $("dropzone");
   if (zonaDrop) {
-    zonaDrop.querySelector("span").textContent = unir
-      ? "Arrastra aquí los archivos ya generados"
-      : "Arrastra los archivos aquí";
+    zonaDrop.querySelector("span").textContent = sr
+      ? "Arrastra aquí Simple Route y la BO"
+      : unir
+        ? "Arrastra aquí los archivos ya generados"
+        : "Arrastra los archivos aquí";
 
     // El paso 03 habla de "movimientos del mes" y de bajar la carpeta de
     // OneDrive. En modo unir eso no aplica: lo que se suelta son archivos que
@@ -297,11 +304,19 @@ function ajustarPantallaSegunZona() {
       if (desc && !desc.dataset.original) desc.dataset.original = desc.textContent.trim();
       if (num && !num.dataset.original) num.dataset.original = num.textContent.trim();
 
-      if (h2) h2.textContent = unir ? "Archivos a unir" : h2.dataset.original;
+      if (h2) {
+        h2.textContent = sr
+          ? "Archivos a comparar"
+          : unir
+            ? "Archivos a unir"
+            : h2.dataset.original;
+      }
       if (desc) {
-        desc.textContent = unir
-          ? "Los archivos que ya bajaste de cada zona. Dos o tres, uno por zona."
-          : desc.dataset.original;
+        desc.textContent = sr
+          ? "La exportación de Simple Route y BBDD BO SAN BERNARDO.xlsx."
+          : unir
+            ? "Los archivos que ya bajaste de cada zona. Dos o tres, uno por zona."
+            : desc.dataset.original;
       }
       if (num) num.textContent = unir ? "02" : num.dataset.original;
     }
@@ -316,16 +331,14 @@ function ajustarPantallaSegunZona() {
     const desc = secProc.querySelector("p");
     if (desc && !desc.dataset.original) desc.dataset.original = desc.textContent.trim();
     if (desc) {
-      desc.textContent = unir
+      desc.textContent = sr
+      ? "Se compara servicio por servicio y se entrega el informe con las diferencias."
+      : unir
         ? "Los archivos se apilan en uno solo, con una columna ZONA al final."
         : desc.dataset.original;
     }
   }
 
-  const btn = $("btn-procesar");
-  if (btn && !btn.disabled) {
-    btn.textContent = unir ? "Unir archivos" : "Procesar consolidado";
-  }
 }
 
 /* =========================================================================
@@ -547,8 +560,22 @@ function pintarLista() {
 
 conectarZonaDeCarga("dropzone", "input-archivos", agregarArchivos);
 
+/* El texto del botón depende de la zona, no de si está habilitado. Antes se
+   escribía solo cuando el botón estaba activo, así que al elegir Unir o Simple
+   Route sin archivos cargados seguía diciendo "Procesar consolidado". */
+let procesando = false;
+
+function etiquetaBoton() {
+  if (zonaElegida === "SIMPLE_ROUTE") return "Comparar";
+  if (zonaElegida === "UNIR") return "Unir archivos";
+  return "Procesar consolidado";
+}
+
 function revisarSiPuedeProcesar() {
-  $("btn-procesar").disabled = !(motorListo && zonaElegida && archivos.length > 0);
+  const btn = $("btn-procesar");
+  if (!btn) return;
+  btn.disabled = !(motorListo && zonaElegida && archivos.length > 0);
+  if (!procesando) btn.textContent = etiquetaBoton();
 }
 
 /* =========================================================================
@@ -556,6 +583,7 @@ function revisarSiPuedeProcesar() {
    ========================================================================= */
 alEvento("btn-procesar", "click", async () => {
   const btn = $("btn-procesar");
+  procesando = true;
   btn.disabled = true;
   btn.innerHTML = '<span class="spin" style="display:inline-block;vertical-align:middle"></span> Procesando…';
 
@@ -581,7 +609,7 @@ alEvento("btn-procesar", "click", async () => {
       periodo: ($("periodo") && $("periodo").value) || null,
       // Unir no usa los archivos base: si se mandaran, entrarían a la carpeta
       // de trabajo y la herramienta trataría de apilarlos.
-      base: zonaElegida === "UNIR"
+      base: (zonaElegida === "UNIR" || zonaElegida === "SIMPLE_ROUTE")
         ? []
         : baseGuardada.map((i) => ({ nombre: i.nombre, bytes: i.bytes })),
       movimientos,
@@ -594,8 +622,9 @@ alEvento("btn-procesar", "click", async () => {
     mostrarProgreso("ERROR: " + ((e && e.message) || e));
     console.error(e);
   } finally {
+    procesando = false;
     btn.disabled = false;
-    btn.textContent = zonaElegida === "UNIR" ? "Unir archivos" : "Procesar consolidado";
+    btn.textContent = etiquetaBoton();
     $("txt-motor").textContent = "Motor listo";
     revisarSiPuedeProcesar();
   }
