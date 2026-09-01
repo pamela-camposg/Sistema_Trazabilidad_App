@@ -349,8 +349,6 @@ def aplicar_homologacion_generador(df, col_generador, homolog_generadores):
 # Verlas distinto al abrir el archivo evita tratarlas como dato de terreno.
 COLUMNAS_DESTACADAS = {
     "Origen ID",
-    "Comuna Destino",
-    "Movimiento",
     "Movimiento interempresa",
     "Destino inferido",
 }
