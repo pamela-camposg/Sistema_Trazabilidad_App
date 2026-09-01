@@ -2,7 +2,7 @@
 # procesar.py — el puente entre la app y los scripts refactorizados.
 #
 # La app le pasa a la función procesar():
-#   - zona:            "RM", "SUR", "NORTE" o "UNIR"
+#   - zona:            "RM", "SUR", "NORTE", "UNIR" o "SIMPLE_ROUTE"
 #   - carpeta_entrada: donde quedaron los archivos que subió la operadora
 #   - carpeta_salida:  donde debe dejar los archivos generados
 #
@@ -19,6 +19,7 @@
 #   SUR    -> lógica REAL conectada (scripts de la Etapa 1)
 #   NORTE  -> lógica REAL conectada (scripts de la Etapa 1)
 #   UNIR   -> no consolida: apila lo que ya generaron las zonas
+#   SIMPLE_ROUTE -> auditoría: cruza Simple Route contra la BO de RM
 #
 # CÓMO SE CONECTAN LOS SCRIPTS
 #   app.js descarga los módulos de python/rm/ y los deja dentro del motor,
@@ -800,6 +801,179 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
         "alertas": alertas,
         "salida": nombre_salida,
         "descargas": [{"archivo": nombre_salida, "etiqueta": "Descargar archivo unido"}],
+        "log": "\n".join(log),
+    }
+
+
+# =============================================================================
+# CONTROL SIMPLE ROUTE — el cruce contra el sistema externo
+# -----------------------------------------------------------------------------
+# Responde una pregunta que ningún otro control responde:
+#
+#   "Todo lo que Simple Route dice que fue DF, ¿existe en BO San Bernardo
+#    con el mismo cliente, contrato y pesaje?"
+#
+# Los otros tres scripts de RM comparan las planillas de Ambipar entre sí. Este
+# las contrasta contra Simple Route, que es una fuente independiente. Por eso
+# detecta lo que ninguno de los otros puede ver: servicios que Simple Route
+# registró y que en la BO no aparecen, o aparecen con otro peso.
+#
+# No forma parte de la consolidación: no aporta ni una fila al consolidado.
+# Es una herramienta de auditoría aparte, y por eso en la app vive en su propio
+# botón y no dentro del flujo mensual de una zona.
+#
+# Solo aplica a RM: Sur y Norte no operan con Simple Route.
+# =============================================================================
+NOMBRES_BO_SIMPLE_ROUTE = ["BBDD BO SAN BERNARDO.xlsx"]
+
+# Cómo se lee cada resultado de la comparación, en palabras
+ETIQUETAS_SR = {
+    "OK": "Coinciden: el servicio está en la BO con el mismo cliente, "
+          "contrato y pesaje.",
+    "NO ENCONTRADO EN BO": "Simple Route lo registró como disposición final, "
+                           "pero no aparece en la BO. Es el hallazgo que más "
+                           "importa: puede ser un servicio sin registrar.",
+    "PESO DISTINTO": "Está en la BO, pero el pesaje no calza (tolerancia: "
+                     "10 kg o 1%).",
+    "CLIENTE DISTINTO": "Está en la BO en esa fecha y contrato, pero a nombre "
+                        "de otro cliente.",
+    "CONTRATO DISTINTO": "Está en la BO en esa fecha y cliente, pero con otro "
+                         "contrato.",
+    "NO COMPARABLE": "A la fila de Simple Route le falta fecha, cliente, "
+                     "contrato o pesaje, así que no se puede comparar.",
+    "SIN BO": "No se encontró la BO de San Bernardo, así que no hubo contra "
+              "qué comparar.",
+}
+
+
+def _columnas_de(ruta):
+    """Nombres de columna de la primera hoja, sin leer los datos."""
+    try:
+        return [str(c).strip() for c in pd.read_excel(ruta, sheet_name=0, nrows=0).columns]
+    except Exception:
+        return []
+
+
+def _control_simple_route(carpeta_entrada, carpeta_salida, log):
+    """Identifica los dos archivos, corre el control y arma la pantalla."""
+    from rm import control_simple_route as mod
+
+    salida = Path(carpeta_salida)
+    rutas = _listar_archivos(carpeta_entrada)
+    fuentes = []
+
+    # ---- 1. Cuál es la BO --------------------------------------------------
+    claves_bo = {_clave(n) for n in NOMBRES_BO_SIMPLE_ROUTE}
+    ruta_bo = next((r for r in rutas if _clave(os.path.basename(r)) in claves_bo), None)
+
+    # ---- 2. Cuál es el archivo de Simple Route -----------------------------
+    # No tiene un nombre fijo: es una exportación y puede llamarse de cualquier
+    # forma. Se reconoce por dentro, buscando la columna "Título", que es la
+    # que el control necesita para separar contrato, tipo y cliente.
+    ruta_sr = None
+    for r in rutas:
+        if r == ruta_bo:
+            continue
+        columnas = _columnas_de(r)
+        if any(_clave(c) in ("TITULO",) for c in columnas):
+            ruta_sr = r
+            break
+
+    for r in rutas:
+        nombre = os.path.basename(r)
+        if r == ruta_sr:
+            papel = "Simple Route"
+        elif r == ruta_bo:
+            papel = "BO San Bernardo"
+        else:
+            papel = "no se usa"
+        fuentes.append({"archivo": nombre, "hojas": papel, "filas": "—"})
+        log.append(f"  {nombre} → {papel}")
+
+    if ruta_sr is None:
+        return {
+            "resumen": "<b>No se reconoció el archivo de Simple Route.</b>",
+            "fuentes": fuentes,
+            "alertas": [{
+                "titulo": "Falta la exportación de Simple Route",
+                "detalle": "Ninguno de los archivos que soltaste tiene una "
+                           "columna llamada 'Título', que es la que el control "
+                           "necesita. Suelta la exportación de Simple Route "
+                           "junto con BBDD BO SAN BERNARDO.xlsx.",
+            }],
+            "salida": None, "descargas": [], "log": "\n".join(log),
+        }
+
+    if ruta_bo is None:
+        log.append("  ⚠ No se encontró BBDD BO SAN BERNARDO.xlsx")
+
+    # ---- 3. Correr el control ---------------------------------------------
+    log.append("")
+    log.append("── Control Simple Route vs BO ──")
+    res = mod.controlar(
+        ruta_sr,
+        ruta_bo=ruta_bo,
+        ruta_salida=salida / mod.NOMBRE_SALIDA,
+        mostrar=True,
+    )
+    log.append(res.get("log", ""))
+
+    # ---- 4. Armar la pantalla ---------------------------------------------
+    conteo = res.get("conteo", {})
+    total = sum(conteo.values())
+    ok = conteo.get("OK", 0)
+
+    alertas = []
+    if ruta_bo is None:
+        alertas.append({
+            "titulo": "No se encontró la BO de San Bernardo",
+            "detalle": "Sin ella no hay contra qué comparar. Suelta también "
+                       "BBDD BO SAN BERNARDO.xlsx.",
+        })
+    for clave, n in sorted(conteo.items(), key=lambda x: -x[1]):
+        if clave == "OK" or n == 0:
+            continue
+        alertas.append({
+            "titulo": f"{clave} — {_formato_miles(n, 0)} caso(s)",
+            "detalle": ETIQUETAS_SR.get(clave, "Ver el detalle en la hoja "
+                                               "COMPARACION_DF."),
+        })
+
+    n_titulos = len(res.get("titulos_revisar", []))
+    if n_titulos:
+        alertas.append({
+            "titulo": f"{n_titulos} título(s) de Simple Route no se pudieron separar",
+            "detalle": "El título debería venir como 'contrato - tipo - cliente'. "
+                       "Los que no calzan están en la hoja TITULOS_A_REVISAR y "
+                       "quedaron fuera de la comparación.",
+        })
+
+    if not alertas:
+        alertas.append({
+            "titulo": "Todo calza",
+            "detalle": "Cada servicio que Simple Route marcó como disposición "
+                       "final está en la BO con el mismo cliente, contrato y "
+                       "pesaje.",
+        })
+
+    porcentaje = f" · {100 * ok / total:.0f}% coincide" if total else ""
+    resumen = (
+        f"<b>Control Simple Route vs BO San Bernardo.</b> "
+        f"{_formato_miles(total, 0)} servicio(s) de disposición final comparados"
+        f"{porcentaje}."
+    )
+
+    descargas = []
+    if res.get("archivo"):
+        descargas.append({"archivo": res["archivo"],
+                          "etiqueta": "Descargar el control"})
+
+    return {
+        "resumen": resumen,
+        "fuentes": fuentes,
+        "alertas": alertas,
+        "salida": res.get("archivo"),
+        "descargas": descargas,
         "log": "\n".join(log),
     }
 
@@ -1607,6 +1781,8 @@ def procesar(zona, carpeta_entrada, carpeta_salida, periodo=None):
             log.append("  (no venía ningún ZIP)")
         log.append("")
 
+        if zona == "SIMPLE_ROUTE":
+            return _control_simple_route(carpeta_entrada, carpeta_salida, log)
         if zona == "UNIR":
             return _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo)
         if zona in ZONAS_CONECTADAS:
