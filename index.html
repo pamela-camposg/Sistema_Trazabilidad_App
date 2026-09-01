@@ -268,6 +268,9 @@
           <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
                          hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
                   data-zona="UNIR" aria-pressed="false">UNIR ZONAS</button>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="SIMPLE_ROUTE" aria-pressed="false">SIMPLE ROUTE</button>
         </div>
 
         <p id="aviso-unir" class="mt-4 hidden rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-600">
@@ -276,6 +279,14 @@
           del año (<code>TRAZABILIDAD_RM_2026-07.xlsx</code>) — y los apila en uno solo,
           con una columna <b>ZONA</b> al final. Pueden ser dos o tres. No mezcles los
           del mes con los del año.
+        </p>
+
+        <p id="aviso-sr" class="mt-4 hidden rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-600">
+          <b>Control cruzado contra Simple Route.</b> Responde una pregunta que ningún
+          otro control responde: <i>todo lo que Simple Route dice que fue disposición
+          final, ¿existe en BO San Bernardo con el mismo cliente, contrato y pesaje?</i>
+          Suelta abajo <b>dos archivos</b>: la exportación de Simple Route y
+          <code>BBDD BO SAN BERNARDO.xlsx</code>. No consolida nada: solo audita. Solo aplica a RM.
         </p>
       </section>
 
