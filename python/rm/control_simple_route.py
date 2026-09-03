@@ -20,10 +20,12 @@ QUÉ SE CAMBIÓ AL REFACTORIZAR (y qué NO)
     Se conserva el uso desde la terminal:
         python control_simple_route.py "simple_route_rm.xlsx" --bo "..."
 
-Salida: un Excel con tres hojas
-    1) RESUMEN            — la pregunta, los filtros y el conteo por resultado
-    2) COMPARACION_DF     — fila por fila, qué encontró en BO y qué no
-    3) TITULOS_A_REVISAR  — títulos de Simple Route que no se pudieron separar
+Salida: un Excel con cuatro hojas
+    1) RESUMEN                  — la pregunta, los filtros y el conteo por resultado
+    2) COMPARACION_DF           — fila por fila, qué encontró en BO y qué no
+    3) SIN_DATOS_PARA_COMPARAR  — filas de Simple Route sin fecha, cliente,
+                                  contrato o pesaje: no hay con qué buscarlas
+    4) TITULOS_A_REVISAR        — títulos que no se pudieron separar
 """
 
 import argparse
@@ -516,7 +518,31 @@ def controlar(ruta_sr, ruta_bo=None, ruta_salida=None,
         p("  Comparando...")
         comp = comparar(df_comparar, bo)
 
+    # Las filas "NO COMPARABLE" no son un hallazgo del control: son filas de
+    # Simple Route a las que les falta fecha, cliente, contrato o pesaje, así
+    # que no hay con qué buscarlas en la BO. Mezcladas con los resultados
+    # reales ensucian la lectura, así que se sacan de COMPARACION_DF y se
+    # llevan a una hoja propia. No se pierde ninguna.
+    if "Resultado" in comp.columns:
+        incompletos = comp[comp["Resultado"] == "NO COMPARABLE"].copy()
+        comp = comp[comp["Resultado"] != "NO COMPARABLE"].copy().reset_index(drop=True)
+    else:
+        incompletos = comp.iloc[0:0].copy()
+
     res = resumen(sr_limpia, df_comparar, comp, comparar_todos_los_estados)
+    # resumen() no sabe de esta separación: la cifra se agrega acá para que la
+    # función original quede intacta.
+    res = pd.concat(
+        [res, pd.DataFrame([{
+            "Indicador": "Sin datos para comparar (hoja aparte)",
+            "Valor": len(incompletos),
+        }])],
+        ignore_index=True,
+    )
+
+    if len(incompletos):
+        p(f"  • {len(incompletos)} fila(s) sin datos suficientes para comparar "
+          f"→ hoja SIN_DATOS_PARA_COMPARAR")
 
     archivo = None
     if ruta_salida:
@@ -524,6 +550,7 @@ def controlar(ruta_sr, ruta_bo=None, ruta_salida=None,
         with pd.ExcelWriter(path_salida, engine="openpyxl") as writer:
             res.to_excel(writer, sheet_name="RESUMEN", index=False)
             comp.to_excel(writer, sheet_name="COMPARACION_DF", index=False)
+            incompletos.to_excel(writer, sheet_name="SIN_DATOS_PARA_COMPARAR", index=False)
             titulos_revisar.to_excel(writer, sheet_name="TITULOS_A_REVISAR", index=False)
         estilizar(path_salida)
         archivo = path_salida.name
@@ -541,6 +568,7 @@ def controlar(ruta_sr, ruta_bo=None, ruta_salida=None,
     return {
         "resumen": res,
         "comparacion": comp,
+        "incompletos": incompletos,
         "titulos_revisar": titulos_revisar,
         "conteo": conteo,
         "archivo": archivo,
