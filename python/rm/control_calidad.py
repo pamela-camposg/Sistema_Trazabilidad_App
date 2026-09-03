@@ -247,22 +247,6 @@ def tomar_columna(df, opciones, default=None):
     return pd.Series([default] * len(df), index=df.index)
 
 
-# Textos que en realidad son una celda vacía. Una celda en blanco de Excel
-# llega a Python como None, y normalizar() hace astype(str), que la convierte
-# en el texto "None". Antes el filtro solo descartaba "nan", así que esas filas
-# entraban: tres filas sin nombre, de tres fuentes distintas, se veían como un
-# mismo cliente con tres RUT distintos. Conflicto falso.
-#
-# No incluye "0": un RUT en 0 sí es un dato malo que hay que ver, y esta_vacio()
-# lo reporta aparte como vacío crítico.
-TEXTOS_VACIOS = ["", "nan", "none", "nat", "#n/a"]
-
-
-def es_texto_vacio(serie):
-    """True donde el valor ya normalizado es en realidad una celda vacía."""
-    return serie.isna() | serie.astype(str).str.strip().str.lower().isin(TEXTOS_VACIOS)
-
-
 def esta_vacio(serie):
     """Marca como vacío los nulos y los textos que representan vacío."""
     return (
@@ -394,8 +378,8 @@ def _clientes_y_generadores(dfs, p):
         sub["ORIGEN"]      = origen
         sub["NOMBRE_NORM"] = normalizar(sub["NOMBRE"])
         sub["RUT_NORM"]    = normalizar_rut(sub["RUT"])
-        sub = sub[~es_texto_vacio(sub["NOMBRE_NORM"])]
-        sub = sub[~es_texto_vacio(sub["RUT_NORM"])]
+        sub = sub[sub["NOMBRE_NORM"].str.lower() != "nan"]
+        sub = sub[sub["RUT_NORM"].str.lower()    != "nan"]
         pares.append(sub)
 
     clientes = pd.concat(pares, ignore_index=True).drop_duplicates(
@@ -418,7 +402,7 @@ def _clientes_y_generadores(dfs, p):
         sub.columns = ["NOMBRE"]
         sub["ORIGEN"]      = origen
         sub["NOMBRE_NORM"] = normalizar(sub["NOMBRE"])
-        sub = sub[~es_texto_vacio(sub["NOMBRE_NORM"])]
+        sub = sub[sub["NOMBRE_NORM"].str.lower() != "nan"]
         gens.append(sub)
 
     generadores = pd.concat(gens, ignore_index=True).drop_duplicates(
@@ -525,7 +509,7 @@ def _c5(dfs, rutas, p):
 
     df_tipos = pd.concat(todos_tipos, ignore_index=True)
     df_tipos["TIPO"] = df_tipos["TIPO"].astype(str).str.strip()
-    df_tipos = df_tipos[~es_texto_vacio(df_tipos["TIPO"])].drop_duplicates()
+    df_tipos = df_tipos[df_tipos["TIPO"].str.lower() != "nan"].drop_duplicates()
     c5 = df_tipos[~df_tipos["TIPO"].isin(tipos_ok)].copy()
     if len(c5) > 0:
         c5.insert(0, "PROBLEMA", "TIPO sin código SINADER")
@@ -550,7 +534,7 @@ def _c6(dfs, rutas, p):
     for df, col, origen in specs_gest:
         if col in df.columns:
             for g in df[col].dropna().astype(str).str.strip().unique():
-                if g and g.lower() not in TEXTOS_VACIOS and g not in ruts_ok:
+                if g and g.lower() != "nan" and g not in ruts_ok:
                     filas_gest.append({"GESTOR": g, "ORIGEN": origen})
 
     c6 = (
@@ -734,7 +718,14 @@ def escribir_excel(res, ruta_salida, p):
         sheet = df if not df.empty else pd.DataFrame({"resultado": [msg_ok]})
         sheet.to_excel(writer, sheet_name=nombre, index=False)
 
+    info = pd.DataFrame({
+        "Campo": ["Período de datos revisado", "Fecha de ejecución", "Filas analizadas", "Total conflictos"],
+        "Valor": [res["periodo"], datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                  res["filas_analizadas"], res["total"]],
+    })
+
     with pd.ExcelWriter(ruta_salida, engine="openpyxl") as w:
+        info.to_excel(w, sheet_name="INFO", index=False)
         resumen.to_excel(w, sheet_name="RESUMEN", index=False)
         hoja(w, res["c1"], "C1_Cliente_RUT",       "Sin conflictos")
         hoja(w, res["c2"], "C2_RUT_nombre",        "Sin conflictos")
@@ -745,12 +736,14 @@ def escribir_excel(res, ruta_salida, p):
         hoja(w, res["c7"], "VACIOS_CRITICOS",      "Sin vacíos críticos")
         hoja(w, res["c8"], "MOVIMIENTOS_REVISAR",  "Movimientos OK")
         hoja(w, res["c9"], "DESTINOS_REVISAR",     "Sin destinos vacíos críticos")
-        if not res["c9_resumen"].empty:
-            res["c9_resumen"].to_excel(w, sheet_name="DESTINOS_POR_MES", index=False)
         hoja(w, res["c9_informativo"], "DESTINOS_CON_OBSERVACION",
              "Sin casos con observación operativa")
-        if not res["c9_informativo_resumen"].empty:
-            res["c9_informativo_resumen"].to_excel(w, sheet_name="OBSERVACION_POR_MES", index=False)
+        # DESTINOS_POR_MES y OBSERVACION_POR_MES ya no se escriben como hojas
+        # aparte: son solo una agrupación por ORIGEN/MES de lo que ya está en
+        # DESTINOS_REVISAR y DESTINOS_CON_OBSERVACION, y duplicaban el detalle.
+        # res["c9_resumen"] y res["c9_informativo_resumen"] se siguen calculando
+        # (quedan disponibles en el dict devuelto por controlar()) por si se
+        # necesitan de nuevo, solo se dejó de volcarlos al Excel.
 
     p(f"✓ Guardado en: {ruta_salida}")
 
@@ -797,6 +790,15 @@ def controlar(rutas, ruta_salida=None, mostrar=True):
     clientes, generadores = _clientes_y_generadores(dfs, p)
     df_all = _vista_unificada(dfs, p)
 
+    # Período de datos analizados: informativo, para que quede claro qué mes(es)
+    # cubre esta corrida. No es un filtro ni cambia ningún cálculo de los
+    # controles C1 a C9 — solo se muestra en la hoja INFO del Excel de salida.
+    fechas_validas = pd.to_datetime(df_all.get("Fecha"), errors="coerce").dropna()
+    if not fechas_validas.empty:
+        periodo = f"{fechas_validas.min().strftime('%m/%Y')} a {fechas_validas.max().strftime('%m/%Y')}"
+    else:
+        periodo = "No se pudo determinar (columna Fecha vacía o ausente)"
+
     res = {
         "c1": _c1(clientes, p),
         "c2": _c2(clientes, p),
@@ -814,6 +816,8 @@ def controlar(rutas, ruta_salida=None, mostrar=True):
 
     # C4 no suma: es informativo, no un conflicto que impida consolidar.
     res["total"] = sum(len(res[k]) for k in ["c1", "c2", "c3", "c5", "c6", "c7", "c8", "c9"])
+    res["periodo"] = periodo
+    res["filas_analizadas"] = len(df_all)
 
     if ruta_salida:
         # Se agrega fecha y hora al nombre para que cada corrida quede aparte
