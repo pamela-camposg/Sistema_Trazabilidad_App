@@ -247,6 +247,22 @@ def tomar_columna(df, opciones, default=None):
     return pd.Series([default] * len(df), index=df.index)
 
 
+# Textos que en realidad son una celda vacía. Una celda en blanco de Excel
+# llega a Python como None, y normalizar() hace astype(str), que la convierte
+# en el texto "None". Antes el filtro solo descartaba "nan", así que esas filas
+# entraban: tres filas sin nombre, de tres fuentes distintas, se veían como un
+# mismo cliente con tres RUT distintos. Conflicto falso.
+#
+# No incluye "0": un RUT en 0 sí es un dato malo que hay que ver, y esta_vacio()
+# lo reporta aparte como vacío crítico.
+TEXTOS_VACIOS = ["", "nan", "none", "nat", "#n/a"]
+
+
+def es_texto_vacio(serie):
+    """True donde el valor ya normalizado es en realidad una celda vacía."""
+    return serie.isna() | serie.astype(str).str.strip().str.lower().isin(TEXTOS_VACIOS)
+
+
 def esta_vacio(serie):
     """Marca como vacío los nulos y los textos que representan vacío."""
     return (
@@ -378,8 +394,8 @@ def _clientes_y_generadores(dfs, p):
         sub["ORIGEN"]      = origen
         sub["NOMBRE_NORM"] = normalizar(sub["NOMBRE"])
         sub["RUT_NORM"]    = normalizar_rut(sub["RUT"])
-        sub = sub[sub["NOMBRE_NORM"].str.lower() != "nan"]
-        sub = sub[sub["RUT_NORM"].str.lower()    != "nan"]
+        sub = sub[~es_texto_vacio(sub["NOMBRE_NORM"])]
+        sub = sub[~es_texto_vacio(sub["RUT_NORM"])]
         pares.append(sub)
 
     clientes = pd.concat(pares, ignore_index=True).drop_duplicates(
@@ -402,7 +418,7 @@ def _clientes_y_generadores(dfs, p):
         sub.columns = ["NOMBRE"]
         sub["ORIGEN"]      = origen
         sub["NOMBRE_NORM"] = normalizar(sub["NOMBRE"])
-        sub = sub[sub["NOMBRE_NORM"].str.lower() != "nan"]
+        sub = sub[~es_texto_vacio(sub["NOMBRE_NORM"])]
         gens.append(sub)
 
     generadores = pd.concat(gens, ignore_index=True).drop_duplicates(
@@ -509,7 +525,7 @@ def _c5(dfs, rutas, p):
 
     df_tipos = pd.concat(todos_tipos, ignore_index=True)
     df_tipos["TIPO"] = df_tipos["TIPO"].astype(str).str.strip()
-    df_tipos = df_tipos[df_tipos["TIPO"].str.lower() != "nan"].drop_duplicates()
+    df_tipos = df_tipos[~es_texto_vacio(df_tipos["TIPO"])].drop_duplicates()
     c5 = df_tipos[~df_tipos["TIPO"].isin(tipos_ok)].copy()
     if len(c5) > 0:
         c5.insert(0, "PROBLEMA", "TIPO sin código SINADER")
@@ -534,7 +550,7 @@ def _c6(dfs, rutas, p):
     for df, col, origen in specs_gest:
         if col in df.columns:
             for g in df[col].dropna().astype(str).str.strip().unique():
-                if g and g.lower() != "nan" and g not in ruts_ok:
+                if g and g.lower() not in TEXTOS_VACIOS and g not in ruts_ok:
                     filas_gest.append({"GESTOR": g, "ORIGEN": origen})
 
     c6 = (
