@@ -549,8 +549,14 @@ def _recortar_revision(ruta, anio, mes, etiqueta, log, formatear=None):
     for nombre, df in hojas.items():
         arriba = nombre.upper()
         col = _columna_fecha(df)
+
+        # Algunas hojas no traen Fecha pero sí una columna MES ya calculada
+        # ("2026-07"). VACIOS_CRITICOS es el caso importante: es un resumen por
+        # fuente-columna-mes, sin fecha fila a fila. Se recorta por MES.
+        por_mes = col is None and "MES" in df.columns
+
         recortable = (
-            col is not None
+            (col is not None or por_mes)
             and not df.empty
             and arriba not in _HOJAS_SIN_RECORTE
             and not arriba.endswith("POR_MES")
@@ -567,9 +573,20 @@ def _recortar_revision(ruta, anio, mes, etiqueta, log, formatear=None):
             })
             continue
 
-        fechas = pd.to_datetime(df[col], errors="coerce")
-        del_mes = df[(fechas.dt.year == anio) & (fechas.dt.month == mes)].copy()
-        del_mes.insert(0, "MES", f"{anio}-{mes:02d}")
+        etiqueta_mes = f"{anio}-{mes:02d}"
+        if por_mes:
+            del_mes = df[df["MES"].astype(str).str.strip() == etiqueta_mes].copy()
+        else:
+            fechas = pd.to_datetime(df[col], errors="coerce")
+            del_mes = df[(fechas.dt.year == anio) & (fechas.dt.month == mes)].copy()
+
+        # Varias hojas del control de calidad YA traen su propia columna MES
+        # (DESTINOS_REVISAR y DESTINOS_CON_OBSERVACION la calculan desde la
+        # Fecha, en el mismo formato "2026-07"). Si se agrega otra, pandas
+        # falla con "cannot insert MES, already exists". Cuando ya está, se
+        # respeta la del script.
+        if "MES" not in del_mes.columns:
+            del_mes.insert(0, "MES", etiqueta_mes)
         salida[nombre] = del_mes
         resumen.append({
             "HOJA": nombre,
@@ -578,7 +595,11 @@ def _recortar_revision(ruta, anio, mes, etiqueta, log, formatear=None):
             "RECORTADA": "sí",
         })
 
-    nuevo = ruta.with_name(f"{ruta.stem}_{anio}-{mes:02d}{ruta.suffix}")
+    # El control de calidad de RM ya viene con la fecha y hora de la corrida en
+    # el nombre. Si además se le pega el período quedan dos fechas pegadas
+    # ("..._2026-09-03_1714_2026-07"), que no se entiende. Se quita el sello.
+    limpio = re.sub(r"_\d{4}-\d{2}-\d{2}_\d{3,4}$", "", ruta.stem)
+    nuevo = ruta.with_name(f"{limpio}_{anio}-{mes:02d}{ruta.suffix}")
     with pd.ExcelWriter(nuevo, engine="openpyxl") as w:
         cabecera = pd.DataFrame({
             "Campo": ["Mes revisado", "Alcance de los cálculos"],
