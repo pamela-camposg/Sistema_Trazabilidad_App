@@ -839,8 +839,6 @@ ETIQUETAS_SR = {
                         "de otro cliente.",
     "CONTRATO DISTINTO": "Está en la BO en esa fecha y cliente, pero con otro "
                          "contrato.",
-    "NO COMPARABLE": "A la fila de Simple Route le falta fecha, cliente, "
-                     "contrato o pesaje, así que no se puede comparar.",
     "SIN BO": "No se encontró la BO de San Bernardo, así que no hubo contra "
               "qué comparar.",
 }
@@ -937,6 +935,16 @@ def _control_simple_route(carpeta_entrada, carpeta_salida, log):
             "titulo": f"{clave} — {_formato_miles(n, 0)} caso(s)",
             "detalle": ETIQUETAS_SR.get(clave, "Ver el detalle en la hoja "
                                                "COMPARACION_DF."),
+        })
+
+    n_incompletos = len(res.get("incompletos", []))
+    if n_incompletos:
+        alertas.append({
+            "titulo": f"{_formato_miles(n_incompletos, 0)} fila(s) sin datos para comparar",
+            "detalle": "A esas filas de Simple Route les falta fecha, cliente, "
+                       "contrato o pesaje, así que no hay con qué buscarlas en "
+                       "la BO. Están en la hoja SIN_DATOS_PARA_COMPARAR, fuera "
+                       "de la comparación.",
         })
 
     n_titulos = len(res.get("titulos_revisar", []))
@@ -1553,11 +1561,25 @@ def _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo=None):
     rutas_cc = {k: v for k, v in rutas.items() if k in claves_cc} or rutas
 
     log.append("── Control de calidad ──")
+    #
+    # OJO: el control de calidad de RM le agrega fecha y hora al nombre DENTRO
+    # de controlar(), así que el archivo que queda en disco NO se llama como el
+    # que uno pidió: pide CONTROL_CALIDAD_RM.xlsx y escribe
+    # CONTROL_CALIDAD_RM_2026-08-28_1543.xlsx. Sur y Norte no hacen eso: le
+    # ponen el sello desde afuera, al usarlos por terminal.
+    #
+    # Por eso no se puede confiar en el nombre pedido: se mira qué archivo
+    # apareció realmente, igual que con el consolidado.
+    antes_cc = {f.name for f in salida.glob("*.xlsx")}
     cc = mod_control.controlar(
         rutas_cc,
         ruta_salida=salida / nombre_cc,
         mostrar=True,   # el avance se ve en pantalla mientras corre
     )
+    generado = _archivo_nuevo(salida, antes_cc)
+    if generado:
+        nombre_cc = generado
+        log.append(f"  (archivo generado: {nombre_cc})")
     log.append(cc.get("log", ""))
     log.append("")
 
@@ -1603,11 +1625,17 @@ def _procesar_zona(zona, carpeta_entrada, carpeta_salida, log, periodo=None):
 
     # ---- 4. Revisión del consolidado (V0 a V9) ------------------------------
     log.append("── Revisión del consolidado ──")
+    # Misma precaución que con el control de calidad, por si alguna zona
+    # decidiera sellar el nombre desde dentro.
+    antes_rev = {f.name for f in salida.glob("*.xlsx")}
     rev = mod_revisar.revisar(
         salida / nombre_consolidado,
         ruta_salida=salida / nombre_rev,
         mostrar=True,
     )
+    generado = _archivo_nuevo(salida, antes_rev)
+    if generado:
+        nombre_rev = generado
     log.append(rev.get("log", ""))
 
     # ---- 5. Recorte del mes elegido -----------------------------------------
