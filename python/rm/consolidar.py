@@ -780,12 +780,6 @@ def procesar_ecofibras(rutas, transportistas, homolog_c, homolog_g, p):
     n_excluidas = n_antes - len(df)
     p(f"  • Filtro año ≥ {AÑO_DESDE}: {len(df)} filas (excluidas: {n_excluidas})")
 
-    # Filtro generador
-    n_antes = len(df)
-    df = df[df["GENERADOR"].astype(str).str.strip() != "REMBRE SPA"]
-    n_excluidas = n_antes - len(df)
-    p(f"  • Filtro Generador ≠ 'REMBRE SPA': {len(df)} filas (excluidas: {n_excluidas})")
-
     df["Unidad"] = "kg"
 
     es_traslado = df["MOVIMIENTO"].eq("TRASLADO")
@@ -970,6 +964,14 @@ def procesar_tradicionales(rutas, homolog_c, p):
         df["Destino"] = limpiar_texto_serie(df["Destino"])
     else:
         df["Destino"] = None
+
+    # Filtro camión T0000: código de rutas no financiadas, no se consideran en el consolidado
+    if "camion" in df.columns:
+        n_antes = len(df)
+        df = df[df["camion"].astype(str).str.strip().str.upper() != "T0000"]
+        p(f"  • Filtro camión ≠ 'T0000' (rutas no financiadas): {len(df)} filas  (excluidas: {n_antes - len(df)})")
+    else:
+        p("  ⚠ Columna 'camion' no encontrada en 'Analizado' — no se pudo aplicar el filtro T0000")
 
     # Filtro año
     n_antes = len(df)
