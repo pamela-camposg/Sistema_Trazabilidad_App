@@ -697,7 +697,12 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
         try:
             with zipfile.ZipFile(ruta) as z:
                 _, hojas = _hojas_del_libro(z)
-            df = pd.read_excel(ruta, sheet_name=0)
+            # keep_default_na=False evita que pandas confunda texto literal como
+            # "N/A" (el valor real que pone construir_id() cuando no hay guía
+            # ni ticket) con una celda vacía. na_values=[""] mantiene el
+            # comportamiento normal para celdas que sí están genuinamente en
+            # blanco — esas siguen leyéndose como NaN, como antes.
+            df = pd.read_excel(ruta, sheet_name=0, keep_default_na=False, na_values=[""])
         except Exception as e:
             alertas.append({"titulo": f"No se pudo leer {nombre}",
                             "detalle": f"{type(e).__name__}: {e}"})
