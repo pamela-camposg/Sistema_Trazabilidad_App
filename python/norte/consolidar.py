@@ -515,8 +515,6 @@ def cargar_lookups(rutas, p):
 # Verlas distinto al abrir el archivo evita tratarlas como dato de terreno.
 COLUMNAS_DESTACADAS = {
     "Origen ID",
-    "Comuna Destino",
-    "Movimiento",
     "Movimiento interempresa",
     "Destino inferido",
 }
