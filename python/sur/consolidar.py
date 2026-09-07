@@ -1611,6 +1611,13 @@ def consolidar(rutas, ruta_prueba=None, ruta_log=None, modo_reset=False,
 
             if ruta_destino.exists():
                 df_existente = leer_excel(ruta_destino, p, sheet_name=HOJA_DESTINO)
+                # pandas interpreta el texto literal "N/A" como celda vacía al releer
+                # el Excel (comportamiento por defecto de pd.read_excel, no es un bug
+                # de este script). Sin este fix, cada ciclo ACUMULATIVO iba borrando
+                # el "N/A" que puso construir_id() en el archivo anterior.
+                for _col in ("ID", "Origen ID"):
+                    if _col in df_existente.columns:
+                        df_existente[_col] = df_existente[_col].fillna("N/A")
                 p(f"  Trazabilidad SUR existente: {len(df_existente)} filas")
             else:
                 df_existente = pd.DataFrame(columns=COLUMNAS_FINALES)
