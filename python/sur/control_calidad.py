@@ -570,6 +570,7 @@ def controlar(rutas, ruta_salida=None, mostrar=True):
     df_all.loc[df_all["ORIGEN"].eq("IRAR_LOS_ANGELES"), "Movimiento_norm"] = "Traslado"
     df_all.loc[df_all["ORIGEN"].eq("BO_TRAPEN"),        "Movimiento_norm"] = "Traslado"
     df_all.loc[df_all["ORIGEN"].eq("BO_CHILOE"),        "Movimiento_norm"] = "Traslado"
+    df_all.loc[df_all["ORIGEN"].eq("BO_CHILLAN"),       "Movimiento_norm"] = "Traslado"
     df_all.loc[df_all["ORIGEN"].eq("PLANTA_TRAPEN"),    "Movimiento_norm"] = "Ingreso"
 
     # En hojas INGRESOS, movimiento vacío se interpreta como Ingreso para control.
