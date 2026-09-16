@@ -134,12 +134,6 @@ h1.premium-heading{ font-size:2.25rem; line-height:2.5rem; font-weight:500 }
 #dock-notice b{ font-weight:600 }
 #dock-notice ul{ list-style:none; margin-top:.35rem; display:flex; flex-direction:column; gap:.2rem }
 #dock-notice li button{ background:none; border:0; padding:0; font-family:inherit; font-size:12.5px; color:#7A4A05; text-decoration:underline; text-underline-offset:2px }
-.block.is-offdock{ border-style:dashed }
-.b-flag{ position:absolute; left:3px; bottom:2px; font-size:9.5px; color:#B26A00 }
-.b-first{ position:absolute; right:14px; top:2px; font-size:9px; font-weight:700; color:#1E8E4E; letter-spacing:.02em }
-.block.is-clash .b-customer{ padding-right:26px }
-.m-offdock{ display:none; margin-top:.8rem; border-left:3px solid #B26A00; background:#FFF8EC; padding:.55rem .8rem; font-size:12px; color:#7A4A05 }
-.m-offdock.on{ display:block }
 #clash-notice b{ font-weight:600 }
 #clash-notice ul{ list-style:none; margin-top:.35rem; display:flex; flex-direction:column; gap:.2rem }
 #clash-notice li button{ background:none; border:0; padding:0; font-family:inherit; font-size:12.5px; color:#7B2318; text-decoration:underline; text-underline-offset:2px }
@@ -234,10 +228,14 @@ h1.premium-heading{ font-size:2.25rem; line-height:2.5rem; font-weight:500 }
 .b-short{ display:flex; gap:5px; align-items:baseline }
 .b-short .b-meta{ margin-left:auto }
 .b-warn{ position:absolute; right:3px; top:2px; font-size:11px; font-weight:700; color:var(--rojo) }
-/* Agendado con poca anticipación: franja lateral rayada, sin robar espacio al texto. */
+/* Agendado con poca anticipación: franja lateral, sin robar espacio al texto. */
 .block.is-rush{ box-shadow:inset 3px 0 0 -1px #B26A00 }
 .b-rush{ position:absolute; right:3px; bottom:2px; font-size:9.5px; font-weight:700; color:#B26A00; letter-spacing:.04em }
 .list-row.is-rush{ box-shadow:inset 0 0 0 1px #F0DCB4 }
+.block.is-offdock{ border-style:dashed }
+.b-flag{ position:absolute; left:3px; bottom:2px; font-size:9.5px; color:#B26A00 }
+.b-first{ position:absolute; right:14px; top:2px; font-size:9px; font-weight:700; color:#1E8E4E; letter-spacing:.02em }
+.block.is-clash .b-customer{ padding-right:26px }
 .b-resize{ position:absolute; left:0; right:0; bottom:0; height:7px; cursor:ns-resize }
 .b-resize::after{ content:''; position:absolute; left:50%; bottom:2px; width:16px; height:2px; margin-left:-8px; background:currentColor; opacity:0; transition:.15s }
 .block:hover .b-resize::after{ opacity:.35 }
@@ -269,6 +267,8 @@ aside{ position:sticky; top:6.5rem }
 .m-created{ display:none; margin-top:.7rem; border-left:3px solid var(--z300); background:var(--z50); padding:.5rem .75rem; font-size:11.5px; color:var(--z600) }
 .m-created.on{ display:block }
 .m-created.is-rush{ border-left-color:#B26A00; background:#FFF8EC; color:#7A4A05 }
+.m-offdock{ display:none; margin-top:.8rem; border-left:3px solid #B26A00; background:#FFF8EC; padding:.55rem .8rem; font-size:12px; color:#7A4A05 }
+.m-offdock.on{ display:block }
 .legend{ margin-top:.7rem; display:flex; flex-direction:column; gap:.45rem }
 .legend-item{ display:flex; align-items:center; gap:.5rem; font-size:12px; color:var(--z600) }
 .legend-swatch{ width:11px; height:11px; flex:0 0 auto; border:1px solid }
@@ -363,10 +363,10 @@ aside{ position:sticky; top:6.5rem }
 .chip:hover{ border-color:var(--neon) }
 .chip[aria-pressed=true]{ background:var(--neon); border-color:var(--neon); color:var(--tinta); font-weight:500 }
 .waste-row{ display:grid; grid-template-columns:1fr 112px 70px 46px 22px; gap:.4rem; margin-bottom:.35rem; align-items:center }
-.waste-row .it-fmt{ font-size:11.5px; color:var(--z600) }
 .waste-row .it-unit{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--z400) }
 .waste-row.is-bale .it-unit{ color:#8A6A2F; font-weight:600 }
 .waste-row.is-bale .it-ton{ border-color:#C6A85C; background:#FCFAF3 }
+.waste-row .it-fmt{ font-size:11.5px; color:var(--z600) }
 .waste-row .row-remove{ border:0; background:none; color:var(--z400); font-size:15px; line-height:1; padding:0 }
 .waste-row .row-remove:hover{ color:var(--rojo) }
 .waste-total{ display:flex; align-items:baseline; gap:.5rem; margin-top:.5rem; font-size:12px; color:var(--z500) }
@@ -815,7 +815,7 @@ footer.footer{ border-top:1px solid var(--z200); background:#fff }
    │  Left empty, the planner still works, but each device keeps its own copy.│
    └──────────────────────────────────────────────────────────────────────────┘ */
 /* Shown in the footer: makes it obvious which file is published. */
-const VERSION = 'v22 · 16-09-2026';
+const VERSION = 'v23 · 16-09-2026';
 
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw0s8-WtDRGzto8Wl2AhjlvDPemw9uFWkCijktv-dB8R4ymbB6tHc3l7EBnR91cOmoMXg/exec';
 
@@ -995,13 +995,11 @@ function isPickup(r){ return r.tipo === 'retiro' }
 
 /* ── Bales ────────────────────────────────────────────────────────────────
    Bales are planned by COUNT, not by weight: nobody weighs them when the
-   truck is booked. The tonnage is estimated from an average weight the plant
-   can adjust in the side column, and is stored in `t` so every total, the
-   Excel and the spreadsheet keep working as before. */
+   truck is booked. The tonnage is estimated with a weight fixed by the plant
+   and stored in `t`, so every total, the Excel and the spreadsheet keep
+   working without knowing about any of this. */
 function isBale(name){ return /^FARDO/.test(String(name || '').toUpperCase()) }
-/* Fixed by the plant: a bale weighs 360 kg. Not configurable on purpose, so
-   every device converts the same way and the tonnage is comparable. */
-const BALE_WEIGHT = 0.36;                           // t per bale (360 kg)
+const BALE_WEIGHT = 0.36;                           // t per bale
 function baleWeight(){ return BALE_WEIGHT }
 function baleCount(i){
   if(i.q != null && i.q !== '') return parseInt(i.q) || 0;
@@ -1082,7 +1080,6 @@ function fillFromHistory(){
 /* ── When was it booked ───────────────────────────────────────────────────
    `creado` is the moment the booking was created. It never changes, even if
    the truck is later moved, so it answers "did they warn us in time?". */
-function bookedAt(r){ return r.creado || null }
 /* Hours between creating the booking and the truck's arrival time. */
 function leadHours(r){
   if(!r.creado) return null;
@@ -1124,7 +1121,7 @@ function wasteSummary(r){
   const fmt = l[0].fmt ? ` · ${l[0].fmt.toLowerCase()}` : '';
   return l.length===1 ? l[0].r + fmt : `${l[0].r}${fmt} +${l.length-1}`;
 }
-/* A bale line reads "40 fardos (≈ 20,0 t)"; everything else reads in tons. */
+/* A bale line reads "40 fardos (≈ 14,4 t)"; everything else reads in tons. */
 function itemAmount(i){
   if(isBale(i.r)){
     const q = baleCount(i);
@@ -1427,6 +1424,9 @@ function assignLanes(list){
   const closeGroup = ()=>{
     if(!group.length) return;
     const lanes = [];                       // end time of each lane
+    /* Left to right in the order they were booked: whoever agendó primero
+       sits on the left, so the column reads like the queue it is. */
+    group.sort((a,b)=> bookedOrder(a) - bookedOrder(b) || a.ini - b.ini);
     group.forEach(r=>{
       let i = lanes.findIndex(end=>end<=r.ini);
       if(i<0){ i = lanes.length; lanes.push(0) }
@@ -1644,7 +1644,8 @@ function renderMobileList(){
   let html = '';
 
   days.forEach(f=>{
-    const list = state.reservas.filter(r=>r.fecha===f && passesMoveFilter(r)).sort((a,b)=>a.ini-b.ini);
+    const list = state.reservas.filter(r=>r.fecha===f && passesMoveFilter(r))
+                     .sort((a,b)=> a.ini-b.ini || bookedOrder(a)-bookedOrder(b));
     if(view!=='day') html += `<div class="m-day">${DAY_NAMES[(fromISO(f).getDay()+6)%7]} ${shortDate(f)} · ${list.length} camion${list.length===1?'':'es'}</div>`;
     if(!list.length){
       html += `<div class="empty-note">No hay ${moveFilter==='retiro'?'retiros':moveFilter==='ingreso'?'ingresos':'camiones'} agendados${view==='day'?' este día':''}.<br>
@@ -2053,9 +2054,7 @@ function rowSetUnit(row){
   row.querySelector('.it-unit').textContent = bale ? 'fardos' : 't';
   inp.step        = bale ? '1' : '0.1';
   inp.placeholder = bale ? 'cant.' : 'ton';
-  inp.title       = bale
-    ? 'Cuántos fardos vienen'
-    : 'Toneladas de este residuo';
+  inp.title       = bale ? 'Cuántos fardos vienen' : 'Toneladas de este residuo';
 }
 
 function renderWasteRows(list){
@@ -2209,7 +2208,7 @@ function saveBooking(){
     Object.assign(prev, obj);
   } else {
     /* `creado` is stamped once and never touched again: it is the evidence of
-       how much notice the plant got. */
+       how much notice the plant got, and it decides who keeps the slot. */
     state.reservas.push(Object.assign(
       { id:'r'+Math.random().toString(36).slice(2,9), hist:[], creado: Date.now() }, obj));
   }
@@ -2818,7 +2817,7 @@ if(!load()){
   state.bloqueos = [defaultLunchBreak()];
   save(true);
 }
-/* Old records may carry a tonnage from when the bale weight was adjustable. */
+/* Old records may carry a tonnage from a different bale weight. */
 if(normalizeBaleTons()) save(true);
 if(new Date().getDay()===0) day = addDays(todayISO(),1);
 render();
