@@ -815,7 +815,7 @@ footer.footer{ border-top:1px solid var(--z200); background:#fff }
    │  Left empty, the planner still works, but each device keeps its own copy.│
    └──────────────────────────────────────────────────────────────────────────┘ */
 /* Shown in the footer: makes it obvious which file is published. */
-const VERSION = 'v23 · 16-09-2026';
+const VERSION = 'v32 · 17-09-2026';
 
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw0s8-WtDRGzto8Wl2AhjlvDPemw9uFWkCijktv-dB8R4ymbB6tHc3l7EBnR91cOmoMXg/exec';
 
@@ -1088,6 +1088,13 @@ function leadHours(r){
 }
 const RUSH_HOURS = 24;                              // less than this = last minute
 function isRush(r){ const h = leadHours(r); return h != null && h < RUSH_HOURS }
+/* dd-mm-aaaa and HH:MM of the moment the booking was created, for the Excel. */
+function bookedDate(r){ return r.creado ? new Date(r.creado).toLocaleDateString('es-CL') : '' }
+function bookedClock(r){
+  if(!r.creado) return '';
+  const d = new Date(r.creado);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
 function bookedText(r){
   if(!r.creado) return 'Sin registro de cuándo se agendó (se creó antes de esta versión).';
   const d = new Date(r.creado);
@@ -2432,12 +2439,14 @@ function downloadWorkbook(sheets, fileName){
 }
 
 /* Detail rows: one per waste type of each truck. */
+/* One row per waste type of each movement. `Fecha/Hora de agendamiento` sit
+   next to `Agendado por`: who asked for the slot, and when. */
 const COLS_DETALLE = ['N° movimiento','Movimiento','Fecha','Día','Punto de descarga',
   'Hora inicio','Hora término','Duración (min)','Cliente / Empresa','Tipo de residuo','Formato',
   'Cantidad de fardos','Toneladas del residuo','Total del movimiento (t)','Cantidad de camiones',
-  'Vehículo','Estado','Agendado por','Agendado el','Horas de anticipación','Aviso con menos de 24 h',
-  'Cliente autorizado en el punto','Llegada','Reprogramaciones','Cambios de cantidad',
-  'Problema','Notas'];
+  'Vehículo','Estado',
+  'Agendado por','Fecha de agendamiento','Hora de agendamiento',
+  'Llegada','Reprogramaciones','Cambios de cantidad','Problema','Notas'];
 
 function detailRows(list){
   const rows = [COLS_DETALLE.slice()];
@@ -2453,13 +2462,10 @@ function detailRows(list){
         DAY_NAMES[(fromISO(r.fecha).getDay()+6)%7],
         dock(r.nave).name, hhmm(r.ini), hhmm(r.ini+r.dur), r.dur,
         r.cliente, it.r||'', it.fmt||'',
-        isBale(it.r) ? baleCount(it) : '', parseFloat(it.t)||0, total,
-        truckCount(r), r.veh||'',
-        r.estado==='tentativo'?'Por confirmar':'Confirmado', r.quien||'',
-        r.creado ? new Date(r.creado).toLocaleString('es-CL') : '',
-        leadHours(r)==null ? '' : Math.round(leadHours(r)*10)/10,
-        r.creado ? (isRush(r) ? 'Sí' : 'No') : '',
-        dockClients(r.nave).length ? (isOffDock(r) ? 'No' : 'Sí') : 'Sin lista',
+        isBale(it.r) ? baleCount(it) : '',
+        parseFloat(it.t)||0, total, truckCount(r), r.veh||'',
+        r.estado==='tentativo'?'Por confirmar':'Confirmado',
+        r.quien||'', bookedDate(r), bookedClock(r),
         arrivalOf(r)==='nollego' ? 'No llegó' : arrivalOf(r)==='llego' ? 'Llegó' : 'Sin registrar',
         changeCount(r,'reprogramacion'), changeCount(r,'camiones'),
         clashReason.get(r.id)
@@ -2475,9 +2481,7 @@ function detailRows(list){
 function summaryRows(list){
   const rows = [['Fecha','Día','Movimientos','Ingresos','Retiros','Camiones planificados',
                  'Llegaron','No llegaron','Sin registrar','Cumplimiento',
-                 'Toneladas planificadas','Fardos planificados',
-                 'Agendados con menos de 24 h','Fuera de su punto de descarga',
-                 'Reprogramaciones','Cambios de cantidad']];
+                 'Toneladas planificadas','Reprogramaciones','Cambios de cantidad']];
   const linea = (etiqueta, dia, l) => {
     const si  = l.filter(r=>arrivalOf(r)==='llego').length;
     const no  = l.filter(r=>arrivalOf(r)==='nollego').length;
@@ -2490,9 +2494,6 @@ function summaryRows(list){
       si, no, l.length-si-no,
       (si+no) ? Math.round(si/(si+no)*100)/100 : '',
       Math.round(l.reduce((s,r)=>s+totalTons(r),0)*10)/10,
-      l.reduce((s,r)=>s+totalBales(r),0),
-      l.filter(r=>isRush(r)).length,
-      l.filter(r=>isOffDock(r)).length,
       l.reduce((s,r)=>s+changeCount(r,'reprogramacion'),0),
       l.reduce((s,r)=>s+changeCount(r,'camiones'),0),
     ];
@@ -2507,40 +2508,19 @@ function summaryRows(list){
 }
 
 /* One row per change: what moved, from what to what, and when. */
-function changeRows(list){
-  const rows = [['Fecha del cambio','Hora','Qué cambió','Cliente / Empresa','Movimiento',
-                 'Antes','Después','Quién']];
-  const all = [];
-  list.forEach(r=>(r.hist||[]).forEach(h=>all.push({r,h})));
-  all.sort((a,b)=>a.h.t-b.h.t);
-  all.forEach(({r,h})=>{
-    const d = new Date(h.t);
-    rows.push([
-      d.toLocaleDateString('es-CL'),
-      d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false}),
-      h.tipo==='camiones' ? 'Cantidad de camiones' : 'Reprogramación',
-      r.cliente, isPickup(r) ? 'Retiro' : 'Ingreso',
-      h.de, h.a, h.quien || '',
-    ]);
-  });
-  if(rows.length===1) rows.push(['—','','Todavía no hay cambios registrados','','','','','']);
-  return rows;
-}
-
 function downloadExcel(){
   const ds = weekDays();
   const list = state.reservas.filter(r=>ds.includes(r.fecha));
   if(!list.length){ toast('No hay ingresos agendados en esta semana.', true); return }
+  /* Two sheets: the day-by-day count, and the detail behind it. */
   const sheets = [
     { name:'Resumen por día', rows:summaryRows(list),
-      widths:[13,13,13,11,10,20,11,13,14,14,20,18,20] },
-    { name:'Detalle',         rows:detailRows(list),
-      widths:[14,12,11,11,26,11,12,13,26,30,16,20,22,20,13,14,16,14,18,20,18,30] },
-    { name:'Cambios',         rows:changeRows(list),
-      widths:[15,8,22,26,12,34,34,16] },
+      widths:[13,13,13,11,10,22,11,13,14,14,22,18,20] },
+    { name:'Detalle', rows:detailRows(list),
+      widths:[14,12,12,11,26,11,13,13,26,30,16,16,20,22,20,13,14,16,20,20,14,16,18,34,30] },
   ];
   downloadWorkbook(sheets, `GIRI_planificacion_${ds[0]}_a_${ds[5]}.xlsx`);
-  toast('Excel descargado: resumen, detalle y cambios.');
+  toast('Excel descargado: resumen por día y detalle.');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
