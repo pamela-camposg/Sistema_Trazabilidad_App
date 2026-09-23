@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#031716" />
-<title>Sistema Trazabilidad Ambipar · Chile</title>
+<title>Sistema Trazabilidad Ambipar Chile</title>
 
 <!-- =========================================================================
      NEO SANS — hoja de estilos de Monotype
@@ -137,6 +137,20 @@
   .btn{ will-change: transform }
   .btn:hover:not(:disabled){ transform: translateY(-1px) }
   .btn:active:not(:disabled){ transform: translateY(0) }
+
+  /* ---------------------------------------------------------
+     TÍTULO PRINCIPAL
+     El título pasó de "Trazabilidad." a "Sistema Trazabilidad
+     Ambipar": es mucho más largo, así que en pantallas angostas
+     hay que bajarle el cuerpo para que no ocupe media pantalla.
+     Va acá y no como clase de Tailwind porque la hoja de estilos
+     viene precompilada: solo existen las clases que ya estaban
+     en uso, y text-3xl no es una de ellas.
+     --------------------------------------------------------- */
+  h1.premium-heading { line-height: 1.1; }
+  @media (max-width: 640px) {
+    h1.premium-heading { font-size: 1.75rem; }
+  }
 </style>
 </head>
 
@@ -194,7 +208,7 @@
       <p class="premium-heading truncate text-[17px] font-medium text-tinta">
         Sistema Trazabilidad Ambipar
       </p>
-      <p class="mt-0.5 text-[13px] text-tinta/70">Inteligencia Circular · Chile</p>
+      <p class="mt-0.5 text-[13px] text-tinta/70">Inteligencia Circular LATAM</p>
     </div>
 
     <div id="estado-motor"
@@ -212,7 +226,7 @@
     <div>
       <span class="mb-4 block h-[3px] w-10 bg-neon"></span>
       <h1 class="premium-heading text-4xl font-medium text-tinta">
-        Trazabilidad.
+        Sistema Trazabilidad Ambipar Chile
       </h1>
       <p class="mt-2.5 max-w-lg text-sm leading-relaxed text-zinc-500">
         Subir archivos Excel por zona. El sistema los procesa y entrega
@@ -243,11 +257,37 @@
                   data-zona="RM" aria-pressed="false">RM</button>
           <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
                          hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
-                  data-zona="SUR" aria-pressed="false">Sur</button>
+                  data-zona="SUR" aria-pressed="false">SUR</button>
           <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
                          hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
-                  data-zona="NORTE" aria-pressed="false">Norte</button>
+                  data-zona="NORTE" aria-pressed="false">NORTE</button>
+          <!-- Separador: "Unir zonas" no es una zona más. El color va inline
+               porque la hoja de Tailwind viene precompilada y no trae la
+               clase bg-zinc-200 (no se usa en ninguna otra parte). -->
+          <span class="mx-1 my-1 w-px" style="background:#e4e4e7"></span>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="UNIR" aria-pressed="false">UNIR ZONAS</button>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="SIMPLE_ROUTE" aria-pressed="false">SIMPLE ROUTE</button>
         </div>
+
+        <p id="aviso-unir" class="mt-4 hidden rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-600">
+          <b>Unir zonas no vuelve a consolidar nada.</b> Suelta abajo los archivos
+          que la app ya generó — los del mes (<code>MES_2026-07_RM.xlsx</code>) o los
+          del año (<code>TRAZABILIDAD_RM_2026-07.xlsx</code>) — y los apila en uno solo,
+          con una columna <b>ZONA</b> al final. Pueden ser dos o tres. No mezcles los
+          del mes con los del año.
+        </p>
+
+        <p id="aviso-sr" class="mt-4 hidden rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-600">
+          <b>Control cruzado contra Simple Route.</b> Responde una pregunta que ningún
+          otro control responde: <i>todo lo que Simple Route dice que fue disposición
+          final, ¿existe en BO San Bernardo con el mismo cliente, contrato y pesaje?</i>
+          Suelta abajo <b>dos archivos</b>: la exportación de Simple Route y
+          <code>BBDD BO SAN BERNARDO.xlsx</code>. No consolida nada: solo audita. Solo aplica a RM.
+        </p>
       </section>
 
       <!-- 02 · ARCHIVOS BASE -->
@@ -295,6 +335,15 @@
           Los Excel de la zona elegida. Puedes soltar los archivos sueltos o bajar la
           carpeta completa desde OneDrive y soltar el .zip tal cual.
         </p>
+
+        <div class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <label for="periodo" class="text-[13px] font-medium text-tinta">Mes a consolidar</label>
+          <input type="month" id="periodo"
+                 class="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[13px] text-tinta transition-colors focus:border-neon focus:outline-none" />
+          <span class="text-[12px] text-zinc-400">
+            Nombra el archivo y define qué filas se entregan aparte para pegar en la base.
+          </span>
+        </div>
 
         <label id="dropzone" for="input-archivos"
                class="dropzone mt-5 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-6 py-12 text-center">
@@ -368,18 +417,33 @@
             <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
             FLUJO
           </p>
-          <ol class="mt-3 space-y-2.5 text-[13px] text-zinc-600">
+          <ol class="mt-3 space-y-3.5 text-[13px] text-zinc-600">
             <li class="flex items-baseline gap-3">
               <span class="text-[11px] tabular-nums text-zinc-400">01</span>
-              Control de calidad
+              <span>
+                Control de calidad
+                <span class="mt-0.5 block text-[12px] leading-relaxed text-zinc-400">
+                  Busca errores en los archivos antes de consolidar.
+                </span>
+              </span>
             </li>
             <li class="flex items-baseline gap-3">
               <span class="text-[11px] tabular-nums text-zinc-400">02</span>
-              Consolidación
+              <span>
+                Consolidación
+                <span class="mt-0.5 block text-[12px] leading-relaxed text-zinc-400">
+                  Junta las fuentes y aplica las reglas de la zona.
+                </span>
+              </span>
             </li>
             <li class="flex items-baseline gap-3">
               <span class="text-[11px] tabular-nums text-zinc-400">03</span>
-              Revisión
+              <span>
+                Revisión
+                <span class="mt-0.5 block text-[12px] leading-relaxed text-zinc-400">
+                  Vuelve a revisar el resultado ya generado.
+                </span>
+              </span>
             </li>
           </ol>
         </div>
@@ -391,8 +455,7 @@
 
 <footer class="border-t border-zinc-200 bg-white">
   <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-[12px] text-zinc-400">
-    <span>Ambipar Chile · Inteligencia Circular · Sistema de Trazabilidad</span>
-    <span>App web con Pyodide</span>
+    <span>Ambipar · Inteligencia Circular LATAM · Sistema de Trazabilidad</span>
   </div>
 </footer>
 
