@@ -4,436 +4,181 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#031716" />
-<title>Planificador GIRI · Ambipar Chile</title>
+<title>Sistema Trazabilidad Ambipar · Chile</title>
 
 <!-- =========================================================================
-     NEO SANS — Monotype stylesheet
+     NEO SANS — hoja de estilos de Monotype
      -------------------------------------------------------------------------
-     Monotype gives one URL per project, like:
+     Monotype entrega una URL propia por proyecto, del tipo:
         https://fast.fonts.net/t/1.css?apiType=css&projectid=XXXXXXXX
-     Replace the commented line with that URL once the licence is in place.
-     Meanwhile the page uses Barlow Semi Condensed, the closest free match to
-     the typeface on the Ambipar site.
+     Reemplaza la línea comentada por esa URL cuando tengas la licencia.
+     Mientras tanto se usa Barlow Semi Condensed, la alternativa libre
+     más parecida a la tipografía del sitio de Ambipar.
      ========================================================================= -->
-<!-- <link rel="stylesheet" href="https://fast.fonts.net/t/1.css?apiType=css&projectid=YOUR-PROJECT"> -->
+<!-- <link rel="stylesheet" href="https://fast.fonts.net/t/1.css?apiType=css&projectid=TU-PROYECTO"> -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+
+<!-- =========================================================================
+     Tailwind CSS compilado y embebido: la pagina no depende de ningun CDN.
+     Contiene solo las clases realmente usadas en este archivo.
+     ========================================================================= -->
+<style>*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:Neo Sans,Neo Sans W01,Exo\ 2,system-ui,sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.sticky{position:sticky}.-left-\[277px\]{left:-277px}.-top-\[18px\]{top:-18px}.top-0{top:0}.-z-10{z-index:-10}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-10{margin-bottom:2.5rem}.mb-4{margin-bottom:1rem}.ml-auto{margin-left:auto}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-1\.5{margin-top:.375rem}.mt-2\.5{margin-top:.625rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-7{margin-top:1.75rem}.mt-8{margin-top:2rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.hidden{display:none}.h-1\.5{height:.375rem}.h-20{height:5rem}.h-5{height:1.25rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-\[3px\]{height:3px}.h-\[716px\]{height:716px}.h-full{height:100%}.w-1\.5{width:.375rem}.w-10{width:2.5rem}.w-6{width:1.5rem}.w-\[716px\]{width:716px}.w-auto{width:auto}.w-full{width:100%}.w-px{width:1px}.min-w-0{min-width:0}.max-w-6xl{max-width:72rem}.max-w-lg{max-width:32rem}.max-w-xl{max-width:36rem}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.items-baseline{align-items:baseline}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.gap-6{gap:1.5rem}.space-y-2\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.625rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.625rem*var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem*var(--tw-space-y-reverse))}.space-y-8>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem*var(--tw-space-y-reverse))}.overflow-hidden,.truncate{overflow:hidden}.truncate{text-overflow:ellipsis;white-space:nowrap}.rounded-\[1px\]{border-radius:1px}.rounded-\[3px\]{border-radius:3px}.rounded-\[4px\]{border-radius:4px}.rounded-lg{border-radius:8px}.rounded-md{border-radius:6px}.rounded-r-md{border-top-right-radius:6px;border-bottom-right-radius:6px}.border{border-width:1px}.border-l-\[3px\]{border-left-width:3px}.border-t{border-top-width:1px}.border-dashed{border-style:dashed}.border-neon{--tw-border-opacity:1;border-color:rgb(204 255 0/var(--tw-border-opacity,1))}.border-zinc-200{--tw-border-opacity:1;border-color:rgb(228 228 231/var(--tw-border-opacity,1))}.border-zinc-300{--tw-border-opacity:1;border-color:rgb(212 212 216/var(--tw-border-opacity,1))}.border-l-zinc-200{--tw-border-opacity:1;border-left-color:rgb(228 228 231/var(--tw-border-opacity,1))}.bg-neon{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.bg-tinta{--tw-bg-opacity:1;background-color:rgb(3 23 22/var(--tw-bg-opacity,1))}.bg-tinta\/25{background-color:rgba(3,23,22,.25)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.bg-zinc-100{--tw-bg-opacity:1;background-color:rgb(244 244 245/var(--tw-bg-opacity,1))}.bg-zinc-300{--tw-bg-opacity:1;background-color:rgb(212 212 216/var(--tw-bg-opacity,1))}.bg-zinc-50{--tw-bg-opacity:1;background-color:rgb(250 250 250/var(--tw-bg-opacity,1))}.object-contain{-o-object-fit:contain;object-fit:contain}.p-1{padding:.25rem}.p-6{padding:1.5rem}.p-\[18\%\]{padding:18%}.px-2{padding-left:.5rem;padding-right:.5rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.pt-7{padding-top:1.75rem}.text-center{text-align:center}.font-sans{font-family:Neo Sans,Neo Sans W01,Exo\ 2,system-ui,sans-serif}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[12px\]{font-size:12px}.text-\[13px\]{font-size:13px}.text-\[15px\]{font-size:15px}.text-\[17px\]{font-size:17px}.text-sm{font-size:.875rem;line-height:1.25rem}.font-medium{font-weight:500}.font-semibold{font-weight:600}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-\[0\.12em\]{letter-spacing:.12em}.tracking-\[0\.18em\]{letter-spacing:.18em}.text-tinta{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.text-tinta\/70{color:rgba(3,23,22,.7)}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.text-zinc-400{--tw-text-opacity:1;color:rgb(161 161 170/var(--tw-text-opacity,1))}.text-zinc-500{--tw-text-opacity:1;color:rgb(113 113 122/var(--tw-text-opacity,1))}.text-zinc-600{--tw-text-opacity:1;color:rgb(82 82 91/var(--tw-text-opacity,1))}.text-zinc-700{--tw-text-opacity:1;color:rgb(63 63 70/var(--tw-text-opacity,1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-\[0\.17\]{opacity:.17}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-300{transition-duration:.3s}.ease-in-out{transition-timing-function:cubic-bezier(.4,0,.2,1)}.focus-within\:border-l-neon:focus-within{--tw-border-opacity:1;border-left-color:rgb(204 255 0/var(--tw-border-opacity,1))}.focus-within\:shadow-\[0_8px_30px_rgb\(0\2c 0\2c 0\2c 0\.04\)\]:focus-within{--tw-shadow:0 8px 30px rgb(0,0,0,0.04);--tw-shadow-colored:0 8px 30px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.hover\:-translate-y-0\.5:hover{--tw-translate-y:-0.125rem}.hover\:-translate-y-0\.5:hover,.hover\:-translate-y-px:hover{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.hover\:-translate-y-px:hover{--tw-translate-y:-1px}.hover\:translate-x-0\.5:hover{--tw-translate-x:0.125rem;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.hover\:border-l-neon:hover{--tw-border-opacity:1;border-left-color:rgb(204 255 0/var(--tw-border-opacity,1))}.hover\:bg-zinc-50:hover{--tw-bg-opacity:1;background-color:rgb(250 250 250/var(--tw-bg-opacity,1))}.hover\:text-tinta:hover{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.hover\:shadow-\[0_8px_30px_rgb\(0\2c 0\2c 0\2c 0\.04\)\]:hover{--tw-shadow:0 8px 30px rgb(0,0,0,0.04);--tw-shadow-colored:0 8px 30px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.group:focus-within .group-focus-within\:bg-neon{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.group:focus-within .group-focus-within\:text-tinta{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.group:hover .group-hover\:bg-neon,.group\/b:hover .group-hover\/b\:bg-neon{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.group:hover .group-hover\:text-tinta{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}.aria-pressed\:bg-neon[aria-pressed=true]{--tw-bg-opacity:1;background-color:rgb(204 255 0/var(--tw-bg-opacity,1))}.aria-pressed\:font-medium[aria-pressed=true]{font-weight:500}.aria-pressed\:text-tinta[aria-pressed=true]{--tw-text-opacity:1;color:rgb(3 23 22/var(--tw-text-opacity,1))}@media (min-width:1024px){.lg\:sticky{position:sticky}.lg\:top-24{top:6rem}.lg\:grid-cols-\[minmax\(0\2c 1fr\)_290px\]{grid-template-columns:minmax(0,1fr) 290px}}</style>
+
 <style>
-/* =========================================================================
-   DESIGN SYSTEM — same one used by index.html (Sistema Trazabilidad)
-   lime #CCFF00 · ink #031716 · zinc greys · Barlow Semi Condensed
-   Shape rule: large containers get 8px corners; anything coloured stays square.
-   ========================================================================= */
-:root{
-  --neon:#CCFF00; --neon-suave:#FBFFE8; --tinta:#031716;
-  --z50:#FAFAFA; --z100:#F4F4F5; --z200:#E4E4E7; --z300:#D4D4D8;
-  --z400:#A1A1AA; --z500:#71717A; --z600:#52525B; --z700:#3F3F46;
-  --rojo:#C0392B; --rojoBg:#FCEDEB; --ambar:#E8A33D;
-  --slot:34px;              /* height of every 30-minute slot */
-}
-*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0 }
-html,body{ overflow-x:hidden }
-body{
-  font-family:'Neo Sans','Neo Sans W01','Barlow Semi Condensed',system-ui,sans-serif;
-  background:#F4F4F5; color:var(--tinta); -webkit-font-smoothing:antialiased;
-  font-size:13px; min-height:100vh;
-}
-.premium-heading{ letter-spacing:-0.01em }
-::selection{ background:var(--neon); color:var(--tinta) }
-a,button,label,summary,[role=button]{ cursor:pointer }
-button:disabled{ cursor:not-allowed }
-input,select,textarea{ cursor:text; font-family:inherit }
+  html, body{ overflow-x:hidden }
+  .premium-heading{ letter-spacing:-0.01em }
 
-/* ---------- WATERMARK: the "a" from the logo, hugely zoomed ---------- */
-.watermark{
-  pointer-events:none; position:fixed; left:-277px; top:-18px; z-index:-10;
-  height:716px; width:716px; user-select:none; opacity:.17;
-}
-.watermark img,.watermark svg{ height:100%; width:100%; object-fit:contain; display:block }
-#a-respaldo{ display:none; padding:18% }
+  /* Indicador de sistema activo: el único elemento animado de la interfaz */
+  .punto{ width:6px; height:6px; border-radius:9999px; background:#d4d4d8; flex-shrink:0 }
+  .punto.listo{ background:#CCFF00; animation:latir 2.4s ease-in-out infinite }
+  @keyframes latir{ 0%,100%{opacity:1} 50%{opacity:.35} }
 
-/* ---------- TOP BAR ---------- */
-header.topbar{ position:sticky; top:0; z-index:60; background:var(--neon) }
-.topbar-in{ margin:0 auto; max-width:1500px; display:flex; align-items:center; gap:1.5rem; height:5rem; padding:0 1.5rem; flex-wrap:wrap }
-.topbar-in .logo{ height:2rem; width:auto; display:block; flex:0 0 auto }
-.topbar-in svg.logo{ width:181px }         /* 260×46 ratio of the fallback logo */
-.divider{ height:2.25rem; width:1px; background:rgba(3,23,22,.25) }
-.app-title{ min-width:0; line-height:1.25 }
-.app-title p:first-child{ font-size:17px; font-weight:500; color:var(--tinta); letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.app-title p:last-child{ margin-top:.125rem; font-size:13px; color:rgba(3,23,22,.7) }
-.topbar-right{ margin-left:auto; display:flex; align-items:center; gap:.625rem; flex-wrap:wrap }
-.pill{ display:flex; align-items:center; gap:.5rem; border-radius:6px; background:var(--tinta); color:#fff; padding:.5rem .75rem; font-size:12px }
-.dot{ width:6px; height:6px; border-radius:9999px; background:var(--neon); flex-shrink:0; animation:latir 2.4s ease-in-out infinite }
-@keyframes latir{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  /* -----------------------------------------------------------------------
+     Clases que app.js crea al vuelo. Se definen acá para que el HTML y el
+     JavaScript sigan hablando el mismo idioma sin tener que tocar app.js.
+     ----------------------------------------------------------------------- */
+  /* Botón primario en lima con texto oscuro: es el par de marca de Ambipar
+     y el punto de mayor contraste de la pantalla. */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    background:#CCFF00; color:#031716; border:1px solid #CCFF00; border-radius:6px;
+    padding:.6rem 1.15rem; font-size:.8125rem; font-weight:600;
+    cursor:pointer; transition:.15s ease;
+  }
+  .btn:hover:not(:disabled){
+    background:#031716; color:#CCFF00; border-color:#031716;
+    box-shadow:0 8px 30px rgb(0 0 0 / .06);
+  }
+  .btn:disabled{ background:#f4f4f6; color:#a1a1aa; border-color:#e4e4e7; cursor:not-allowed }
+  .btn.secundario{ background:#fff; color:#031716; border-color:#e4e4e7; font-weight:500 }
+  .btn.secundario:hover{ border-color:#CCFF00; background:#FBFFE8 }
 
-/* ---------- PAGE CANVAS ---------- */
-.canvas{ margin:0 auto; max-width:1500px; padding:2.5rem 1.5rem 3rem }
-.page-head{ margin-bottom:1.5rem }
-.lime-rule{ display:block; height:3px; width:2.5rem; background:var(--neon); margin-bottom:1rem }
-h1.premium-heading{ font-size:2.25rem; line-height:2.5rem; font-weight:500 }
-.bajada{ margin-top:.625rem; max-width:38rem; font-size:14px; line-height:1.625; color:var(--z500) }
+  .quitar{
+    background:none; border:0; cursor:pointer; padding:2px 4px;
+    font-size:.6875rem; letter-spacing:.08em; text-transform:uppercase; color:#a1a1aa;
+  }
+  .quitar:hover{ color:#031716 }
 
-.layout{ display:grid; grid-template-columns:1fr; gap:1.5rem; align-items:start }
-@media (min-width:1240px){ .layout{ grid-template-columns:minmax(0,1fr) 280px } }
+  .spin{
+    width:12px; height:12px; border:1.5px solid rgba(3,23,22,.25);
+    border-top-color:#031716; border-radius:50%;
+    animation:giro .7s linear infinite; margin-right:.5rem;
+  }
+  @keyframes giro{ to{ transform:rotate(360deg) } }
 
-/* ---------- CARDS ---------- */
-.card{ border:1px solid var(--z200); border-left:3px solid var(--z200); border-radius:8px; background:#fff; padding:1.25rem 1.5rem 1.5rem; transition:all .3s ease-in-out }
-.card:hover{ border-left-color:var(--neon); box-shadow:0 8px 30px rgb(0 0 0 / .04) }
-.card + .card{ margin-top:1.25rem }
-.card-head{ display:flex; align-items:baseline; gap:.75rem; flex-wrap:wrap }
-.fmtNum{ display:inline-flex; height:1.25rem; width:1.5rem; align-items:center; justify-content:center; border-radius:3px; background:var(--z100); font-size:10px; font-weight:600; color:var(--z500); transition:.3s }
-.card:hover .fmtNum{ background:var(--neon); color:var(--tinta) }
-.card h2{ font-size:15px; font-weight:500; letter-spacing:-.01em }
-.card-note{ margin-top:.375rem; max-width:44rem; font-size:13px; line-height:1.625; color:var(--z500) }
-.tag{ border-radius:4px; background:var(--z100); padding:.125rem .5rem; font-size:10px; font-weight:500; letter-spacing:.12em; color:var(--z500) }
+  .oculto{ display:none !important }
 
-/* ---------- BUTTONS ---------- */
-.btn{ display:inline-flex; align-items:center; justify-content:center; gap:.45rem; background:var(--neon); color:var(--tinta); border:1px solid var(--neon); border-radius:6px; padding:.55rem 1.05rem; font-size:12.5px; font-weight:600; font-family:inherit; transition:.15s ease }
-.btn:hover{ background:var(--tinta); color:var(--neon); border-color:var(--tinta); transform:translateY(-1px) }
-.btn:active{ transform:translateY(0) }
-.btn.secondary{ background:#fff; color:var(--tinta); border-color:var(--z200); font-weight:500 }
-.btn.secondary:hover{ border-color:var(--neon); background:var(--neon-suave); color:var(--tinta) }
-.btn.danger{ background:#fff; color:var(--rojo); border-color:#EFCFCB; font-weight:500 }
-.btn.danger:hover{ background:var(--rojo); color:#fff; border-color:var(--rojo) }
-.btn svg{ width:14px; height:14px; flex:0 0 auto }
-.link-btn{ background:none; border:0; padding:2px 4px; font-family:inherit; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--z400) }
-.link-btn:hover{ color:var(--tinta) }
+  /* Alertas: línea de énfasis de 1px, sin fondos de color */
+  .alerta{
+    border-left:3px solid #CCFF00; background:#F9F9FB;
+    border-radius:0 6px 6px 0; padding:.7rem 1rem;
+    margin-bottom:.5rem; font-size:.8125rem; color:#3f3f46;
+  }
+  .alerta b{ color:#031716; font-weight:500 }
 
-/* ---------- TOOLBAR ---------- */
-.toolbar{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:1.1rem }
-.date-nav{ display:flex; align-items:center; gap:.15rem; border:1px solid var(--z200); border-radius:6px; padding:2px; background:#fff }
-.date-nav button{ background:none; border:0; color:var(--tinta); width:28px; height:28px; font-size:15px; border-radius:4px; transition:.15s }
-.date-nav button:hover{ background:var(--neon) }
-#date-label{ font-size:12.5px; font-weight:500; min-width:210px; text-align:center }
-.switch{ display:inline-flex; border:1px solid var(--z200); border-radius:6px; padding:2px; background:#fff }
-.switch button{ border:0; background:none; padding:.4rem .95rem; font-size:12.5px; font-family:inherit; color:var(--z500); border-radius:4px; transition:.15s }
-.switch button:hover{ background:var(--z50); color:var(--tinta) }
-.switch button[aria-pressed=true]{ background:var(--neon); color:var(--tinta); font-weight:500 }
-.toolbar .right{ margin-left:auto; display:flex; gap:.5rem; flex-wrap:wrap }
+  /* Listas de archivos: filas compactas separadas por 1px */
+  #lista-archivos li, #lista-base li{
+    display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:.7rem .9rem; font-size:.8125rem; color:#3f3f46;
+    border:1px solid #e4e4e7; border-radius:6px; margin-bottom:.375rem;
+    background:#fff;
+  }
+  #lista-base li{ background:#F9F9FB; border-left:3px solid #CCFF00 }
+  #lista-base li b{ font-weight:500; color:#031716 }
+  .fecha{ font-size:.6875rem; color:#a1a1aa; white-space:nowrap }
 
-/* ---------- HELP STRIP ---------- */
-.help-strip{ margin-top:1rem; border:1px solid var(--z200); border-left:3px solid var(--neon);
-  border-radius:0 6px 6px 0; background:var(--z50); padding:.75rem .95rem }
-.help-title{ display:flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--z400); margin-bottom:.55rem }
-.help-title .link-btn{ margin-left:auto; letter-spacing:.08em }
-.help-strip ol.only-phone{ display:none }
-.help-strip.is-hidden{ display:none }
-.help-strip ol{ display:flex; flex-direction:column; gap:.4rem; font-size:12.5px; color:var(--z600) }
-.help-strip li{ list-style:none; display:flex; align-items:baseline; gap:.5rem }
-.help-strip li b{ font-weight:600; color:var(--tinta); font-size:10px; background:var(--neon);
-  width:15px; height:15px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto }
+  .dropzone{ transition:.15s ease }
+  .dropzone:hover, .dropzone.drag{ border-color:#CCFF00; background:#FBFFE8 }
 
-/* ---------- CLASH BANNER ---------- */
-#clash-notice{ display:none; margin-top:1rem; border:1px solid #EFCFCB; border-left:3px solid var(--rojo); border-radius:0 6px 6px 0; background:var(--rojoBg); padding:.7rem .9rem; font-size:12.5px; color:#7B2318 }
-#clash-notice.on{ display:block }
-#dock-notice{ display:none; margin-top:.7rem; border:1px solid #E6D5B0; border-left:3px solid #B26A00; border-radius:0 6px 6px 0; background:#FFF8EC; padding:.7rem .9rem; font-size:12.5px; color:#7A4A05 }
-#dock-notice.on{ display:block }
-#dock-notice b{ font-weight:600 }
-#dock-notice ul{ list-style:none; margin-top:.35rem; display:flex; flex-direction:column; gap:.2rem }
-#dock-notice li button{ background:none; border:0; padding:0; font-family:inherit; font-size:12.5px; color:#7A4A05; text-decoration:underline; text-underline-offset:2px }
-#clash-notice b{ font-weight:600 }
-#clash-notice ul{ list-style:none; margin-top:.35rem; display:flex; flex-direction:column; gap:.2rem }
-#clash-notice li button{ background:none; border:0; padding:0; font-family:inherit; font-size:12.5px; color:#7B2318; text-decoration:underline; text-underline-offset:2px }
+  #resultado{ display:none }
 
-/* =========================================================================
-   TIME GRID
-   ========================================================================= */
-.grid-box{ border:1px solid var(--z200); border-radius:8px; background:#fff; overflow:hidden; margin-top:1.1rem }
-.grid-scroll{ overflow-x:auto }
-.grid{ min-width:820px }
-/* Careful: this cannot be sticky. The wrapper has overflow-x, so the header
-   would drift down and cover the first hours of the day. */
-.grid-head{ display:grid; position:relative; z-index:20 }
-.grid-head > div{ background:var(--neon); padding:.55rem .5rem; text-align:center; border-left:1px solid rgba(3,23,22,.12) }
-.grid-head > div:first-child{ border-left:0 }
-.grid-head .col-name{ font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--tinta); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.grid-head .col-sub{ font-size:10.5px; color:rgba(3,23,22,.6); margin-top:1px; font-variant-numeric:tabular-nums }
-.grid-head .is-today{ background:var(--tinta) }
-.grid-head .is-today .col-name{ color:var(--neon) }
-.grid-head .is-today .col-sub{ color:rgba(255,255,255,.65) }
+  /* -----------------------------------------------------------------------
+     Tabla de registros densos: solo líneas horizontales de 1px, sin bordes
+     verticales ni filas alternadas. Padding vertical ajustado (py-3).
+     ----------------------------------------------------------------------- */
+  table{ width:100%; border-collapse:collapse; font-size:.8125rem }
+  th{
+    text-align:left; padding:.5rem .75rem;
+    border-bottom:2px solid #CCFF00;
+    font-size:.75rem; font-weight:400; color:#71717a;
+  }
+  th .orden{ display:inline-flex; align-items:center; gap:.35rem; color:inherit }
+  th svg{ opacity:.45 }
+  td{
+    padding:.75rem; border-bottom:1px solid #e4e4e7; color:#3f3f46;
+    font-variant-numeric:tabular-nums;
+  }
+  tbody tr:last-child td{ border-bottom:0 }
+  tbody tr:hover td{ background:#FAFAFA }
+  /* Columna numérica alineada a la derecha para lectura de ingeniería */
+  th:nth-child(3), td:nth-child(3){ text-align:right }
 
-.grid-body{ display:grid; border-top:1px solid var(--z200) }
-.hours-col{ background:var(--z50); border-right:1px solid var(--z200) }
-.hour{ height:var(--slot); font-size:10px; color:var(--z400); text-align:right; padding:1px 7px 0 0; font-variant-numeric:tabular-nums; border-top:1px solid var(--z200) }
-.hour.media{ color:transparent; border-top-style:dotted }
-.hour:first-child{ border-top:0 }
+  #registro{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.7188rem;
+    line-height:1.7; color:#52525b; background:#F9F9FB;
+    border:1px solid #e4e4e7; border-radius:6px; padding:1rem 1.15rem;
+    white-space:pre-wrap; max-height:20rem; overflow:auto; margin-top:1rem;
+  }
 
-.col{ position:relative; border-left:1px solid var(--z200) }
-.col::before{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:repeating-linear-gradient(180deg,
-    var(--z200) 0 1px, transparent 1px calc(var(--slot)*2));
-  background-position:0 var(--slot);
-}
-.col::after{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:repeating-linear-gradient(180deg,
-    transparent 0 var(--slot), #F1F1F3 var(--slot) calc(var(--slot) + 1px), transparent calc(var(--slot) + 1px) calc(var(--slot)*2));
-  background-position:0 var(--slot);
-}
-.col.is-target{ background:var(--neon-suave) }
-.col.hoy-col{ box-shadow:inset 2px 0 0 var(--neon) }
-/* Blocked bands: lunch break, maintenance, dock closed */
-.blocked{ position:absolute; left:0; right:0; z-index:3; pointer-events:none;
-  background:repeating-linear-gradient(135deg, #F1F1F3 0 7px, #E7E7EA 7px 14px);
-  border-top:1px solid var(--z300); border-bottom:1px solid var(--z300);
-  display:flex; align-items:center; justify-content:center; overflow:hidden }
-.blocked span{ font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--z500);
-  background:#fff; padding:1px 6px; border:1px solid var(--z300) }
+  input[type=file]{ display:none }
+  ::selection{ background:#CCFF00; color:#031716 }
 
-/* A pickup is material leaving: hollow block with a thicker dashed edge */
-.block.is-pickup{ background:repeating-linear-gradient(90deg,#fff 0 9px,rgba(0,0,0,.03) 9px 18px)!important;
-  border-style:dashed; border-left-width:6px }
-.list-row.is-pickup{ background:repeating-linear-gradient(90deg,#fff 0 9px,rgba(0,0,0,.03) 9px 18px) }
+  /* Cursor estándar del sistema; manito solo en lo que se puede clickear */
+  a, button, label, summary, [role="button"], .zona-btn, .dropzone, .quitar, .btn{
+    cursor: pointer;
+  }
+  button:disabled, .btn:disabled{ cursor: not-allowed }
+  input, textarea, select{ cursor: text }
 
-/* Arrival state: an arrived truck turns green, not just a small marker */
-.block.is-arrived{ background:#E7F4EC!important; border-color:#1E8E4E!important; border-left-width:6px }
-.block.is-arrived .b-customer{ color:#14663A }
-.block.is-arrived .b-waste{ color:#2F7A52 }
-.block.is-noshow{ background:var(--z100)!important; border-color:var(--z400)!important; border-style:dotted; color:var(--z500)!important }
-.block.is-noshow .b-customer{ text-decoration:line-through; color:var(--z500) }
-.b-real{ display:block; font-size:9.5px; font-weight:700; letter-spacing:.08em }
-.b-ok{ position:absolute; right:3px; top:3px; width:15px; height:15px; border-radius:50%;
-  background:#1E8E4E; color:#fff; font-size:9px; font-weight:700; line-height:15px; text-align:center }
-
-/* Quick button to record the arrival without opening the booking form */
-.b-tic{ position:absolute; right:3px; top:3px; width:19px; height:19px; border:1px solid currentColor;
-  background:#fff; color:inherit; font-size:11px; line-height:1; padding:0; opacity:0; transition:.15s;
-  display:flex; align-items:center; justify-content:center }
-.block:hover .b-tic{ opacity:.75 }
-.b-tic:hover{ opacity:1!important; background:#1E8E4E; color:#fff; border-color:#1E8E4E }
-
-.now-line{ position:absolute; left:0; right:0; height:1px; background:var(--rojo); z-index:6; pointer-events:none }
-.now-line::before{ content:''; position:absolute; left:0; top:-2px; width:5px; height:5px; background:var(--rojo) }
-.ghost{ position:absolute; left:2px; right:2px; border:1px dashed var(--tinta); background:rgba(204,255,0,.35); z-index:7; pointer-events:none; display:none }
-
-/* ---------- BOOKING BLOCKS ---------- */
-.block{
-  position:absolute; left:2px; right:16px; z-index:8; overflow:hidden;   /* 16px libres a la derecha: sirven para agendar otro movimiento a la misma hora */
-  border-radius:0; border:1px solid; border-left-width:4px; background:#fff;
-  padding:3px 5px; font-size:10.5px; line-height:1.25; user-select:none;
-  cursor:grab; transition:box-shadow .15s;
-}
-.block:hover{ box-shadow:0 3px 12px rgb(0 0 0 / .12); z-index:9 }
-.block.is-dragging{ opacity:.4; cursor:grabbing }
-.block.is-tentative{ border-style:dashed; background:repeating-linear-gradient(135deg,#fff 0 6px,rgba(0,0,0,.035) 6px 12px) }
-.block.is-clash{ border-color:var(--rojo)!important; background:var(--rojoBg)!important; color:var(--rojo)!important }
-.block.is-clash .b-waste,.block.is-clash .b-meta{ color:var(--rojo) }
-.b-customer{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block }
-.b-waste{ display:block; color:var(--z600); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.b-meta{ display:block; color:var(--z400); font-size:9.5px; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.b-short{ display:flex; gap:5px; align-items:baseline }
-.b-short .b-meta{ margin-left:auto }
-.b-warn{ position:absolute; right:3px; top:2px; font-size:11px; font-weight:700; color:var(--rojo) }
-/* Agendado con poca anticipación: franja lateral, sin robar espacio al texto. */
-.block.is-rush{ box-shadow:inset 3px 0 0 -1px #B26A00 }
-.b-rush{ position:absolute; right:3px; bottom:2px; font-size:9.5px; font-weight:700; color:#B26A00; letter-spacing:.04em }
-.list-row.is-rush{ box-shadow:inset 0 0 0 1px #F0DCB4 }
-.block.is-offdock{ border-style:dashed }
-.b-flag{ position:absolute; left:3px; bottom:2px; font-size:9.5px; color:#B26A00 }
-.b-first{ position:absolute; right:14px; top:2px; font-size:9px; font-weight:700; color:#1E8E4E; letter-spacing:.02em }
-.block.is-clash .b-customer{ padding-right:26px }
-.b-resize{ position:absolute; left:0; right:0; bottom:0; height:7px; cursor:ns-resize }
-.b-resize::after{ content:''; position:absolute; left:50%; bottom:2px; width:16px; height:2px; margin-left:-8px; background:currentColor; opacity:0; transition:.15s }
-.block:hover .b-resize::after{ opacity:.35 }
-
-/* ---------- SUMMARY / LOAD ---------- */
-.load-list{ display:flex; flex-direction:column; gap:.6rem; margin-top:.75rem }
-.load-row{ font-size:12px; color:var(--z600) }
-.load-top{ display:flex; align-items:baseline; gap:.4rem }
-.load-top b{ font-weight:500; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.load-top span{ font-size:11px; color:var(--z400); font-variant-numeric:tabular-nums }
-.load-bar{ height:3px; background:var(--z200); margin-top:4px }
-.load-bar i{ display:block; height:100% }
-
-.kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.5rem; margin-top:1.1rem }
-.kpi{ border:1px solid var(--z200); border-left:3px solid var(--neon); padding:.6rem .8rem; background:var(--neon-suave) }
-.kpi b{ display:block; font-size:19px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums }
-.kpi span{ display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--z500); margin-top:4px }
-
-/* ---------- SIDE COLUMN ---------- */
-aside{ position:sticky; top:6.5rem }
-.side-block + .side-block{ margin-top:1.75rem }
-.side-block{ transition:transform .3s }
-.side-block:hover{ transform:translateX(2px) }
-.side-title{ display:flex; align-items:center; gap:.5rem; font-size:10px; font-weight:500; letter-spacing:.18em; color:var(--z400) }
-.side-title span.pt{ height:6px; width:6px; border-radius:1px; background:var(--z300); transition:.3s }
-.side-block:hover .side-title span.pt{ background:var(--neon) }
-.side-block p{ margin-top:.6rem; font-size:12.5px; line-height:1.625; color:var(--z600) }
-.side-block p b{ font-weight:500; color:var(--tinta) }
-.m-created{ display:none; margin-top:.7rem; border-left:3px solid var(--z300); background:var(--z50); padding:.5rem .75rem; font-size:11.5px; color:var(--z600) }
-.m-created.on{ display:block }
-.m-created.is-rush{ border-left-color:#B26A00; background:#FFF8EC; color:#7A4A05 }
-.m-offdock{ display:none; margin-top:.8rem; border-left:3px solid #B26A00; background:#FFF8EC; padding:.55rem .8rem; font-size:12px; color:#7A4A05 }
-.m-offdock.on{ display:block }
-.legend{ margin-top:.7rem; display:flex; flex-direction:column; gap:.45rem }
-.legend-item{ display:flex; align-items:center; gap:.5rem; font-size:12px; color:var(--z600) }
-.legend-swatch{ width:11px; height:11px; flex:0 0 auto; border:1px solid }
-
-/* =========================================================================
-   PHONE VIEW — day list with large Arrived / Did not arrive buttons
-   ========================================================================= */
-#mobile-list{ display:none; margin-top:1.1rem }
-.m-day{ font-size:10px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
-  color:var(--z500); background:var(--z100); padding:.4rem .7rem; margin:1rem 0 .5rem }
-.m-day:first-child{ margin-top:0 }
-.list-row{ border:1px solid var(--z200); border-left:4px solid; background:#fff;
-  padding:.7rem .8rem .65rem; margin-bottom:.55rem }
-.list-main{ display:flex; gap:.7rem; align-items:flex-start }
-.list-row.is-arrived{ background:#E7F4EC; border-color:#1E8E4E }
-.list-row.is-noshow{ background:var(--z100); border-color:var(--z400); border-style:dotted }
-.list-row.is-noshow .list-customer{ text-decoration:line-through; color:var(--z500) }
-.list-row.is-clash{ background:var(--rojoBg); border-color:var(--rojo) }
-.list-time{ flex:0 0 52px; font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1 }
-.list-time span{ display:block; font-size:10px; font-weight:400; color:var(--z400); margin-top:2px }
-.list-info{ flex:1; min-width:0 }
-.list-customer{ display:block; font-size:14px; font-weight:600 }
-.list-waste{ display:block; font-size:12px; color:var(--z600); margin-top:1px }
-.list-dock{ display:flex; align-items:center; gap:.35rem; font-size:11px; color:var(--z500); margin-top:3px }
-.list-dock i{ width:8px; height:8px; flex:0 0 auto }
-.list-tag{ font-size:9.5px; font-weight:700; letter-spacing:.08em; margin-top:4px; display:block }
-.list-actions{ display:flex; gap:.45rem; margin-top:.6rem }
-.list-actions button{ flex:1; height:42px; border:1px solid var(--z200); background:#fff;
-  font-size:13.5px; font-weight:600; font-family:inherit; border-radius:4px; color:var(--z600);
-  display:flex; align-items:center; justify-content:center; gap:.4rem }
-.list-actions .ok[aria-pressed=true]{ background:#1E8E4E; border-color:#1E8E4E; color:#fff }
-.list-actions .no[aria-pressed=true]{ background:var(--rojo); border-color:var(--rojo); color:#fff }
-.empty-note{ border:1px dashed var(--z300); padding:1.6rem; text-align:center; font-size:13px; color:var(--z400) }
-
-@media (max-width:900px){
-  .canvas{ padding:1.25rem 1rem 2rem }
-  .topbar-in{ height:auto; padding:.7rem 1rem; gap:.7rem }
-  .topbar-in .logo{ height:1.5rem } .topbar-in svg.logo{ width:136px }
-  .divider{ display:none }
-  .app-title p:first-child{ font-size:15px }
-  .app-title p:last-child{ font-size:11px }
-  .topbar-right{ width:100%; margin-left:0 }
-  h1.premium-heading{ font-size:1.6rem; line-height:2rem }
-  .card{ padding:1rem .9rem 1.2rem }
-  .grid-box{ display:none }          /* the grid is unreadable on a phone */
-  #mobile-list{ display:block }
-  .help-strip ol.only-desktop{ display:none }
-  .help-strip ol.only-phone{ display:flex }
-  .toolbar{ gap:.4rem }
-  .toolbar .right{ margin-left:0; width:100% }
-  .date-nav{ flex:1 } #date-label{ min-width:0; flex:1 }
-  .kpis{ grid-template-columns:repeat(2,1fr) }
-  .modal{ padding:1.1rem; border-radius:0; max-height:100vh; height:100%; width:100% }
-  .overlay{ padding:0 }
-  .row2,.row3{ grid-template-columns:1fr }
-  .waste-row{ grid-template-columns:1fr 1fr; grid-auto-rows:min-content }
-  .waste-row .it-unit{ align-self:center }
-  .waste-row .row-remove{ grid-column:2; justify-self:end }
-  aside{ position:static }
-  body{ font-size:14px }
-  .pill{ font-size:11px; padding:.35rem .6rem }
-  .page-head{ margin-bottom:1rem }
-  .card{ border-radius:6px }
-  .card + .card{ margin-top:.9rem }
-  .toolbar .btn, .toolbar .switch button{ flex:1 1 auto; justify-content:center }
-  .toolbar .right .btn{ flex:1 }
-  .date-nav{ flex:1 1 100% }
-  .modal-actions{ flex-wrap:wrap }
-  .modal-actions .btn{ flex:1 1 auto }
-}
-
-/* ---------- MODAL ---------- */
-.overlay{ position:fixed; inset:0; background:rgba(3,23,22,.45); z-index:100; display:none; align-items:center; justify-content:center; padding:1rem }
-.overlay.is-open{ display:flex }
-.modal{ background:#fff; border-radius:8px; border-top:3px solid var(--neon); padding:1.5rem; width:520px; max-width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 24px 60px rgb(0 0 0 / .18) }
-.modal h3{ font-size:18px; font-weight:500; letter-spacing:-.01em }
-.modal .sub{ font-size:12.5px; color:var(--z500); margin:.2rem 0 1.2rem }
-.form-section{ font-size:10px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--tinta); margin:1.2rem 0 .8rem; padding-bottom:.45rem; border-bottom:1px solid var(--z200) }
-.form-section:first-of-type{ margin-top:0 }
-.field{ margin-bottom:.8rem }
-.field label{ display:block; font-size:10px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--z400); margin-bottom:.3rem }
-.field label i{ font-style:normal; color:var(--z300); text-transform:none; letter-spacing:0 }
-.field input,.field select,.field textarea{ width:100%; border:1px solid var(--z200); border-radius:6px; padding:.5rem .7rem; font-size:13px; color:var(--tinta); background:#fff; outline:none; transition:.15s }
-.field textarea{ resize:vertical; line-height:1.5; text-transform:uppercase }
-.field textarea::placeholder{ text-transform:none }
-.field textarea:focus{ border-color:var(--neon); box-shadow:0 0 0 3px rgba(204,255,0,.3) }
-.field input:focus,.field select:focus{ border-color:var(--neon); box-shadow:0 0 0 3px rgba(204,255,0,.3) }
-.row2{ display:grid; grid-template-columns:1fr 1fr; gap:.7rem }
-.row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:.7rem }
-.chips{ display:flex; gap:.4rem; flex-wrap:wrap }
-.chip{ padding:.35rem .8rem; border:1px solid var(--z200); border-radius:4px; background:#fff; font-size:12px; font-family:inherit; color:var(--z600); transition:.15s }
-.chip:hover{ border-color:var(--neon) }
-.chip[aria-pressed=true]{ background:var(--neon); border-color:var(--neon); color:var(--tinta); font-weight:500 }
-.waste-row{ display:grid; grid-template-columns:1fr 112px 70px 46px 22px; gap:.4rem; margin-bottom:.35rem; align-items:center }
-.waste-row .it-unit{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--z400) }
-.waste-row.is-bale .it-unit{ color:#8A6A2F; font-weight:600 }
-.waste-row.is-bale .it-ton{ border-color:#C6A85C; background:#FCFAF3 }
-.waste-row .it-fmt{ font-size:11.5px; color:var(--z600) }
-.waste-row .row-remove{ border:0; background:none; color:var(--z400); font-size:15px; line-height:1; padding:0 }
-.waste-row .row-remove:hover{ color:var(--rojo) }
-.waste-total{ display:flex; align-items:baseline; gap:.5rem; margin-top:.5rem; font-size:12px; color:var(--z500) }
-.waste-total b{ font-size:15px; font-weight:600; color:var(--tinta); font-variant-numeric:tabular-nums }
-.waste-total .btn{ margin-left:auto; padding:.35rem .8rem; font-size:11.5px }
-.chip-row{ display:flex; gap:.3rem; flex-wrap:wrap; margin-top:.5rem }
-.chip-row button{ border:1px solid var(--z200); background:var(--z50); border-radius:3px; padding:.2rem .5rem; font-size:11px; font-family:inherit; color:var(--z600) }
-.chip-row button:hover{ border-color:var(--neon); background:var(--neon-suave); color:var(--tinta) }
-.modal-clash{ display:none; margin-top:.8rem; border-left:3px solid var(--rojo); background:var(--rojoBg); padding:.55rem .8rem; font-size:12px; color:#7B2318 }
-.modal-clash.on{ display:block }
-.modal-clash.ok{ display:block; border-left-color:#1E8E4E; background:#F1F8F3; color:#20603C }
-.modal-actions{ display:flex; gap:.5rem; margin-top:1.4rem; align-items:center }
-.modal-actions .crece{ flex:1 }
-
-/* ---------- TOAST ---------- */
-#toast{ position:fixed; left:1.5rem; bottom:1.5rem; z-index:200; background:var(--tinta); color:#fff; border-left:3px solid var(--neon); padding:.7rem 1rem; font-size:12.5px; max-width:340px; opacity:0; transform:translateY(8px); pointer-events:none; transition:.2s }
-#toast.on{ opacity:1; transform:none }
-#toast.malo{ border-left-color:var(--rojo) }
-
-/* ---------- FOOTER ---------- */
-footer.footer{ border-top:1px solid var(--z200); background:#fff }
-.footer-in{ margin:0 auto; max-width:1500px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.75rem; padding:1.5rem; font-size:12px; color:var(--z400) }
-
-/* =========================================================================
-   PHONE — the grid gives way to the list and everything stacks in one column.
-   ========================================================================= */
-
-@media (max-width:600px){
-  .row2,.row3{ grid-template-columns:1fr }
-  .row3 .field:first-child{ grid-column:auto }
-}
-
-@media print{
-  .topbar-right,.toolbar,.help-strip,aside,footer.footer,.b-resize,#toast{ display:none!important }
-  body{ background:#fff }
-  .canvas{ padding:0; max-width:none }
-  .layout{ display:block }
-  .card{ border:0; box-shadow:none; padding:0 }
-  .grid-head{ position:static }
-  header.topbar{ position:static }
-}
+  /* Relieve sutil en los botones */
+  .btn{ will-change: transform }
+  .btn:hover:not(:disabled){ transform: translateY(-1px) }
+  .btn:active:not(:disabled){ transform: translateY(0) }
 </style>
 </head>
 
-<body>
+<body class="bg-zinc-100 font-sans text-tinta antialiased">
+<!-- =========================================================================
+     MARCA DE AGUA: la "a" del logo Ambipar en megazoom.
+     Se ve solo un trozo, anclado a la esquina superior izquierda. Va detrás
+     de todo y no intercepta clics.
+     ========================================================================= -->
+<div aria-hidden="true"
+     class="pointer-events-none fixed -left-[277px] -top-[18px] -z-10 h-[716px] w-[716px] select-none opacity-[0.17]">
 
-<!-- MARCA DE AGUA: la "a" del logo Ambipar en megazoom -->
-<div aria-hidden="true" class="watermark">
-  <img src="ambipar-a-verde.png" alt=""
-       onerror="this.style.display='none';document.getElementById('logo-a-fallback').style.display='block'">
-  <div id="logo-a-fallback">
-    <svg viewBox="0 0 100 100">
-      <g fill="none" stroke="#CCFF00" stroke-linecap="butt">
-        <rect x="22" y="22" width="56" height="56" rx="13" transform="rotate(45 50 50)" stroke-width="7"/>
-        <circle cx="48.5" cy="55" r="10.5" stroke-width="6.5"/>
-        <path d="M59 41.5 V 68.5" stroke-width="6.5"/>
+  <!-- El isotipo oficial (ambipar-a-verde.png, fondo transparente) ampliado.
+       Si el archivo todavía no está en el repositorio, se dibuja el de
+       respaldo y la página nunca muestra una imagen rota. -->
+  <img src="ambipar-a-verde.png" alt="" class="h-full w-full object-contain"
+       onerror="this.style.display='none';document.getElementById('a-respaldo').style.display='block'">
+
+  <div id="a-respaldo" class="hidden h-full w-full p-[18%]">
+    <svg viewBox="0 0 100 100" class="h-full w-full">
+    <!-- Rombo redondeado + "a" de una sola planta: la misma construcción
+         del isotipo (cuenco circular con asta recta a la derecha). -->
+    <g fill="none" stroke="#CCFF00" stroke-linecap="butt">
+      <rect x="22" y="22" width="56" height="56" rx="13"
+            transform="rotate(45 50 50)" stroke-width="7"/>
+      <circle cx="48.5" cy="55" r="10.5" stroke-width="6.5"/>
+      <path d="M59 41.5 V 68.5" stroke-width="6.5"/>
       </g>
     </svg>
   </div>
 </div>
 
+
 <!-- ========================= BARRA SUPERIOR ========================= -->
-<header class="topbar">
-  <div class="topbar-in">
-    <img src="ambipar-logo.png" alt="Ambipar" class="logo"
-         onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
-    <svg id="logo-fallback" viewBox="0 0 260 46" class="logo" style="display:none" aria-label="Ambipar">
+<!-- Bloque sólido de marca: lima corporativo con tipografía en oscuro
+     institucional, replicando el patrón editorial de Ambipar. -->
+<header class="sticky top-0 z-50 bg-neon">
+  <div class="mx-auto flex h-20 max-w-6xl items-center gap-6 px-6">
+
+    <img src="ambipar-logo.png" alt="Ambipar" class="h-8 w-auto"
+         onerror="this.style.display='none';document.getElementById('logo-respaldo').style.display='block'">
+    <svg id="logo-respaldo" viewBox="0 0 260 46" class="hidden h-8 w-auto" aria-label="Ambipar">
       <text x="0" y="35" font-family="'Barlow Semi Condensed', sans-serif" font-size="42"
             font-weight="600" letter-spacing="-1" fill="#031716">ambipar</text>
       <g transform="translate(220 3)" fill="none" stroke="#031716" stroke-linecap="butt">
@@ -443,2382 +188,224 @@ footer.footer{ border-top:1px solid var(--z200); background:#fff }
       </g>
     </svg>
 
-    <span class="divider"></span>
+    <span class="h-9 w-px bg-tinta/25"></span>
 
-    <div class="app-title">
-      <p class="premium-heading">Planificador GIRI</p>
-      <p>GIRI - Chile</p>
+    <div class="min-w-0 leading-tight">
+      <p class="premium-heading truncate text-[17px] font-medium text-tinta">
+        Sistema Trazabilidad Ambipar
+      </p>
+      <p class="mt-0.5 text-[13px] text-tinta/70">Inteligencia Circular · Chile</p>
     </div>
 
-    <div class="topbar-right">
-      <div class="pill" id="sync-state" onclick="openSheetModal()"
-           title="Estado de la información · clic para ver la conexión" style="cursor:pointer">
-        <span class="dot"></span><span id="sync-label">Actualizado</span>
-      </div>
+    <div id="estado-motor"
+         class="ml-auto flex items-center gap-2 rounded-md bg-tinta px-3 py-2 text-[12px] text-white">
+      <span class="punto" id="punto-motor"></span>
+      <span id="txt-motor">Iniciando el motor…</span>
     </div>
   </div>
 </header>
 
-<div class="canvas">
+<div class="mx-auto max-w-6xl px-6 py-12">
 
-  <div class="page-head">
-    <span class="lime-rule"></span>
-    <h1 class="premium-heading">Planificación GIRI</h1>
+  <!-- ========================= ENCABEZADO ========================= -->
+  <div class="mb-10">
+    <div>
+      <span class="mb-4 block h-[3px] w-10 bg-neon"></span>
+      <h1 class="premium-heading text-4xl font-medium text-tinta">
+        Trazabilidad.
+      </h1>
+      <p class="mt-2.5 max-w-lg text-sm leading-relaxed text-zinc-500">
+        Subir archivos Excel por zona. El sistema los procesa y entrega
+        consolidado listo para descargar.
+      </p>
+    </div>
   </div>
 
-  <div class="layout">
-    <div style="min-width:0">
+  <!-- ============ MAQUETACIÓN ASIMÉTRICA: 1fr + columna técnica ============ -->
+  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_290px]">
 
-      <!-- ============== TARJETA PRINCIPAL: AGENDA ============== -->
-      <section class="card">
-        <div class="card-head">
-          <span class="fmtNum">01</span>
-          <h2 id="view-title">Agenda del día</h2>
-          <span class="tag" id="range-chip">—</span>
+    <!-- ---------------- COLUMNA PRINCIPAL ---------------- -->
+    <div class="min-w-0 space-y-5">
+
+      <!-- 01 · ZONA -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">01</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Zona</h2>
         </div>
+        <p class="mt-1.5 text-[13px] text-zinc-500">
+          Ámbito del procesamiento. Cada zona tiene sus propias fuentes y reglas.
+        </p>
 
-        <div class="toolbar">
-          <button class="btn" onclick="quickAdd()">
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 2v10M2 7h10"/></svg>
-            Agendar
-          </button>
-
-          <div class="date-nav">
-            <button onclick="shiftDate(-1)" title="Anterior">&#8249;</button>
-            <span id="date-label"></span>
-            <button onclick="shiftDate(1)" title="Siguiente">&#8250;</button>
-          </div>
-          <button class="btn secondary" onclick="goToday()">Hoy</button>
-
-          <div class="switch" id="view-switch">
-            <button onclick="setView('day')"    aria-pressed="true">Día</button>
-            <button onclick="setView('semana')" aria-pressed="false">Semana</button>
-          </div>
-
-          <div class="switch" id="move-switch" title="Muestra todo, solo lo que entra o solo lo que sale">
-            <button onclick="setMoveFilter('todo')"    aria-pressed="true">Todo</button>
-            <button onclick="setMoveFilter('ingreso')" aria-pressed="false">↓ Ingresos</button>
-            <button onclick="setMoveFilter('retiro')"  aria-pressed="false">↑ Retiros</button>
-          </div>
-
-          <button class="btn secondary" onclick="openBlockModal()" title="Colación, mantención o nave cerrada">
-            Bloquear horario
-          </button>
-
-          <div class="right">
-            <button class="btn secondary" onclick="downloadExcel()" title="Descarga un archivo .xlsx con toda la semana">
-              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1v8M4 6l3 3 3-3M2 12h10"/></svg>
-              Descargar Excel
-            </button>
-            <button class="btn secondary" onclick="window.print()" title="Imprime la vista que estás viendo">
-              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5V1.5h6V5M3 5h8v5H3zM4.5 8.5h5V13h-5z"/></svg>
-              Imprimir
-            </button>
-          </div>
+        <div id="zonas" class="mt-5 inline-flex rounded-md border border-zinc-200 p-1">
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="RM" aria-pressed="false">RM</button>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="SUR" aria-pressed="false">Sur</button>
+          <button class="zona-btn rounded-[4px] px-5 py-2 text-[13px] text-zinc-500 transition-all duration-300 ease-in-out hover:-translate-y-px hover:bg-zinc-50
+                         hover:text-tinta aria-pressed:bg-neon aria-pressed:text-tinta aria-pressed:font-medium"
+                  data-zona="NORTE" aria-pressed="false">Norte</button>
         </div>
-
-        <div class="help-strip" id="help-strip">
-          <span class="help-title">Cómo se usa
-            <button class="link-btn" onclick="hideHelp()">Ocultar</button>
-          </span>
-          <ol class="only-desktop">
-            <li><b>1</b> Haz clic en un espacio libre para agendar un ingreso o un retiro.</li>
-            <li><b>2</b> Escribe el cliente y elige qué residuo trae.</li>
-            <li><b>3</b> Si cambia la hora o el lugar, arrastra el bloque.</li>
-            <li><b>4</b> Cuando el camión llegue, márcalo con el ✓.</li>
-          </ol>
-          <ol class="only-phone">
-            <li><b>1</b> Toca <b style="background:none;color:var(--tinta);width:auto">✓ Llegó</b> o <b style="background:none;color:var(--tinta);width:auto">✕ No llegó</b> según lo que pase con cada camión.</li>
-            <li><b>2</b> Toca el camión para ver o cambiar sus datos.</li>
-            <li><b>3</b> Para agregar uno nuevo, usa ＋ Agendar.</li>
-          </ol>
-        </div>
-
-        <div id="clash-notice"></div>
-        <div id="dock-notice"></div>
-
-
-        <div id="mobile-list"></div>
-
-        <div class="grid-box">
-          <div class="grid-scroll">
-            <div class="grid">
-              <div class="grid-head" id="grid-head"></div>
-              <div class="grid-body" id="grid-body"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="kpis" id="kpis"></div>
       </section>
 
-      <!-- ============== TARJETA: DETALLE ============== -->
-      <section class="card">
-        <div class="card-head">
-          <span class="fmtNum">02</span>
-          <h2>Carga por punto de descarga</h2>
-          <span class="tag" id="load-chip">—</span>
+      <!-- 02 · ARCHIVOS BASE -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">02</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Archivos base</h2>
+          <span class="rounded-[4px] bg-zinc-100 px-2 py-0.5 text-[10px] font-medium tracking-[0.12em] text-zinc-500">
+            SE SUBEN UNA SOLA VEZ
+          </span>
         </div>
-        <p class="card-note">Camiones agendados y toneladas comprometidas en cada punto de descarga.</p>
-        <div class="load-list" id="load-list"></div>
+        <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
+          Homologación, Destinatarios, Clasificación SINADER y Transportistas son los
+          mismos para las tres zonas. Quedan guardados en este computador.
+        </p>
+
+        <p id="estado-base"
+           class="mt-5 rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-2.5 text-[13px] text-zinc-600">
+          Iniciando…
+        </p>
+
+        <ul id="lista-base" class="mt-4"></ul>
+
+        <label id="dropzone-base" for="input-base"
+               class="dropzone mt-4 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-5 py-5 text-center">
+          <span class="text-[13px] font-medium text-tinta">Actualizar archivos base</span>
+          <span class="mt-0.5 block text-[12px] text-zinc-400">
+            Los 4 Excel sueltos, o la carpeta “Información Base” en .zip
+          </span>
+        </label>
+        <input type="file" id="input-base" multiple accept=".xlsx,.zip" />
+
+        <button id="btn-borrar-base" class="quitar mt-4" style="display:none">
+          Borrar archivos base guardados
+        </button>
+      </section>
+
+      <!-- 03 · MOVIMIENTOS -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">03</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Movimientos del mes</h2>
+        </div>
+        <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
+          Los Excel de la zona elegida. Puedes soltar los archivos sueltos o bajar la
+          carpeta completa desde OneDrive y soltar el .zip tal cual.
+        </p>
+
+        <label id="dropzone" for="input-archivos"
+               class="dropzone mt-5 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-6 py-12 text-center">
+          <span class="text-[13px] font-medium text-tinta">Arrastra los archivos aquí</span>
+          <span class="mt-0.5 block text-[12px] text-zinc-400">
+            o haz clic para elegirlos · .xlsx o .zip
+          </span>
+        </label>
+        <input type="file" id="input-archivos" multiple accept=".xlsx,.zip" />
+
+        <ul id="lista-archivos" class="mt-4"></ul>
+      </section>
+
+      <!-- 04 · PROCESAR -->
+      <section class="group rounded-lg border border-zinc-200 border-l-[3px] border-l-zinc-200 bg-white p-6 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-l-neon hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:border-l-neon focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div class="flex items-baseline gap-3">
+          <span class="inline-flex h-5 w-6 items-center justify-center rounded-[3px] bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition-colors duration-300 group-hover:bg-neon group-hover:text-tinta group-focus-within:bg-neon group-focus-within:text-tinta">04</span>
+          <h2 class="premium-heading text-[15px] font-medium text-tinta">Procesar</h2>
+        </div>
+        <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
+          El consolidado se genera dentro de este navegador y queda disponible para descargar.
+        </p>
+
+        <button id="btn-procesar" class="btn mt-5" disabled>Procesar consolidado</button>
+
+        <div id="resultado" class="mt-8 border-t border-zinc-200 pt-7">
+          <p id="resumen"
+             class="rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-3 text-[13px] leading-relaxed text-zinc-700"></p>
+
+          <div id="alertas" class="mt-6"></div>
+
+          <div class="mt-7 overflow-hidden rounded-md border border-zinc-200">
+            <table id="tabla-fuentes">
+              <thead>
+                <tr>
+                  <th><span class="orden">Archivo<svg width="9" height="11" viewBox="0 0 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1v9M1.5 7.5l3 3 3-3"/></svg></span></th>
+                  <th><span class="orden">Hojas<svg width="9" height="11" viewBox="0 0 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1v9M1.5 7.5l3 3 3-3"/></svg></span></th>
+                  <th><span class="orden">Filas<svg width="9" height="11" viewBox="0 0 9 11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 1v9M1.5 7.5l3 3 3-3"/></svg></span></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div id="descargas" class="mt-7 flex flex-wrap gap-2.5"></div>
+
+          <pre id="registro" class="oculto"></pre>
+        </div>
       </section>
     </div>
 
-    <!-- ---------------- COLUMNA TÉCNICA ---------------- -->
-    <aside>
-      <div class="side-block">
-        <p class="side-title"><span class="pt"></span>PUNTOS DE DESCARGA
-          <button class="link-btn" style="margin-left:auto" onclick="openClientsModal()"
-                  title="Definir qué clientes puede recibir cada punto">Clientes</button></p>
-        <div class="legend" id="dock-legend"></div>
-      </div>
-      <div class="side-block">
-        <p class="side-title"><span class="pt"></span>ESTADO DEL INGRESO</p>
-        <div class="legend">
-          <div class="legend-item"><span class="legend-swatch" style="background:#fff;border-color:var(--tinta)"></span>Confirmado</div>
-          <div class="legend-item"><span class="legend-swatch" style="background:repeating-linear-gradient(135deg,#fff 0 3px,#ddd 3px 6px);border-color:var(--z400);border-style:dashed"></span>Por confirmar</div>
-          <div class="legend-item"><span class="legend-swatch" style="background:#E7F4EC;border-color:#1E8E4E;border-left-width:4px"></span>Llegó</div>
-          <div class="legend-item"><span class="legend-swatch" style="background:var(--z100);border-color:var(--z400);border-style:dotted"></span>No llegó</div>
+    <!-- ---------------- COLUMNA TÉCNICA (soporte) ---------------- -->
+    <!-- Bento integrado: sin bordes propios. El ritmo lo dan el aire y las
+         sangrías escalonadas, no una caja alrededor de cada bloque. -->
+    <aside class="lg:sticky lg:top-24">
+      <div class="space-y-8">
+
+        <div class="group/b transition-all duration-300 hover:translate-x-0.5">
+          <p class="flex items-center gap-2 text-[10px] font-medium tracking-[0.18em] text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
+            MOTOR
+          </p>
+          <p class="mt-2.5 text-[13px] leading-relaxed text-zinc-600">
+            Python corriendo dentro del navegador.
+            <span class="mt-1 block text-zinc-400">Pyodide · pandas · openpyxl</span>
+          </p>
+        </div>
+
+        <div class="group/b transition-all duration-300 hover:translate-x-0.5">
+          <p class="flex items-center gap-2 text-[10px] font-medium tracking-[0.18em] text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-[1px] bg-zinc-300 transition-colors duration-300 group-hover/b:bg-neon"></span>
+            FLUJO
+          </p>
+          <ol class="mt-3 space-y-2.5 text-[13px] text-zinc-600">
+            <li class="flex items-baseline gap-3">
+              <span class="text-[11px] tabular-nums text-zinc-400">01</span>
+              Control de calidad
+            </li>
+            <li class="flex items-baseline gap-3">
+              <span class="text-[11px] tabular-nums text-zinc-400">02</span>
+              Consolidación
+            </li>
+            <li class="flex items-baseline gap-3">
+              <span class="text-[11px] tabular-nums text-zinc-400">03</span>
+              Revisión
+            </li>
+          </ol>
         </div>
       </div>
-      <div class="side-block">
-        <p class="side-title"><span class="pt"></span>HORARIO</p>
-        <p>08:30 a 22:00. Lunes a sábado.</p>
-      </div>
     </aside>
+
   </div>
 </div>
 
-<footer class="footer">
-  <div class="footer-in">
-    <span>Ambipar Chile - GIRI - Planificador Operacional</span>
-    <span id="version">Inteligencia Circular LATAM</span>
+<footer class="border-t border-zinc-200 bg-white">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-[12px] text-zinc-400">
+    <span>Ambipar Chile · Inteligencia Circular · Sistema de Trazabilidad</span>
+    <span>App web con Pyodide</span>
   </div>
 </footer>
 
-<!-- ══════════════ MODAL: FICHA DEL INGRESO ══════════════ -->
-<div class="overlay" id="ov">
-  <div class="modal">
-    <h3 id="m-title">Agendar movimiento</h3>
-    <div class="sub" id="m-sub"></div>
-    <div class="m-created" id="m-created"></div>
-
-    <div class="field">
-      <div class="chips" id="f-move"></div>
-    </div>
-
-    <div class="form-section" id="lbl-what">Qué llega</div>
-    <div class="field">
-      <label id="lbl-customer">Cliente</label>
-      <input type="text" id="f-customer" list="dl-customers" placeholder="Escribe el nombre del cliente" autocomplete="off">
-      <datalist id="dl-customers"></datalist>
-    </div>
-    <div class="field">
-      <label id="lbl-waste">Residuos que trae <i>— uno o varios, con sus toneladas</i></label>
-      <input type="text" id="f-search" placeholder="Buscar en la lista…" autocomplete="off"
-             oninput="filterWaste()" style="margin-bottom:.45rem">
-      <div id="f-waste"></div>
-      <div class="waste-total">
-        Total del camión: <b id="f-total">0,0</b> t<span id="f-bales"></span>
-        <button type="button" class="btn secondary" onclick="addWasteRow()">＋ Otro residuo</button>
-      </div>
-      <div class="chip-row" id="waste-chips"></div>
-    </div>
-
-    <div class="form-section">Dónde y cuándo</div>
-    <div class="field">
-      <label>Punto de descarga</label>
-      <div class="chips" id="f-docks"></div>
-    </div>
-    <div class="row3">
-      <div class="field">
-        <label>Día</label>
-        <select id="f-day"></select>
-      </div>
-      <div class="field">
-        <label>Hora de llegada</label>
-        <select id="f-time"></select>
-      </div>
-      <div class="field">
-        <label>Duración</label>
-        <select id="f-length">
-          <option value="30">30 min</option>
-          <option value="60" selected>1 hora</option>
-          <option value="90">1 h 30</option>
-          <option value="120">2 horas</option>
-          <option value="180">3 horas</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-clash" id="m-clash"></div>
-    <div class="m-offdock" id="m-offdock"></div>
-
-    <div class="form-section">Camión</div>
-    <div class="row3">
-      <div class="field">
-        <label>Cantidad de camiones</label>
-        <input type="number" id="f-trucks" min="1" max="20" step="1" value="1">
-      </div>
-      <div class="field">
-        <label>Vehículo</label>
-        <select id="f-vehicle">
-          <option>Camión</option><option>Rampla</option><option>Mixer / Tolva</option>
-          <option>Furgón</option><option>Camioneta</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Agendado por</label>
-        <input type="text" id="f-by" list="dl-by" placeholder="Tu nombre" autocomplete="off">
-        <datalist id="dl-by"></datalist>
-      </div>
-    </div>
-    <div class="field">
-      <label>Estado</label>
-      <div class="chips">
-        <button class="chip" id="st-confirmed" aria-pressed="true"  onclick="setStatus('confirmado')">Confirmado</button>
-        <button class="chip" id="st-tentative" aria-pressed="false" onclick="setStatus('tentativo')">Por confirmar</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Notas <i>— opcional</i></label>
-      <input type="text" id="f-notes" placeholder="Ej: requiere pesaje doble, llega con guía manual">
-    </div>
-
-    <div class="form-section" id="lbl-arrival">Lo que pasó</div>
-    <div id="arrival-box">
-      <div class="chips">
-        <button class="chip" type="button" id="btn-arrived"   onclick="setArrival('llego')">Llegó</button>
-        <button class="chip" type="button" id="btn-noshow" onclick="setArrival('nollego')">No llegó</button>
-        <button class="chip" type="button" id="btn-unset"  onclick="setArrival(null)">Sin registrar</button>
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn danger" id="btn-delete" onclick="deleteBooking()" style="display:none">Eliminar</button>
-      <button class="btn secondary" id="btn-duplicate" onclick="duplicateBooking()" style="display:none"
-              title="Crea una copia en el próximo espacio libre del mismo punto">Duplicar</button>
-      <span style="flex:1"></span>
-      <button class="btn secondary" onclick="closeBooking()">Cancelar</button>
-      <button class="btn" onclick="saveBooking()" id="btn-save">Agendar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════ MODAL: PLANILLA DE GOOGLE ══════════════ -->
-<div class="overlay" id="ov-sheet">
-  <div class="modal" style="width:560px">
-    <h3>Conectar con Google Sheets</h3>
-    <div class="sub">La planilla se actualiza sola con cada cambio y sirve de respaldo compartido.</div>
-
-    <div class="form-section">Cómo se conecta · una sola vez</div>
-    <ol style="font-size:12.5px;color:var(--z600);display:flex;flex-direction:column;gap:.5rem;padding-left:1.1rem">
-      <li>Crea una planilla nueva en Google Sheets.</li>
-      <li>Menú <b>Extensiones → Apps Script</b>. Borra lo que aparezca y pega el código del archivo <b>apps-script.gs</b>.</li>
-      <li>Botón <b>Implementar → Nueva implementación → Aplicación web</b>. En "Quién tiene acceso" elige <b>Cualquier usuario</b>. Copia la URL que termina en <code>/exec</code>.</li>
-      <li>Pega esa URL aquí abajo y aprieta Conectar.</li>
-    </ol>
-
-    <div class="field" style="margin-top:1.1rem">
-      <label>URL de la aplicación web</label>
-      <input type="text" id="f-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
-    </div>
-    <p id="sheet-status" style="font-size:12px;color:var(--z500)"></p>
-
-    <div class="modal-actions">
-      <button class="btn danger" id="btn-disconnect" onclick="disconnectSheet()" style="display:none">Desconectar</button>
-      <span style="flex:1"></span>
-      <button class="btn secondary" onclick="pullFromSheet(true)">Traer cambios</button>
-      <button class="btn secondary" onclick="closeOverlay('ov-sheet')">Cerrar</button>
-      <button class="btn" onclick="connectSheet()">Conectar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════ MODAL: CLIENTES POR PUNTO ══════════════ -->
-<div class="overlay" id="ov-clients">
-  <div class="modal" style="width:560px">
-    <h3>Clientes por punto de descarga</h3>
-    <div class="sub">Un cliente por línea. Si dejas un punto en blanco, acepta a cualquiera.
-      Agendar un cliente fuera de su punto no queda prohibido: queda avisado y marcado.</div>
-    <div id="cl-list"></div>
-    <div class="modal-actions">
-      <button class="link-btn" onclick="fillFromHistory()"
-              title="Rellena cada punto con los clientes que ya se agendaron ahí">Traer del historial</button>
-      <span style="flex:1"></span>
-      <button class="btn secondary" onclick="closeOverlay('ov-clients')">Cerrar</button>
-      <button class="btn" onclick="saveDockClients()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════ MODAL: BLOQUEAR HORARIO ══════════════ -->
-<div class="overlay" id="ov-block">
-  <div class="modal" style="width:440px">
-    <h3>Bloquear un horario</h3>
-    <div class="sub">Colación, mantención o nave cerrada. Nadie debería agendar ahí.</div>
-
-    <div class="field">
-      <label>Motivo</label>
-      <div class="chips" id="bk-reasons"></div>
-    </div>
-    <div class="field">
-      <label>Punto de descarga</label>
-      <select id="bk-dock"></select>
-    </div>
-    <div class="row3">
-      <div class="field">
-        <label>Cuándo</label>
-        <select id="bk-when"></select>
-      </div>
-      <div class="field">
-        <label>Desde</label>
-        <select id="bk-start"></select>
-      </div>
-      <div class="field">
-        <label>Duración</label>
-        <select id="bk-length">
-          <option value="30">30 min</option><option value="60" selected>1 hora</option>
-          <option value="90">1 h 30</option><option value="120">2 horas</option>
-          <option value="240">4 horas</option><option value="720">Todo el día</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-section">Bloqueos activos</div>
-    <div id="bk-list" style="display:flex;flex-direction:column;gap:.35rem;max-height:190px;overflow:auto"></div>
-
-    <div class="modal-actions">
-      <span style="flex:1"></span>
-      <button class="btn secondary" onclick="closeOverlay('ov-block')">Cerrar</button>
-      <button class="btn" onclick="saveBlock()">Agregar bloqueo</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
+<!-- Pyodide ya no se carga acá: lo hace worker.js, en su propio hilo. -->
+<!-- app.js se pide siempre con una marca distinta para que el navegador no
+     use una copia vieja guardada en caché. Son 24 KB: no se nota, y evita que
+     la operadora quede corriendo una versión anterior sin darse cuenta. -->
 <script>
-/* ══════════════════════════════════════════════════════════════════════════
-   1 · CONFIGURATION
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* ┌──────────────────────────────────────────────────────────────────────────┐
-   │  SHARED GOOGLE SPREADSHEET — the only line you may need to edit          │
-   │                                                                          │
-   │  Paste between the quotes the address Google gives you when the Apps     │
-   │  Script is deployed (the one ending in /exec). From then on, anyone who  │
-   │  opens this page sees the live schedule, with nothing to configure.      │
-   │                                                                          │
-   │  It should look like this:                                               │
-   │  const SHEET_URL = 'https://script.google.com/macros/s/AKfy…/exec';      │
-   │                                                                          │
-   │  Left empty, the planner still works, but each device keeps its own copy.│
-   └──────────────────────────────────────────────────────────────────────────┘ */
-/* Shown in the footer: makes it obvious which file is published. */
-const VERSION = 'v32 · 17-09-2026';
-
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw0s8-WtDRGzto8Wl2AhjlvDPemw9uFWkCijktv-dB8R4ymbB6tHc3l7EBnR91cOmoMXg/exec';
-
-/* Unloading points that can actually be planned. Not all of them are
-   warehouses: the timber yard for Arauco is a separate area, but it is booked
-   the same way. Nave Clasificación is left out on purpose — the number of
-   Resimple trucks cannot be known in advance.
-   (The stored field is still called "nave" so that data already saved in the
-    spreadsheet keeps working.) */
-/* sharedFront: true  → la carga y la descarga usan el mismo frente, así que un
-                        ingreso y un retiro a la misma hora se estorban.
-   sharedFront: false → el retiro sale por otro lado; pueden convivir. */
-const DOCKS = [
-  { id:'clasif', name:'Nave Clasificación',              col:'#2E7D52', bg:'#EAF3EE', sharedFront:false },
-  { id:'cdr',    name:'Nave CDR',                        col:'#1565C0', bg:'#E7EFF8', sharedFront:true  },
-  { id:'envase', name:'Nave Separación Envase-Producto', col:'#BF360C', bg:'#F9EAE5', sharedFront:true  },
-  { id:'madera', name:'Recepción Madera para Arauco',    col:'#8A6A2F', bg:'#F4F0E5', sharedFront:false },
-];
-
-/* How the load comes in. Optional: it can be left blank. */
-const FORMATS = ['PALLET', 'GRANEL', 'MAXISACA', 'PISO CAMINANTE'];
-
-/* Where each format is actually handled. Pallets and maxisacas are moved in the
-   yard, so they never compete for the unloading front with bulk loads. */
-const PATIO_FORMATS = ['PALLET', 'MAXISACA'];
-
-/* A booking is either material coming in or material being collected. */
-const MOVES = [
-  { id:'ingreso', label:'Ingreso', short:'Entra' },
-  { id:'retiro',  label:'Retiro',  short:'Sale'  },
-];
-/* Companies that usually collect material. The list learns new ones. */
-const COLLECTORS = ['CDR', 'KDM', 'VALORIZADORES', 'RESIMPLE'];
-
-/* Bales are planned in Nave Clasificación. */
-const WASTE_BALES = [
-  'FARDOS REGIONES', 'FARDOS MIXTOS', 'FARDOS DE CARTÓN', 'FARDOS DE PLÁSTICO',
-  'FARDOS PET', 'FARDOS PEBD', 'FARDOS PAPEL', 'FARDOS DE LATAS',
-];
-
-/* Waste catalogue. All uppercase, the way the plant records it. */
-const WASTE_RESIMPLE = [
-  'PP FLEXIBLE', 'PE FLEXIBLE', 'PET TRANSPARENTE', 'PET COLOR', 'PP RÍGIDO', 'PE RÍGIDO',
-  'METAL NO FERROSO (ALUMINIO)', 'METAL FERROSO (HOJALATA)', 'PAPEL Y CARTÓN', 'CARTÓN',
-  'CARTÓN PARA LÍQUIDOS'
-];
-
-const WASTE_GENERAL = [
-  'BOTELLA TRANSPARENTE', 'BOTELLA COLOR', 'BOTELLAS FLAKE', 'CLAMSHELL ENTERO',
-  'CLAMSHELL FLAKE', 'GARRAFÓN MOLIDO', 'IMPRESO', 'PREFORMA ENTERA', 'PREFORMA MOLIDA', 'REDES',
-  'RESINA O FILTRADO', 'TORTA', 'ZUNCHO PET', 'BANDEJA NEGRA',
-  'ROLLO PLÁSTICO DESDE VIÑA SANTA RITA', 'BANDEJAS ENTERAS', 'BANDEJAS TRITURADAS',
-  'BALDES ENTEROS', 'BALDES TRITURADOS', 'TAPAS ENTEROS', 'BIDONES ENTEROS SIN PROCESAR',
-  'BIDONES TRITURADOS', 'TAMBORES ENTEROS', 'BINS', 'BINS TRITURADOS', 'BOYAS ENTERAS',
-  'BOYAS TRITURADAS', 'PALLETS ENTEROS', 'PALLETS TRITURADOS', 'SOPLADO ENTERO',
-  'TUBERÍAS ENTERAS', 'TUBERÍAS TRITURADAS', 'TAPAS DE GARRAFÓN ENTERAS',
-  'TAPAS DE GARRAFÓN TRITURADAS', 'ROTOMOLDEO TRITURADO', 'ENVASES HDPE', 'FLOTADORES TRITURADOS',
-  'FLOTADORES ENTEROS', 'BOTAS', 'BLISTER', 'LAMAS', 'VENTANAS', 'TUBERÍAS', 'CÁPSULA VINO',
-  'FILM PESCADO', 'PEBD COLOR', 'PEBD TRANSPARENTE', 'MANGUERA RIEGO ENTERA',
-  'MANGUERA RIEGO TRITURADA', 'TAPA GARRAFÓN ENTERO', 'TAPA GARRAFÓN MOLIDA', 'STRETCH FILM',
-  'PE EXPANDIDO', 'PP RÍGIDO ENTERO', 'PP RÍGIDO TRITURADO', 'CABOS ENTEROS (PTO MONTT)',
-  'CABOS TRITURADOS', 'GANCHO ROPA', 'FILM', 'MALLA RASCHEL', 'MAXISACOS', 'RAFIA BLANCA',
-  'RAFIA CARBÓN', 'RAFIA CHICA', 'RAFIA COLOR', 'RAFIA GRIS', 'RAFIA NEGRA',
-  'RAFIA BLANCA + PEBD (BBL)', 'COTONA', 'CARPETA', 'CARRETE MOLIDO', 'CARRETE ENTERO',
-  'ZUNCHO PP', 'EPS SIN PROCESAR', 'EPS TORTA', 'EPS GRANEL', 'EPS TORTA COLOR',
-  'EPS TORTA NEGRO', 'EPS FILTRADO', 'EPS TORTA FILTRADO', 'EPS ALMACIGUERA',
-  'EPS TORTA ALMACIGUERA', 'EPS TORTA ALMACIGUERA ANTIGUAS', 'PAI FARDO CHICOS', 'PAI FARDO',
-  'PAI RAMAS NESTLÉ RECUPAC', 'PAI FARDO NESTLÉ RECUPAC', 'PAI FARDO POST CONSUMO',
-  'PAI ESTRELLA', 'PAI ESTRELLA NESTLÉ RECUPAC', 'PAI RAMA', 'PAI PROCESADO',
-  'PAI CARRETE ENTERO', 'PAI CARRETE MOLIDO', 'PAI DESCARTE', 'CRISTAL MOLIDO',
-  'CRISTAL ENTERO ANILLO', 'PAI BANDEJAS ENTERAS', 'PAI PROCESADO BANDEJAS SOPROLE', 'PAI ROLLOS',
-  'PAI ROLLOS TRITURADOS BLANCO', 'PAI POST CONSUMO', 'EPS BLOQUE', 'GARRAFÓN ENTERO', 'CD',
-  'LAMINA', 'RAMA', 'TORTAS Y RAMAS', 'FIBRA', 'ROLLOS POLIAMIDA', 'REDES NYLON', 'VIRUTA',
-  'ALARMAS', 'FARDOS', 'TRITURADO', 'MOLIDO', 'ENTERO', 'RAFIA + PA FILM', 'CORCHO',
-  'CARTÓN CORRUGADO', 'PUERTO MONTT (SIN PROCESAR)', 'CON CERA', 'ESQUINERO', 'CONO TRITURADO',
-  'CONO ENTERO SIN PROCESAR', 'CONO ENTERO', 'CARTÓN PARA LÍQUIDOS', 'BLANCO', 'REVISTA',
-  'DIARIO', 'CHATARRA', 'HOJALATA', 'CABLES ELÉCTRICOS', 'LATAS DE AEROSOLES', 'LATAS',
-  'CAPSULAS VINO', 'PALLETS BUENOS', 'PALLETS MALOS', 'DESPUNTES', 'OTRAS MADERAS',
-  'VIDRIO COLOR', 'VIDRIO', 'NEUMÁTICOS FUERA DE USO', 'TROZOS DE CAUCHO',
-  'CORREA TRANSPORTADORA ALMA NYLON', 'CORREA TRANSPORTADORA ALMA ACERO',
-  'RETAZOS DE CORREA TRANSPORTADORA', 'ROPA', 'ELECTRÓNICOS', 'PEQUEÑOS APARATOS',
-  'MONITORES, PANTALLAS', 'LÁMPARAS', 'PANELES FOTOVOLTAICOS', 'GRANDES APARATOS',
-  'APARATOS DE INTERCAMBIO DE TEMPERATURA', 'TIERRAS CONTAMINADAS', 'LODOS CONTAMINADOS',
-  'LODO PULPER', 'LODO PLANTA RILES', 'LODOS PTAS', 'LODOS ACUICULTURA', 'FÁRMACOS',
-  'ALIMENTO LÁCTEO', 'ALIMENTO PANADERÍA Y PASTELERÍA', 'ALIMENTO DESCARTADO', 'INVENTARIO',
-  'TEXTIL', 'MATERIAL CONSTRUCCIÓN', 'COSMÉTICOS', 'MATERIAS PRIMAS', 'DECOMISOS', 'TABACO',
-  'MEZCLA DE ENVASES Y EMBALAJES', 'MEZCLA DE METALES', 'MEZCLA DE PAPEL Y CARTÓN',
-  'MEZCLA DE PLÁSTICOS', 'PLÁSTICOS', 'PAPEL Y CARTÓN', 'METALES', 'MADERA',
-  'ASIMILABLE A DOMICILIARIO', 'INDUSTRIAL', 'ESCOMBROS', 'MULTICAPA', 'RESIDUOS ORGÁNICOS',
-  'SÓLIDOS CONTAMINADOS', 'ACEITES Y LUBRICANTES USADOS', 'BATERÍAS', 'CDR',
-  'RESIDUOS NO RECICLABLES', 'RESIDUOS LIQUÍDOS', 'AGUAS SERVIDAS'
-];
-
-/* One catalogue for every dock: the general list plus the Resimple types that
-   were not already in it. */
-const WASTE_ALL = [...WASTE_GENERAL,
-  ...WASTE_RESIMPLE.filter(v=>!WASTE_GENERAL.includes(v)),
-  ...WASTE_BALES.filter(v=>!WASTE_GENERAL.includes(v))];
-
-const CATALOG = {
-  clasif: { groups:[['FARDOS', WASTE_BALES], ['OTROS RESIDUOS', WASTE_ALL]],
-            quick:['FARDOS REGIONES','FARDOS MIXTOS','FARDOS DE CARTÓN','FARDOS DE PLÁSTICO','PAPEL Y CARTÓN','CARTÓN'] },
-  cdr:    { groups:[['RESIDUOS', WASTE_ALL]],
-            quick:['CDR','RESIDUOS NO RECICLABLES','MEZCLA DE PLÁSTICOS','MADERA','TEXTIL','SÓLIDOS CONTAMINADOS','ESCOMBROS','ASIMILABLE A DOMICILIARIO'] },
-  envase: { groups:[['RESIDUOS', WASTE_ALL]],
-            quick:['MEZCLA DE ENVASES Y EMBALAJES','ALIMENTO DESCARTADO','COSMÉTICOS','FÁRMACOS','INVENTARIO','DECOMISOS','MATERIAS PRIMAS','BALDES ENTEROS'] },
-  madera: { groups:[['MADERA', ['PALLETS BUENOS','PALLETS MALOS','PALLETS ENTEROS','PALLETS TRITURADOS',
-                                'DESPUNTES','OTRAS MADERAS','MADERA','ESQUINERO','CARRETE ENTERO','CARRETE MOLIDO']],
-                    ['OTROS RESIDUOS', WASTE_ALL]],
-            quick:['PALLETS BUENOS','PALLETS MALOS','DESPUNTES','OTRAS MADERAS','MADERA','ESQUINERO'] },
-};
-
-const OPEN_MIN = 8*60+30, CLOSE_MIN = 22*60, STEP_MIN = 30;      // 08:30 to 22:00, half-hour steps
-const SLOTS = (CLOSE_MIN - OPEN_MIN) / STEP_MIN;
-const ROW_H  = 34;                                      // px per 30-minute slot
-const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const DAY_ABBR = ['Lun','Mar','Mié','Jue','Vie','Sáb'];
-const STORE_KEY = 'giri_planificador_v2';
-
-/* ══════════════════════════════════════════════════════════════════════════
-   2 · STATE
-   ══════════════════════════════════════════════════════════════════════════ */
-let state = {
-  reservas: [],   // {id,tipo,fecha,nave,ini,dur,cliente,items[{r,t,fmt}],camiones,veh,quien,estado,notas,real,hist[]}
-  bloqueos: [],   // {id,tipo:'diario'|'fecha',fecha,nave:'*'|id,ini,dur,motivo}
-  listas: { clientes:[], residuos:[], transp:[], quien:[] },
-  config: { sheetUrl:'' },
-  actualizado: 0,
-};
-const BLOCK_REASONS = ['Colación','Mantención','Nave cerrada','Otro'];
-let view = 'day';
-/* Movement filter for the whole board: 'todo' | 'ingreso' | 'retiro' */
-let moveFilter = 'todo';
-let day   = todayISO();                 // día visible en view Día
-let monday = mondayOf(new Date());      // monday of the visible week
-let editingId = null;                  // id of the booking being edited
-let statusSel = 'confirmado';
-let dockSel = DOCKS[0].id;
-let clashes = new Set();
-let clashReason = new Map();   // booking id → reason of the blocked period
-let clashYields = new Set();   // ids that must move: they were booked last
-let clashWinner = new Map();   // id that must move → the booking that got there first
-
-/* ══════════════════════════════════════════════════════════════════════════
-   3 · DATE AND TIME HELPERS
-   ══════════════════════════════════════════════════════════════════════════ */
-function todayISO(){ return toISO(new Date()) }
-function toISO(d){
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function fromISO(s){ const [a,m,d] = s.split('-').map(Number); return new Date(a,m-1,d) }
-function mondayOf(d){
-  const x = new Date(d), dow = x.getDay(), dif = dow===0 ? -6 : 1-dow;
-  x.setDate(x.getDate()+dif); x.setHours(0,0,0,0); return x;
-}
-function addDays(iso,n){ const d = fromISO(iso); d.setDate(d.getDate()+n); return toISO(d) }
-function weekDays(){
-  return [0,1,2,3,4,5].map(i=>{ const d=new Date(monday); d.setDate(d.getDate()+i); return toISO(d) });
-}
-function hhmm(min){ return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0') }
-function longDate(iso){
-  const t = fromISO(iso).toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-function shortDate(iso){ return fromISO(iso).toLocaleDateString('es-CL',{day:'numeric',month:'short'}) }
-function dock(id){ return DOCKS.find(n=>n.id===id) || DOCKS[0] }
-const punto = dock;   /* Spanish alias kept for a few inline templates */
-
-/* A truck may carry several waste types: r.items = [{r:'WASTE', t:tons}] */
-function itemsOf(r){
-  if(Array.isArray(r.items) && r.items.length) return r.items;
-  return [{ r:(r.residuo||'').toUpperCase(), t:parseFloat(r.ton)||0 }];
-}
-function totalTons(r){ return itemsOf(r).reduce((s,i)=>s+(parseFloat(i.t)||0),0) }
-function truckCount(r){ return parseInt(r.camiones) || 1 }
-function isPickup(r){ return r.tipo === 'retiro' }
-
-/* ── Bales ────────────────────────────────────────────────────────────────
-   Bales are planned by COUNT, not by weight: nobody weighs them when the
-   truck is booked. The tonnage is estimated with a weight fixed by the plant
-   and stored in `t`, so every total, the Excel and the spreadsheet keep
-   working without knowing about any of this. */
-function isBale(name){ return /^FARDO/.test(String(name || '').toUpperCase()) }
-const BALE_WEIGHT = 0.36;                           // t per bale
-function baleWeight(){ return BALE_WEIGHT }
-function baleCount(i){
-  if(i.q != null && i.q !== '') return parseInt(i.q) || 0;
-  return Math.round((parseFloat(i.t) || 0) / baleWeight());   // older records
-}
-function totalBales(r){
-  return itemsOf(r).reduce((s,i)=> s + (isBale(i.r) ? baleCount(i) : 0), 0);
-}
-/* Keeps stored tonnages in step with the fixed weight, including records
-   created while it was still adjustable. Returns how many it corrected. */
-function normalizeBaleTons(){
-  let n = 0;
-  state.reservas.forEach(r=>{
-    if(!Array.isArray(r.items)) return;
-    r.items.forEach(i=>{
-      if(!isBale(i.r) || i.q == null) return;
-      const t = Math.round(baleCount(i) * BALE_WEIGHT * 100) / 100;
-      if(i.t !== t){ i.t = t; n++ }
-    });
-    if(n) r.ton = totalTons(r);
-  });
-  return n;
-}
-
-/* ── Who belongs at each dock ─────────────────────────────────────────────
-   Each dock can carry a list of the customers it is meant to receive. An
-   empty list means "anyone", so nothing changes until the plant fills it in.
-   Booking someone outside their dock is never blocked — it is flagged, so a
-   real exception can still go through and be seen. */
-function normName(v){ return String(v || '').trim().toUpperCase().replace(/\s+/g,' ') }
-function dockClients(id){
-  return (state.listas && state.listas.porNave && state.listas.porNave[id]) || [];
-}
-function dockAllows(id, cliente){
-  const list = dockClients(id);
-  if(!list.length) return true;
-  const c = normName(cliente);
-  if(!c) return true;
-  return list.some(x=>normName(x) === c);
-}
-function isOffDock(r){ return !dockAllows(r.nave, r.cliente) }
-
-function openClientsModal(){
-  document.getElementById('cl-list').innerHTML = DOCKS.map(n=>{
-    const l = dockClients(n.id);
-    return `<div class="field">
-      <label style="color:${n.col}">${esc(n.name)}
-        <i>— ${l.length ? `${l.length} cliente${l.length===1?'':'s'} autorizado${l.length===1?'':'s'}`
-                        : 'abierto a cualquiera'}</i></label>
-      <textarea class="cl-box" data-n="${n.id}" rows="4"
-        placeholder="Un cliente por línea. En blanco, acepta a cualquiera.">${esc(l.join('\n'))}</textarea>
-    </div>`;
-  }).join('');
-  document.getElementById('ov-clients').classList.add('is-open');
-}
-function saveDockClients(){
-  state.listas.porNave = state.listas.porNave || {};
-  document.querySelectorAll('#cl-list .cl-box').forEach(t=>{
-    const l = t.value.split('\n').map(normName).filter(Boolean);
-    state.listas.porNave[t.dataset.n] = [...new Set(l)];
-  });
-  save(); closeOverlay('ov-clients'); render();
-  const fuera = state.reservas.filter(isOffDock).length;
-  toast(fuera ? `Listas guardadas. Hay ${fuera} movimiento${fuera===1?'':'s'} agendado${fuera===1?'':'s'} fuera de su punto.`
-              : 'Listas guardadas.', !!fuera);
-}
-/* Starting point: whoever has already been received at each dock. */
-function fillFromHistory(){
-  document.querySelectorAll('#cl-list .cl-box').forEach(t=>{
-    const yaEstan = t.value.split('\n').map(normName).filter(Boolean);
-    const hist = state.reservas.filter(r=>r.nave===t.dataset.n && !isPickup(r))
-                               .map(r=>normName(r.cliente)).filter(Boolean);
-    t.value = [...new Set([...yaEstan, ...hist])].sort().join('\n');
-  });
-  toast('Rellenado con los clientes que ya se agendaron en cada punto. Revísalo antes de guardar.');
-}
-
-/* ── When was it booked ───────────────────────────────────────────────────
-   `creado` is the moment the booking was created. It never changes, even if
-   the truck is later moved, so it answers "did they warn us in time?". */
-/* Hours between creating the booking and the truck's arrival time. */
-function leadHours(r){
-  if(!r.creado) return null;
-  const t = fromISO(r.fecha); t.setHours(0, r.ini, 0, 0);
-  return (t.getTime() - r.creado) / 3600000;
-}
-const RUSH_HOURS = 24;                              // less than this = last minute
-function isRush(r){ const h = leadHours(r); return h != null && h < RUSH_HOURS }
-/* dd-mm-aaaa and HH:MM of the moment the booking was created, for the Excel. */
-function bookedDate(r){ return r.creado ? new Date(r.creado).toLocaleDateString('es-CL') : '' }
-function bookedClock(r){
-  if(!r.creado) return '';
-  const d = new Date(r.creado);
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-function bookedText(r){
-  if(!r.creado) return 'Sin registro de cuándo se agendó (se creó antes de esta versión).';
-  const d = new Date(r.creado);
-  const cuando = `${d.toLocaleDateString('es-CL',{day:'numeric',month:'short'})} a las `
-               + `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  const h = leadHours(r);
-  if(h == null) return `Agendado el ${cuando}.`;
-  const ant = h < 0  ? 'cuando esa hora ya había pasado'
-            : h < 1  ? 'con menos de 1 hora de anticipación'
-            : h < 48 ? `con ${Math.round(h)} horas de anticipación`
-            :          `con ${Math.round(h/24)} días de anticipación`;
-  return `Agendado el ${cuando}, ${ant}.`;
-}
-
-/* ── Change log ───────────────────────────────────────────────────────────
-   Every reschedule and every change in the number of trucks is written down,
-   so the spreadsheet can show how often the plan moves after being agreed. */
-function logChange(r, kind, from, to){
-  if(String(from) === String(to)) return;
-  r.hist = r.hist || [];
-  r.hist.push({ t: Date.now(), tipo: kind, de: String(from), a: String(to),
-                quien: (state.listas.quien || []).slice(-1)[0] || '' });
-}
-function changeCount(r, kind){
-  return (r.hist || []).filter(h => h.tipo === kind).length;
-}
-function whenText(r){ return `${shortDate(r.fecha)} ${hhmm(r.ini)}` }
-function wasteSummary(r){
-  const l = itemsOf(r).filter(i=>i.r);
-  if(!l.length) return '—';
-  const fmt = l[0].fmt ? ` · ${l[0].fmt.toLowerCase()}` : '';
-  return l.length===1 ? l[0].r + fmt : `${l[0].r}${fmt} +${l.length-1}`;
-}
-/* A bale line reads "40 fardos (≈ 14,4 t)"; everything else reads in tons. */
-function itemAmount(i){
-  if(isBale(i.r)){
-    const q = baleCount(i);
-    return q ? `${q} fardo${q===1?'':'s'} (≈ ${fmtNum(parseFloat(i.t)||0)} t)` : '';
-  }
-  return i.t ? `${fmtNum(parseFloat(i.t)||0)} t` : '';
-}
-function wasteDetail(r){
-  return itemsOf(r).filter(i=>i.r).map(i=>{
-    const cant = itemAmount(i);
-    return `${i.r}${cant?` · ${cant}`:''}${i.fmt?` · ${i.fmt.toLowerCase()}`:''}`;
-  }).join('\n');
-}
-function fmtNum(n){ return (Math.round(n*10)/10).toFixed(1).replace('.',',') }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   4 · BROWSER STORAGE
-   ══════════════════════════════════════════════════════════════════════════ */
-let lastSaved = null;
-/* save()     → a real change: stamp the time and push it to the spreadsheet.
-   save(true) → local copy only (migrations, data pulled from the spreadsheet,
-                connection tweaks). If it stamped the time, a device opening
-                for the first time would think it is newer than the spreadsheet
-                and would never pull everyone else's work. */
-function save(local){
-  if(!local) state.actualizado = Date.now();
-  lastSaved = new Date();
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)) }
-  catch(e){ /* private mode or no permission: the session keeps working anyway */ }
-  if(!local) scheduleSync();
-  renderSyncState();
-}
-function load(){
-  try{
-    const t = localStorage.getItem(STORE_KEY);
-    if(t){
-      const d = JSON.parse(t);
-      if(d && Array.isArray(d.reservas)){
-        state = d;
-        state.listas = state.listas || {clientes:[],residuos:[],transp:[],quien:[]};
-        /* Backwards compatibility: the old "Resimple" dock became Nave
-           Clasificación, and waste types are uppercase now. */
-        let moved = 0;
-        state.reservas.forEach(r=>{
-          if(!DOCKS.some(n=>n.id===r.nave)){ r.nave = DOCKS[0].id; moved++ }
-          r.residuo = (r.residuo||'').toUpperCase();
-          if(!Array.isArray(r.items) || !r.items.length)
-            r.items = [{ r:r.residuo, t:parseFloat(r.ton)||0 }];
-          r.items.forEach(i=>{ i.r = String(i.r||'').toUpperCase(); i.t = parseFloat(i.t)||0 });
-          if(!r.tipo) r.tipo = 'ingreso';                 /* everything used to be an arrival */
-          if(!r.camiones) r.camiones = 1;
-          if(!Array.isArray(r.hist)) r.hist = [];
-          if(r.real && typeof r.real === 'object')
-            r.real = r.real.noLlego ? 'nollego' : (r.real.hour!=null ? 'llego' : null);
-        });
-        state.listas.residuos = (state.listas.residuos||[]).map(v=>String(v).toUpperCase());
-        if(!Array.isArray(state.bloqueos)) state.bloqueos = [defaultLunchBreak()];
-        state.config = state.config || { sheetUrl:'' };
-        state.bloqueos.forEach(b=>{ if(b.nave!=='*' && !DOCKS.some(n=>n.id===b.nave)) b.nave='*' });
-        if(moved) setTimeout(()=>toast(
-          `${moved} ingreso${moved>1?'s':''} que estaba${moved>1?'n':''} en Nave Clasificación pasó a ${DOCKS[0].name}. Revísalos.`, true), 900);
-        return true;
-      }
-    }
-  }catch(e){}
-  return false;
-}
-/* The lunch break exists from day one; it can be edited or removed. */
-function defaultLunchBreak(){
-  return { id:'b-colacion', tipo:'diario', fecha:null, nave:'*', ini:12*60+30, dur:60, motivo:'Colación' };
-}
-function remember(list, valor){
-  if(!valor) return;
-  const L = state.listas[list] = state.listas[list] || [];
-  if(!L.some(v=>v.toLowerCase()===valor.toLowerCase())) L.push(valor);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   5 · FIRST RUN
-   ══════════════════════════════════════════════════════════════════════════ */
-/* No demo data: the schedule starts empty and fills up with real trucks.
-   Customer names are remembered as they are typed. */
-/* ══════════════════════════════════════════════════════════════════════════
-   6 · SCHEDULE CLASHES
-   ══════════════════════════════════════════════════════════════════════════ */
-/* Blocked periods that apply to a date and dock. dock '*' = all of them. */
-function blocksFor(fecha, naveId){
-  return (state.bloqueos||[]).filter(b=>
-    (b.tipo==='diario' || b.fecha===fecha) && (b.nave==='*' || b.nave===naveId));
-}
-function blockingPeriod(fecha, naveId, ini, dur){
-  return blocksFor(fecha, naveId).find(b=> ini < b.ini + b.dur && b.ini < ini + dur) || null;
-}
-
-/* Which physical areas a booking occupies, judged by the format of its waste.
-   Pallets and maxisacas are handled in the yard; bulk and walking-floor loads
-   need the unloading front. A booking with no format declared is treated as
-   unknown, and unknown competes with everything (better a false alarm than a
-   real crossing that goes unnoticed). */
-function areasOf(r){
-  const out = new Set();
-  itemsOf(r).forEach(i=>{
-    const f = String(i.fmt || '').toUpperCase();
-    if(!f) out.add('?');
-    else out.add(PATIO_FORMATS.includes(f) ? 'patio' : 'anden');
-  });
-  if(!out.size) out.add('?');
-  return out;
-}
-/* True when the two bookings need the same area at the same time. */
-function shareArea(a, b){
-  const A = areasOf(a), B = areasOf(b);
-  if(A.has('?') || B.has('?')) return true;
-  for(const x of A) if(B.has(x)) return true;
-  return false;
-}
-
-/* Two movements clash when they share dock, date, time AND area, unless one is
-   an arrival and the other a pickup at a dock where they use different fronts. */
-function clashPossible(a, b){
-  if(!shareArea(a, b)) return false;
-  if((a.tipo || 'ingreso') === (b.tipo || 'ingreso')) return true;
-  return !!dock(a.nave || b.nave).sharedFront;
-}
-
-/* Who gets to keep the slot: whoever booked it first. A booking created
-   before this feature existed has no `creado`, so it counts as the oldest. */
-function bookedOrder(r){ return r.creado || 0 }
-function firstBooked(a, b){
-  if(bookedOrder(a) !== bookedOrder(b)) return bookedOrder(a) < bookedOrder(b) ? a : b;
-  return a.id < b.id ? a : b;                 /* tie: stable, never arbitrary */
-}
-
-function findClashes(){
-  clashes = new Set();
-  clashReason = new Map();
-  clashYields = new Set();
-  clashWinner = new Map();
-  state.reservas.forEach(r=>{
-    const b = blockingPeriod(r.fecha, r.nave, r.ini, r.dur);
-    if(b){ clashes.add(r.id); clashReason.set(r.id, b.motivo) }
-  });
-  const groups = {};
-  state.reservas.forEach(r=>{ (groups[r.fecha+'|'+r.nave] = groups[r.fecha+'|'+r.nave] || []).push(r) });
-  Object.values(groups).forEach(list=>{
-    list.sort((a,b)=>a.ini-b.ini);
-    for(let i=0;i<list.length;i++)
-      for(let j=i+1;j<list.length;j++){
-        if(list[j].ini >= list[i].ini + list[i].dur) break;
-        if(!clashPossible(list[i], list[j])) continue;
-        clashes.add(list[i].id); clashes.add(list[j].id);
-        /* The one booked later is the one that has to move. */
-        const primero = firstBooked(list[i], list[j]);
-        const segundo = primero === list[i] ? list[j] : list[i];
-        clashYields.add(segundo.id);
-        if(!clashWinner.has(segundo.id)) clashWinner.set(segundo.id, primero);
-      }
-  });
-  return clashes;
-}
-/* `probe` is the booking being placed (or a draft {nave,tipo,items} from the
-   form). Without it every time overlap counts, whatever the format. */
-function overlaps(fecha, naveId, ini, dur, ignorarId, probe){
-  const p = probe ? Object.assign({ nave:naveId }, probe) : null;
-  return state.reservas.filter(r=>
-    r.id!==ignorarId && r.fecha===fecha && r.nave===naveId &&
-    ini < r.ini + r.dur && r.ini < ini + dur &&
-    (!p || clashPossible(p, r)));
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   7 · RENDERING THE GRID
-   ══════════════════════════════════════════════════════════════════════════ */
-function columns(){
-  return view==='day'
-    ? DOCKS.map(n=>({ k:n.id, name:n.name, sub:'', hoy:false }))
-    : weekDays().map((f,i)=>({ k:f, name:DAY_ABBR[i], sub:shortDate(f), hoy:f===todayISO() }));
-}
-/* True when the booking passes the Todo / Ingresos / Retiros filter. */
-function passesMoveFilter(r){
-  return moveFilter==='todo' || (r.tipo || 'ingreso') === moveFilter;
-}
-function visibleBookings(){
-  const inRange = view==='day'
-    ? state.reservas.filter(r=>r.fecha===day)
-    : state.reservas.filter(r=>weekDays().includes(r.fecha));
-  return inRange.filter(passesMoveFilter);
-}
-function columnKey(r){ return view==='day' ? r.nave : r.fecha }
-
-function render(){
-  findClashes();
-  const cols = columns();
-  const anchoCols = `64px repeat(${cols.length},minmax(150px,1fr))`;
-
-  /* --- header row --- */
-  const cab = document.getElementById('grid-head');
-  cab.style.gridTemplateColumns = anchoCols;
-  cab.innerHTML = '<div></div>' + cols.map(c=>{
-    const n = view==='day' ? dock(c.k) : null;
-    const punto = n ? `<span style="display:inline-block;width:8px;height:8px;background:${n.col};margin-right:5px;vertical-align:1px"></span>` : '';
-    return `<div class="${c.hoy?'is-today':''}">
-        <div class="col-name">${punto}${c.name}</div>
-        ${c.sub?`<div class="col-sub">${c.sub}</div>`:''}
-      </div>`;
-  }).join('');
-
-  /* --- body --- */
-  const cuerpo = document.getElementById('grid-body');
-  cuerpo.style.gridTemplateColumns = anchoCols;
-  cuerpo.innerHTML = '';
-
-  const hours = document.createElement('div');
-  hours.className = 'hours-col';
-  for(let s=0;s<SLOTS;s++){
-    const m = OPEN_MIN + s*STEP_MIN;
-    const h = document.createElement('div');
-    h.className = 'hour' + ((m%60 && s>0) ? ' media' : '');
-    h.textContent = hhmm(m);
-    hours.appendChild(h);
-  }
-  cuerpo.appendChild(hours);
-
-  const visible = visibleBookings();
-
-  cols.forEach(c=>{
-    const col = document.createElement('div');
-    col.className = 'col' + (c.hoy?' hoy-col':'');
-    col.style.height = (SLOTS*ROW_H)+'px';
-    col.dataset.k = c.k;
-
-    /* current time line */
-    const iso = view==='day' ? day : c.k;
-    if(iso===todayISO()){
-      const ahora = new Date().getHours()*60 + new Date().getMinutes();
-      if(ahora>=OPEN_MIN && ahora<=CLOSE_MIN){
-        const l = document.createElement('div');
-        l.className='now-line'; l.style.top = ((ahora-OPEN_MIN)/STEP_MIN*ROW_H)+'px';
-        col.appendChild(l);
-      }
-    }
-
-    /* blocked bands */
-    const naveCol = view==='day' ? c.k : null;
-    const list = view==='day'
-      ? blocksFor(day, naveCol)
-      : blocksFor(c.k, '*').filter(b=>b.nave==='*');
-    list.forEach(b=>{
-      const el = document.createElement('div');
-      el.className = 'blocked';
-      el.style.top = ((b.ini - OPEN_MIN)/STEP_MIN*ROW_H)+'px';
-      el.style.height = (Math.min(b.dur, CLOSE_MIN-b.ini)/STEP_MIN*ROW_H)+'px';
-      el.innerHTML = `<span>${esc(b.motivo)}</span>`;
-      col.appendChild(el);
-    });
-
-    /* ghost that follows the block while dragging */
-    const gh = document.createElement('div');
-    gh.className='ghost'; col.appendChild(gh);
-
-    /* blocks, spread side by side when they share a time slot */
-    const own = visible.filter(r=>columnKey(r)===c.k);
-    assignLanes(own).forEach(({r,lane,total})=>col.appendChild(makeBlock(r,lane,total)));
-
-    /* clicking empty space books that slot */
-    col.addEventListener('click', e=>{
-      if(e.target!==col) return;
-      const slot = Math.floor((e.clientY - col.getBoundingClientRect().top)/ROW_H);
-      openBooking(null, {
-        fecha: view==='day' ? day : c.k,
-        nave:  view==='day' ? c.k : dockSel,
-        ini:   OPEN_MIN + Math.max(0,Math.min(SLOTS-1,slot))*STEP_MIN,
-      });
-    });
-
-    cuerpo.appendChild(col);
-  });
-
-  renderMobileList();
-  const ay = document.getElementById('help-strip');
-  if(ay) ay.classList.toggle('is-hidden', !!(state.config && state.config.ayudaOculta));
-  renderHeaderText();
-  renderClashNotice();
-  renderDockNotice();
-  renderKPIs();
-  renderLoadByDock();
-  renderLegend();
-  fillDatalists();
-}
-
-/* Splits overlapping blocks into lanes so none is hidden behind another
-   (same idea Outlook and Google Calendar use). */
-function assignLanes(list){
-  const order = [...list].sort((a,b)=> a.ini-b.ini || b.dur-a.dur);
-  const out = [];
-  let group = [], groupEnd = -1;
-
-  /* Closes the current cluster of overlapping bookings and gives each one a lane.
-     Careful: the key must be called "lane" — makeBlock reads it by name. */
-  const closeGroup = ()=>{
-    if(!group.length) return;
-    const lanes = [];                       // end time of each lane
-    /* Left to right in the order they were booked: whoever agendó primero
-       sits on the left, so the column reads like the queue it is. */
-    group.sort((a,b)=> bookedOrder(a) - bookedOrder(b) || a.ini - b.ini);
-    group.forEach(r=>{
-      let i = lanes.findIndex(end=>end<=r.ini);
-      if(i<0){ i = lanes.length; lanes.push(0) }
-      lanes[i] = r.ini + r.dur;
-      r._lane = i;
-    });
-    group.forEach(r=>out.push({ r, lane:r._lane, total:lanes.length }));
-    group = []; groupEnd = -1;
-  };
-
-  order.forEach(r=>{
-    if(group.length && r.ini >= groupEnd) closeGroup();
-    group.push(r);
-    groupEnd = Math.max(groupEnd, r.ini + r.dur);
-  });
-  closeGroup();
-  return out;
-}
-
-
-/* Dragging with pointer events: works with a mouse and with a finger on a
-   tablet. Finds the column under the cursor and the nearest 30-minute slot. */
-let drag = null, resizing = false;
-
-function clearGhosts(){
-  document.querySelectorAll('.ghost').forEach(g=>g.style.display='none');
-  document.querySelectorAll('.col.destino').forEach(c=>c.classList.remove('is-target'));
-}
-function slotAt(col, clientY, offsetDentro){
-  const y = clientY - col.getBoundingClientRect().top - (offsetDentro||0);
-  return Math.max(0, Math.min(SLOTS-1, Math.round(y/ROW_H)));
-}
-function startDrag(e, b, r){
-  b.setPointerCapture(e.pointerId);
-  drag = {
-    id:r.id, dur:r.dur, x0:e.clientX, y0:e.clientY, movido:false,
-    dentro: e.clientY - b.getBoundingClientRect().top, destino:null, b
-  };
-}
-document.addEventListener('pointermove', e=>{
-  if(!drag) return;
-  if(!drag.movido && Math.abs(e.clientY-drag.y0)<4 && Math.abs(e.clientX-drag.x0)<4) return;
-  drag.movido = true;
-  drag.b.classList.add('is-dragging');
-  const bajo = document.elementFromPoint(e.clientX, e.clientY);
-  const col = bajo && bajo.closest ? bajo.closest('.col') : null;
-  clearGhosts();
-  if(!col){ drag.destino = null; return }
-  const slot = slotAt(col, e.clientY, drag.dentro);
-  drag.destino = { k: col.dataset.k, slot };
-  col.classList.add('is-target');
-  const g = col.querySelector('.ghost');
-  if(g){
-    g.style.display = 'block';
-    g.style.top = (slot*ROW_H)+'px';
-    g.style.height = (drag.dur/STEP_MIN*ROW_H - 3)+'px';
-  }
-});
-document.addEventListener('pointerup', e=>{
-  if(!drag) return;
-  const a = drag; drag = null;
-  a.b.classList.remove('is-dragging');
-  clearGhosts();
-  if(a.movido){
-    if(a.destino) dropBooking(a.id, a.destino.k, a.destino.slot);
-  } else if(!resizing){
-    openBooking(a.id);
-  }
-});
-document.addEventListener('pointercancel', ()=>{ drag=null; clearGhosts() });
-
-function makeBlock(r, lane, total){
-  lane = lane||0; total = total||1;
-  const n = dock(r.nave);
-  const b = document.createElement('div');
-  const isClash = clashes.has(r.id);
-  const real = arrivalOf(r);
-  b.className = 'block' + (r.estado==='tentativo'?' is-tentative':'') + (isClash?' is-clash':'')
-              + (real==='llego'?' is-arrived':'') + (real==='nollego'?' is-noshow':'')
-              + (isPickup(r)?' is-pickup':'') + (isRush(r)?' is-rush':'')
-              + (isOffDock(r)?' is-offdock':'');
-  b.style.top = ((r.ini - OPEN_MIN)/STEP_MIN*ROW_H)+'px';
-  b.style.height = (r.dur/STEP_MIN*ROW_H - 3)+'px';
-  if(total>1){
-    const width = 100/total;
-    b.style.left  = `calc(${lane*width}% + 2px)`;
-    b.style.right = `calc(${100-(lane+1)*width}% + ${lane===total-1?16:2}px)`;
-  }
-  b.style.borderColor = n.col;
-  b.style.color = n.col;
-  if(!isClash && r.estado!=='tentativo' && !isPickup(r)) b.style.background = n.bg;
-  b.dataset.id = r.id;
-  b.style.touchAction = 'none';
-  const tt = totalTons(r);
-  const nTrucks = truckCount(r);
-  b.title = `${isPickup(r)?'RETIRO · ':''}${r.cliente}\n${wasteDetail(r)}\n`
-          + `${hhmm(r.ini)}–${hhmm(r.ini+r.dur)} · ${n.name}`
-          + `${nTrucks>1?` · ${nTrucks} camiones`:''}${tt?` · ${fmtNum(tt)} t en total`:''}`
-          + `${changeCount(r,'reprogramacion')?`\nReprogramado ${changeCount(r,'reprogramacion')} vez(ces)`:''}`
-          + `\n${bookedText(r)}`
-          + `${clashYields.has(r.id) ? `\nSe cruza con ${clashWinner.get(r.id).cliente}, que agendó primero: este es el que debería moverse.` : ''}`
-          + `${clashes.has(r.id) && !clashYields.has(r.id) && !clashReason.has(r.id) ? '\nAgendó primero: tiene prioridad sobre el otro.' : ''}`
-          + `${isOffDock(r) ? `\n⚑ ${r.cliente} no está en la lista de ${n.name}.` : ''}`;
-
-  const range = `${hhmm(r.ini)}–${hhmm(r.ini+r.dur)}`;
-  const nBales = totalBales(r);
-  const extra = [nTrucks>1?`${nTrucks} cam.`:'', nBales?`${nBales} fardos`:'',
-                 tt?`${fmtNum(tt)} t`:''].filter(Boolean).join(' · ');
-  const naveTxt = (view==='semana' && total<3) ? n.name : '';
-
-  if(r.dur<=30){
-    b.innerHTML = `<div class="b-short">
-        <b class="b-customer">${isPickup(r)?'↑ ':''}${esc(r.cliente)}</b>
-        <span class="b-meta">${range}</span>
-      </div>`;
-  } else {
-    const txtReal = real==='nollego' ? 'NO LLEGÓ' : real==='llego' ? 'LLEGÓ' : '';
-    b.innerHTML = `
-      <b class="b-customer">${isPickup(r)?'↑ ':''}${esc(r.cliente)}</b>
-      <span class="b-waste">${esc(wasteSummary(r))}</span>
-      <span class="b-meta">${range}${extra?' · '+esc(extra):''}${naveTxt?' · '+esc(naveTxt):''}</span>
-      ${txtReal?`<span class="b-real" style="color:${real==='nollego'?'var(--rojo)':'#1E8E4E'}">${txtReal}</span>`:''}`;
-  }
-  if(isClash) b.insertAdjacentHTML('beforeend',
-    `<span class="b-warn" title="${esc(clashReason.get(r.id)||'Cruce de horario')}">!</span>`);
-  else if(real==='llego') b.insertAdjacentHTML('beforeend','<span class="b-ok" title="Llegó">✓</span>');
-  if(isRush(r) && r.dur>30) b.insertAdjacentHTML('beforeend',
-    `<span class="b-rush" title="${esc(bookedText(r))}">⏱</span>`);
-  if(isOffDock(r) && r.dur>30) b.insertAdjacentHTML('beforeend',
-    `<span class="b-flag" title="${esc(r.cliente)} no está en la lista de ${esc(n.name)}">⚑</span>`);
-  if(clashes.has(r.id) && !clashYields.has(r.id) && !clashReason.has(r.id))
-    b.insertAdjacentHTML('beforeend',
-      '<span class="b-first" title="Agendó primero: tiene prioridad">1º</span>');
-  b.insertAdjacentHTML('beforeend','<span class="b-resize" title="Estirar para cambiar la duración"></span>');
-  if(real!=='llego' && !isClash){
-    const tic = document.createElement('button');
-    tic.className = 'b-tic'; tic.textContent = '✓';
-    tic.title = 'Marcar que llegó';
-    tic.addEventListener('pointerdown', e=>e.stopPropagation());
-    tic.addEventListener('click', e=>{ e.stopPropagation(); markArrival(r.id,'llego') });
-    b.appendChild(tic);
-  }
-
-  /* --- drag (mouse or finger) --- */
-  b.addEventListener('pointerdown', e=>{
-    if(e.target.classList.contains('b-resize')) return;
-    e.preventDefault(); e.stopPropagation();
-    startDrag(e, b, r);
-  });
-  b.addEventListener('click', e=>e.stopPropagation());
-
-  /* --- resize (duration) --- */
-  const tirador = b.querySelector('.b-resize');
-  tirador.addEventListener('pointerdown', e=>{
-    e.preventDefault(); e.stopPropagation();
-    resizing = true;
-    const y0 = e.clientY, d0 = r.dur;
-    tirador.setPointerCapture(e.pointerId);
-    const shiftDate = ev=>{
-      const pasos = Math.round((ev.clientY - y0)/ROW_H);
-      const nd = Math.max(STEP_MIN, Math.min(CLOSE_MIN - r.ini, d0 + pasos*STEP_MIN));
-      b.style.height = (nd/STEP_MIN*ROW_H - 3)+'px';
-      b.dataset.dur = nd;
-    };
-    const soltarT = ()=>{
-      tirador.removeEventListener('pointermove', shiftDate);
-      tirador.removeEventListener('pointerup', soltarT);
-      const nd = parseInt(b.dataset.dur||r.dur);
-      if(nd!==r.dur){
-        r.dur = nd; save(); render();
-        const ch = overlaps(r.fecha,r.nave,r.ini,r.dur,r.id,r);
-        if(ch.length) toast(`Ojo: quedó cruzado con ${ch[0].cliente} en ${dock(r.nave).name}.`, true);
-      }
-      setTimeout(()=>resizing=false,50);
-    };
-    tirador.addEventListener('pointermove', shiftDate);
-    tirador.addEventListener('pointerup', soltarT);
-  });
-
-  return b;
-}
-
-function dropBooking(id, colK, slot){
-  const r = state.reservas.find(x=>x.id===id);
-  if(!r) return;
-  const nuevoIni = OPEN_MIN + slot*STEP_MIN;
-  if(nuevoIni + r.dur > CLOSE_MIN){ toast(`Ese horario se pasa del cierre de planta (${hhmm(CLOSE_MIN)}).`, true); return }
-  const before = {fecha:r.fecha, nave:r.nave, ini:r.ini};
-  if(view==='day') r.nave = colK; else r.fecha = colK;
-  r.ini = nuevoIni;
-  if(before.fecha!==r.fecha || before.nave!==r.nave || before.ini!==r.ini)
-    logChange(r, 'reprogramacion',
-              `${shortDate(before.fecha)} ${hhmm(before.ini)} ${dock(before.nave).name}`,
-              `${shortDate(r.fecha)} ${hhmm(r.ini)} ${dock(r.nave).name}`);
-  const ch = overlaps(r.fecha, r.nave, r.ini, r.dur, r.id, r);
-  const bq = blockingPeriod(r.fecha, r.nave, r.ini, r.dur);
-  save(); render();
-  if(bq){
-    toast(`Ojo: ${r.cliente} quedó dentro del horario de ${bq.motivo.toLowerCase()}.`, true);
-  } else if(ch.length){
-    toast(`Cruce en ${dock(r.nave).name}: ${r.cliente} queda encima de ${ch[0].cliente} (${hhmm(ch[0].ini)}). Los dos quedaron marcados en rojo.`, true);
-  } else if(before.fecha!==r.fecha || before.nave!==r.nave || before.ini!==r.ini){
-    toast(`${r.cliente} movido a ${dock(r.nave).name}, ${shortDate(r.fecha)} ${hhmm(r.ini)}.`);
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   8 · SUPPORTING PANELS
-   ══════════════════════════════════════════════════════════════════════════ */
-/* Phone list: one row per truck with two large buttons. Phones always show a
-   single day; in week view the rows are grouped by day. */
-function renderMobileList(){
-  const box = document.getElementById('mobile-list');
-  const days = view==='day' ? [day] : weekDays();
-  let html = '';
-
-  days.forEach(f=>{
-    const list = state.reservas.filter(r=>r.fecha===f && passesMoveFilter(r))
-                     .sort((a,b)=> a.ini-b.ini || bookedOrder(a)-bookedOrder(b));
-    if(view!=='day') html += `<div class="m-day">${DAY_NAMES[(fromISO(f).getDay()+6)%7]} ${shortDate(f)} · ${list.length} camion${list.length===1?'':'es'}</div>`;
-    if(!list.length){
-      html += `<div class="empty-note">No hay ${moveFilter==='retiro'?'retiros':moveFilter==='ingreso'?'ingresos':'camiones'} agendados${view==='day'?' este día':''}.<br>
-        <span style="color:var(--z500)">Usa <b>＋ Agendar</b> para agregar uno.</span></div>`;
-      return;
-    }
-    list.forEach(r=>{
-      const n = dock(r.nave), real = arrivalOf(r), tt = totalTons(r);
-      const tag = real==='llego' ? '<span class="list-tag" style="color:#1E8E4E">LLEGÓ</span>'
-                : real==='nollego' ? '<span class="list-tag" style="color:var(--rojo)">NO LLEGÓ</span>'
-                : r.estado==='tentativo' ? '<span class="list-tag" style="color:var(--ambar)">POR CONFIRMAR</span>' : '';
-      html += `<div class="list-row ${real==='llego'?'is-arrived':''} ${real==='nollego'?'is-noshow':''} ${clashes.has(r.id)?'is-clash':''} ${isPickup(r)?'is-pickup':''} ${isRush(r)?'is-rush':''}"
-                    style="border-left-color:${real?'':n.col}">
-        <div class="list-main" onclick="openBooking('${r.id}')">
-          <div class="list-time">${hhmm(r.ini)}<span>${hhmm(r.ini+r.dur)}</span></div>
-          <div class="list-info">
-            <b class="list-customer">${isPickup(r)?'↑ ':''}${esc(r.cliente)}</b>
-            <span class="list-waste">${esc(wasteSummary(r))}</span>
-            <span class="list-dock"><i style="background:${n.col}"></i>${esc(n.name)}${truckCount(r)>1?` · ${truckCount(r)} camiones`:''}${totalBales(r)?` · ${totalBales(r)} fardos`:''}${tt?` · ${fmtNum(tt)} t`:''}</span>
-            ${tag}
-            ${isRush(r)?'<span class="list-tag" style="color:#B26A00">⏱ AGENDADO A ÚLTIMA HORA</span>':''}
-          </div>
-        </div>
-        <div class="list-actions">
-          <button class="ok" aria-pressed="${real==='llego'}"
-                  onclick="markArrival('${r.id}','llego')">✓ Llegó</button>
-          <button class="no" aria-pressed="${real==='nollego'}"
-                  onclick="markArrival('${r.id}','nollego')">✕ No llegó</button>
-        </div>
-      </div>`;
-    });
-  });
-  box.innerHTML = html;
-}
-
-/* One tap sets it, another clears it. */
-function markArrival(id, v){
-  const r = state.reservas.find(x=>x.id===id);
-  if(!r) return;
-  r.real = (arrivalOf(r)===v) ? null : v;
-  save(); render();
-  toast(r.real==='llego' ? `${r.cliente}: llegó.`
-      : r.real==='nollego' ? `${r.cliente}: no llegó.`
-      : `${r.cliente}: sin registrar.`);
-}
-
-function hideHelp(){
-  document.getElementById('help-strip').classList.add('is-hidden');
-  state.config = state.config || {};
-  state.config.ayudaOculta = true;
-  save(true);
-}
-
-function renderHeaderText(){
-  const ds = weekDays();
-  const soloTxt = moveFilter==='ingreso' ? ' · solo ingresos'
-                : moveFilter==='retiro'  ? ' · solo retiros' : '';
-  document.getElementById('view-title').textContent =
-    (view==='day' ? 'Agenda del día' : 'Agenda de la semana') + soloTxt;
-  document.getElementById('date-label').textContent = view==='day'
-    ? longDate(day)
-    : `${shortDate(ds[0])} – ${shortDate(ds[5])}`;
-  document.getElementById('range-chip').textContent = (view==='day'
-    ? longDate(day) : `SEMANA ${shortDate(ds[0])} – ${shortDate(ds[5])}`).toUpperCase();
-  document.getElementById('load-chip').textContent = (view==='day' ? shortDate(day) : 'SEMANA').toUpperCase();
-  document.querySelectorAll('#view-switch button').forEach((b,i)=>
-    b.setAttribute('aria-pressed', (i===0)===(view==='day')));
-  ['todo','ingreso','retiro'].forEach((v,i)=>
-    document.querySelectorAll('#move-switch button')[i]
-      .setAttribute('aria-pressed', v===moveFilter));
-}
-
-function renderClashNotice(){
-  const box = document.getElementById('clash-notice');
-  const visible = visibleBookings().filter(r=>clashes.has(r.id));
-  if(!visible.length){ box.className=''; box.innerHTML=''; return }
-  const groups = {};
-  visible.filter(r=>!clashReason.has(r.id))
-          .forEach(r=>{ (groups[r.fecha+'|'+r.nave] = groups[r.fecha+'|'+r.nave] || []).push(r) });
-  const enBloqueo = visible.filter(r=>clashReason.has(r.id));
-  const itemsBloq = enBloqueo.map(r=>
-    `<li>· <button onclick="goToBooking('${r.fecha}','${r.id}')">${DAY_ABBR[(fromISO(r.fecha).getDay()+6)%7]} ${shortDate(r.fecha)} · ${esc(r.cliente)} cae en ${esc(clashReason.get(r.id))}</button></li>`).join('');
-  const items = Object.entries(groups).map(([k,list])=>{
-    const [f,n] = k.split('|');
-    list.sort((a,b)=>a.ini-b.ini);
-    /* Name the one that has to move: whoever booked last. */
-    const mueve = list.filter(r=>clashYields.has(r.id));
-    const quienes = list.map(r=>`${r.cliente} (${hhmm(r.ini)})`).join(' y ');
-    const quien = mueve.length
-      ? ` — le toca moverse a <b>${esc(mueve.map(r=>r.cliente).join(', '))}</b>, agendó después`
-      : '';
-    return `<li>· <button onclick="goToBooking('${f}','${(mueve[0]||list[0]).id}')">${DAY_ABBR[(fromISO(f).getDay()+6)%7]} ${shortDate(f)} · ${dock(n).name}: ${esc(quienes)}</button>${quien}</li>`;
-  }).join('');
-  const n = Object.keys(groups).length + enBloqueo.length;
-  box.className='on';
-  box.innerHTML = `<b>Hay ${n} problema${n>1?'s':''} de horario.</b>
-    Camiones que ocupan el mismo lugar a la misma hora, o que caen en un horario bloqueado.
-    (Los pallets y maxisacas van a patio, así que no compiten con granel ni piso caminante.)
-    Manda la hora el que agendó primero: arrastra el otro bloque.
-    <ul>${items}${itemsBloq}</ul>`;
-}
-
-/* Customers booked at a dock that is not theirs. */
-function renderDockNotice(){
-  const box = document.getElementById('dock-notice');
-  const fuera = visibleBookings().filter(isOffDock);
-  if(!fuera.length){ box.className=''; box.innerHTML=''; return }
-  const items = fuera.sort((a,b)=> a.fecha===b.fecha ? a.ini-b.ini : a.fecha.localeCompare(b.fecha))
-    .map(r=>`<li>· <button onclick="goToBooking('${r.fecha}','${r.id}')">${DAY_ABBR[(fromISO(r.fecha).getDay()+6)%7]} ${shortDate(r.fecha)} ${hhmm(r.ini)} · ${esc(r.cliente)} en ${esc(dock(r.nave).name)}</button></li>`).join('');
-  box.className='on';
-  box.innerHTML = `<b>⚑ ${fuera.length} ${fuera.length===1?'cliente agendado':'clientes agendados'} en un punto que no le corresponde.</b>
-    Revisa si hay que moverlo o si es una excepción y hay que sumarlo a la lista
-    (columna de la derecha, <b>Puntos de descarga → Clientes</b>).
-    <ul>${items}</ul>`;
-}
-function goToBooking(fecha, id){
-  day = fecha; monday = mondayOf(fromISO(fecha)); setView('day'); openBooking(id);
-}
-
-/* Five tiles, in this order: Camiones agendados · Ingresos - Retiros ·
-   Toneladas planificadas · Llegaron · Con problema. */
-function renderKPIs(){
-  const list = visibleBookings();
-  const ton  = list.reduce((s,r)=>s+totalTons(r),0);
-  const lleg = list.filter(r=>arrivalOf(r)==='llego').length;
-  const conflicto = list.filter(r=>clashes.has(r.id)).length;
-  const box = document.getElementById('kpis');
-  box.innerHTML = `
-    <div class="kpi"><b>${list.reduce((s,r)=>s+truckCount(r),0)}</b><span>Camiones agendados</span></div>
-    <div class="kpi"><b>${list.filter(r=>!isPickup(r)).length} · ${list.filter(r=>isPickup(r)).length}</b><span>Ingresos · Retiros</span></div>
-    <div class="kpi"><b>${fmtNum(ton)}</b><span>Toneladas planificadas</span></div>
-    <div class="kpi" ${lleg?'style="border-left-color:#1E8E4E;background:#F1F8F3"':''}>
-      <b>${lleg}</b><span>Llegaron</span></div>
-    <div class="kpi" ${conflicto?'style="border-left-color:var(--rojo);background:var(--rojoBg)"':''}>
-      <b>${conflicto}</b><span>Con problema</span></div>`;
-}
-
-function renderLoadByDock(){
-  const list = visibleBookings();
-  const porNave = DOCKS.map(n=>{
-    const own = list.filter(r=>r.nave===n.id);
-    return { n, cam:own.length, ton:own.reduce((s,r)=>s+totalTons(r),0),
-             lleg:own.filter(r=>arrivalOf(r)==='llego').length };
-  });
-  const maxCam = Math.max(1, ...porNave.map(x=>x.cam));
-  document.getElementById('load-list').innerHTML = porNave.map(({n,cam,ton,lleg})=>`
-    <div class="load-row">
-      <div class="load-top"><b style="color:${n.col}">${n.name}</b>
-        <span>${cam} camión${cam===1?'':'es'} · ${fmtNum(ton)} t${lleg?` · ${lleg} llegó`:''}</span></div>
-      <div class="load-bar"><i style="width:${cam/maxCam*100}%;background:${n.col}"></i></div>
-    </div>`).join('');
-}
-
-function renderLegend(){
-  document.getElementById('dock-legend').innerHTML = DOCKS.map(n=>
-    `<div class="legend-item"><span class="legend-swatch" style="background:${n.bg};border-color:${n.col}"></span>${n.name}</div>`).join('');
-}
-
-function fillDatalists(){
-  const fill = (idDL, arr)=>{
-    document.getElementById(idDL).innerHTML = [...new Set(arr)].sort()
-      .map(v=>`<option value="${esc(v)}"></option>`).join('');
-  };
-  fill('dl-customers', moveSel==='retiro'
-        ? [...COLLECTORS, ...(state.listas.retiros||[])]
-        : state.listas.clientes);
-  fill('dl-by',    state.listas.quien);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   9 · DATE NAVIGATION
-   ══════════════════════════════════════════════════════════════════════════ */
-function setView(v){
-  view = v;
-  if(v==='day' && !weekDays().includes(day)) day = weekDays()[0];
-  render();
-}
-/* Todo · Ingresos · Retiros. Filters the grid, the phone list and the numbers. */
-function setMoveFilter(v){
-  moveFilter = v || 'todo';
-  render();
-  toast(v==='ingreso' ? 'Mostrando solo los ingresos.'
-      : v==='retiro'  ? 'Mostrando solo los retiros.'
-      : 'Mostrando ingresos y retiros.');
-}
-function shiftDate(n){
-  if(view==='day'){
-    let f = day;
-    do{ f = addDays(f, n) } while(fromISO(f).getDay()===0);   // saltar domingos
-    day = f; monday = mondayOf(fromISO(f));
-  } else {
-    monday = new Date(monday); monday.setDate(monday.getDate()+n*7);
-    day = weekDays()[0];
-  }
-  render();
-}
-function goToday(){
-  const h = new Date();
-  const before = day, antesVista = view;
-  monday = mondayOf(h);
-  day = h.getDay()===0 ? weekDays()[0] : todayISO();
-  view = 'day';                       /* coming from week view, land on the day */
-  render();
-  if(before===day && antesVista==='day') toast('Ya estás en el día de hoy.');
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   10 · BOOKING FORM
-   ══════════════════════════════════════════════════════════════════════════ */
-function quickAdd(){
-  openBooking(null, { fecha: view==='day'?day:weekDays()[0], nave:dockSel, ini:OPEN_MIN+30 });
-}
-
-function openBooking(id, pre){
-  editingId = id || null;
-  const r = id ? state.reservas.find(x=>x.id===id) : null;
-  const base = r || Object.assign({ tipo:'ingreso', fecha:day, nave:DOCKS[0].id, ini:8*60, dur:60,
-    cliente:'', items:[], camiones:1, veh:'Camión', quien:'', estado:'confirmado', notas:'' }, pre||{});
-  if(base.ini < OPEN_MIN) base.ini = OPEN_MIN;
-
-  renderMovePicker(base.tipo || 'ingreso');
-  document.getElementById('f-trucks').value = truckCount(base);
-  document.getElementById('m-title').textContent = r
-    ? (isPickup(base) ? 'Ficha del retiro' : 'Ficha del ingreso')
-    : 'Agendar movimiento';
-  document.getElementById('m-sub').textContent = r
-    ? 'Modifica lo que necesites. También puedes arrastrar el bloque en la agenda.'
-    : 'Reserva una hora en un punto de descarga. Queda visible para toda la planta.';
-  /* When it was booked, and whether that was with enough notice. */
-  const cre = document.getElementById('m-created');
-  cre.className = 'm-created' + (r ? ' on' : '') + (r && isRush(r) ? ' is-rush' : '');
-  cre.textContent = r
-    ? bookedText(r) + (isRush(r) ? ' Es una recepción avisada con poca anticipación.' : '')
-    : '';
-  document.getElementById('btn-save').textContent = r ? 'Guardar cambios' : 'Agendar';
-  document.getElementById('btn-delete').style.display = r ? 'inline-flex' : 'none';
-  document.getElementById('btn-duplicate').style.display = r ? 'inline-flex' : 'none';
-
-  /* day */
-  const selD = document.getElementById('f-day');
-  selD.innerHTML = weekDays().map(f=>
-    `<option value="${f}">${DAY_NAMES[(fromISO(f).getDay()+6)%7]} ${shortDate(f)}</option>`).join('');
-  if(!weekDays().includes(base.fecha))
-    selD.insertAdjacentHTML('afterbegin',`<option value="${base.fecha}">${shortDate(base.fecha)}</option>`);
-  selD.value = base.fecha;
-
-  /* time */
-  const selH = document.getElementById('f-time');
-  selH.innerHTML = Array.from({length:SLOTS},(_,s)=>{
-    const m = OPEN_MIN+s*STEP_MIN; return `<option value="${m}">${hhmm(m)}</option>`;
-  }).join('');
-  selH.value = base.ini;
-
-  document.getElementById('f-length').value = base.dur;
-  document.getElementById('f-customer').value = base.cliente;
-  document.getElementById('f-vehicle').value = base.veh || 'Camión';
-  document.getElementById('f-by').value = base.quien || '';
-  document.getElementById('f-notes').value = base.notas || '';
-  setStatus(base.estado || 'confirmado');
-  document.getElementById('f-search').value = '';
-  renderArrival(r);
-  renderDockPicker(base.nave);
-  renderWasteRows(base.items && base.items.length ? base.items
-              : (base.residuo ? [{r:base.residuo, t:base.ton||''}] : null));
-  checkClash();
-
-  document.getElementById('ov').classList.add('is-open');
-  setTimeout(()=>document.getElementById('f-customer').focus(),60);
-}
-
-/* What actually happened: arrived, did not arrive, or not recorded yet. */
-let arrivalSel = null;
-let moveSel = 'ingreso';
-function renderArrival(r){
-  const hay = !!r;
-  document.getElementById('arrival-box').style.display = hay ? 'block' : 'none';
-  document.getElementById('lbl-arrival').style.display  = hay ? 'block' : 'none';
-  setArrival(hay ? arrivalOf(r) : null);
-}
-function setArrival(v){
-  arrivalSel = v;
-  document.getElementById('btn-arrived'  ).setAttribute('aria-pressed', v==='llego');
-  document.getElementById('btn-noshow').setAttribute('aria-pressed', v==='nollego');
-  document.getElementById('btn-unset' ).setAttribute('aria-pressed', v==null);
-}
-/* Accepts both the old format (actual time / no-show) and the new one. */
-function arrivalOf(r){
-  const x = r.real;
-  if(!x) return null;
-  if(typeof x === 'string') return x;
-  if(x.noLlego) return 'nollego';
-  if(x.hour!=null || x.llego) return 'llego';
-  return null;
-}
-
-/* Ingreso o retiro. Cambia los rótulos y las sugerencias de la ficha,
-   porque un retiro se le pide a una empresa, no a un cliente. */
-function renderMovePicker(v){
-  moveSel = v || 'ingreso';
-  document.getElementById('f-move').innerHTML = MOVES.map(m=>
-    `<button type="button" class="chip" data-m="${m.id}" aria-pressed="${m.id===moveSel}"
-       onclick="pickMove('${m.id}')">${m.id==='retiro'?'↑':'↓'} ${m.label}</button>`).join('');
-
-  const out = moveSel === 'retiro';
-  document.getElementById('lbl-what').textContent   = out ? 'Qué sale' : 'Qué llega';
-  document.getElementById('lbl-customer').textContent = out ? 'Empresa que retira' : 'Cliente';
-  const inp = document.getElementById('f-customer');
-  inp.placeholder = out ? 'Ej: KDM, CDR, Valorizadores…' : 'Escribe el nombre del cliente';
-  const lblW = document.querySelector('label[for=""], #f-waste');
-  const lblRes = document.getElementById('lbl-waste');
-  if(lblRes) lblRes.innerHTML = out
-    ? 'Material que se lleva <i>— uno o varios, con sus toneladas</i>'
-    : 'Residuos que trae <i>— uno o varios, con sus toneladas</i>';
-  fillDatalists();
-}
-function pickMove(v){ renderMovePicker(v); checkClash() }
-
-function renderDockPicker(sel){
-  dockSel = sel;
-  document.getElementById('f-docks').innerHTML = DOCKS.map(n=>
-    `<button class="chip" data-n="${n.id}" aria-pressed="${n.id===sel}"
-       style="${n.id===sel?`background:${n.bg};border-color:${n.col};color:${n.col};font-weight:600`:''}"
-       onclick="pickDock('${n.id}')">${n.name}</button>`).join('');
-  refreshWasteOptions();
-}
-function pickDock(id){
-  const actuales = readWasteRows();
-  renderDockPicker(id);
-  renderWasteRows(actuales);
-  checkClash();
-}
-/* ── Waste carried by the truck ──────────────────────────────────────────
-   Each row is one waste type with its tonnage; a truck may carry several.
-   The search box on top filters the options of every row.                  */
-function wasteOptions(valor){
-  const cat = CATALOG[dockSel] || CATALOG.cdr;
-  const q = (document.getElementById('f-search').value||'').trim().toUpperCase();
-  const filtra = a => a.filter(v=>!q || v.includes(q));
-  const op = a => a.map(v=>`<option value="${esc(v)}"${v===valor?' selected':''}>${esc(v)}</option>`).join('');
-
-  let html = `<option value=""${!valor?' selected':''}>— Elige el residuo —</option>`;
-  cat.groups.forEach(([name,arr])=>{
-    const l = filtra(arr);
-    if(l.length) html += `<optgroup label="${name}">${op(l)}</optgroup>`;
-  });
-  const custom = [...new Set(filtra((state.listas.residuos||[]).map(v=>v.toUpperCase())
-    .filter(v=>!WASTE_RESIMPLE.includes(v) && !WASTE_GENERAL.includes(v))))];
-  if(custom.length) html += `<optgroup label="AGREGADOS AQUÍ">${op(custom)}</optgroup>`;
-  if(valor && !WASTE_RESIMPLE.includes(valor) && !WASTE_GENERAL.includes(valor) && !custom.includes(valor))
-    html += `<option value="${esc(valor)}" selected>${esc(valor)}</option>`;
-  html += '<option value="__otro">OTRO — ESCRIBIRLO…</option>';
-  return html;
-}
-
-/* `amount` is the number shown in the row: bales in units, everything else
-   in tonnes. The row re-labels itself whenever the chosen waste changes. */
-function wasteRow(valor, amount, escrito, fmt){
-  const row = document.createElement('div');
-  row.className = 'waste-row';
-  row.innerHTML = escrito
-    ? `<input type="text" class="it-txt" value="${esc(valor||'')}" placeholder="ESCRIBE EL RESIDUO" style="text-transform:uppercase">`
-    : `<select class="it-sel">${wasteOptions(valor||'')}</select>`;
-  const fmtOpts = ['<option value="">— formato —</option>']
-    .concat(FORMATS.map(f=>`<option value="${f}"${f===fmt?' selected':''}>${f.toLowerCase()}</option>`)).join('');
-  row.insertAdjacentHTML('beforeend',
-    `<select class="it-fmt" title="Cómo viene la carga (opcional). Pallet y maxisaca se descargan en patio; granel y piso caminante ocupan el frente de descarga.">${fmtOpts}</select>
-     <input type="number" class="it-ton" min="0" step="0.1" value="${amount!==''&&amount!=null?amount:''}">
-     <span class="it-unit"></span>
-     <button type="button" class="row-remove" title="Quitar este residuo">×</button>`);
-
-  const sel = row.querySelector('.it-sel');
-  const syncUnit = ()=>rowSetUnit(row);
-  if(sel) sel.addEventListener('change', ()=>{
-    if(sel.value==='__otro'){
-      const t = row.querySelector('.it-ton').value;
-      row.replaceWith(wasteRow('', t, true, row.querySelector('.it-fmt').value));
-      document.querySelector('#f-waste .waste-row:last-child .it-txt')?.focus();
-      return;
-    }
-    syncUnit();
-    updateWasteTotal();
-    checkClash();          /* the waste (and its area) changes the clash check */
-  });
-  const txt = row.querySelector('.it-txt');
-  if(txt) txt.addEventListener('input', ()=>{ syncUnit(); updateWasteTotal() });
-  row.querySelector('.it-fmt').addEventListener('change', checkClash);
-  row.querySelector('.it-ton').addEventListener('input', updateWasteTotal);
-  row.querySelector('.row-remove').addEventListener('click', ()=>{
-    row.remove();
-    if(!document.querySelectorAll('#f-waste .waste-row').length) addWasteRow();
-    updateWasteTotal();
-    checkClash();
-  });
-  rowSetUnit(row);
-  return row;
-}
-/* Bales ask for a count; everything else asks for tonnes. */
-function rowName(row){
-  const sel = row.querySelector('.it-sel'), txt = row.querySelector('.it-txt');
-  return ((sel ? (sel.value==='__otro' ? '' : sel.value) : (txt ? txt.value : '')) || '').trim().toUpperCase();
-}
-function rowSetUnit(row){
-  const bale = isBale(rowName(row));
-  const inp  = row.querySelector('.it-ton');
-  row.classList.toggle('is-bale', bale);
-  row.querySelector('.it-unit').textContent = bale ? 'fardos' : 't';
-  inp.step        = bale ? '1' : '0.1';
-  inp.placeholder = bale ? 'cant.' : 'ton';
-  inp.title       = bale ? 'Cuántos fardos vienen' : 'Toneladas de este residuo';
-}
-
-function renderWasteRows(list){
-  const box = document.getElementById('f-waste');
-  box.innerHTML = '';
-  const l = (list && list.length) ? list : [{r:'',t:''}];
-  l.forEach(i=>{
-    const known = !i.r || WASTE_RESIMPLE.includes(i.r) || WASTE_GENERAL.includes(i.r)
-                     || (state.listas.residuos||[]).map(v=>v.toUpperCase()).includes(i.r);
-    const amount = isBale(i.r) ? (baleCount(i) || '') : i.t;
-    box.appendChild(wasteRow(i.r, amount, false && !known, i.fmt));
-  });
-  updateWasteTotal();
-  const cat = CATALOG[dockSel] || CATALOG.cdr;
-  document.getElementById('waste-chips').innerHTML =
-    (cat.quick||[]).map(v=>`<button type="button" onclick="pickWaste(this)">${esc(v)}</button>`).join('');
-}
-
-function addWasteRow(valor){
-  document.getElementById('f-waste').appendChild(wasteRow(valor||'', '', false));
-  updateWasteTotal();
-}
-/* A shortcut chip fills the first empty row, or adds one if there is none. */
-function pickWaste(btn){
-  const v = btn.textContent;
-  document.getElementById('f-search').value = '';
-  refreshWasteOptions();
-  const emptyRow = [...document.querySelectorAll('#f-waste .it-sel')].find(s=>!s.value);
-  if(emptyRow){ emptyRow.value = v; rowSetUnit(emptyRow.closest('.waste-row')) } else addWasteRow(v);
-  updateWasteTotal();
-}
-function filterWaste(){ refreshWasteOptions() }
-function refreshWasteOptions(){
-  document.querySelectorAll('#f-waste .it-sel').forEach(sel=>{
-    const v = sel.value==='__otro' ? '' : sel.value;
-    sel.innerHTML = wasteOptions(v);
-  });
-}
-/* For a bale row the number typed is a COUNT: it is kept in `q` and the
-   tonnage in `t` is the estimate, so nothing downstream has to know. */
-function readWasteRows(){
-  return [...document.querySelectorAll('#f-waste .waste-row')].map(f=>{
-    const r = rowName(f);
-    const v = parseFloat(f.querySelector('.it-ton').value) || 0;
-    const fmt = f.querySelector('.it-fmt').value || '';
-    if(isBale(r)){
-      const q = Math.max(0, Math.round(v));
-      return { r, q, t: Math.round(q * baleWeight() * 100) / 100, fmt };
-    }
-    return { r, t: v, fmt };
-  }).filter(i=>i.r);
-}
-function updateWasteTotal(){
-  let t = 0, fardos = 0;
-  document.querySelectorAll('#f-waste .waste-row').forEach(f=>{
-    const v = parseFloat(f.querySelector('.it-ton').value) || 0;
-    if(isBale(rowName(f))){ fardos += Math.round(v); t += Math.round(v) * baleWeight() }
-    else t += v;
-  });
-  document.getElementById('f-total').textContent = fmtNum(t);
-  const extra = document.getElementById('f-bales');
-  if(extra) extra.textContent = fardos ? ` · ${fardos} fardo${fardos===1?'':'s'}` : '';
-}
-
-function setStatus(v){
-  statusSel = v;
-  document.getElementById('st-confirmed').setAttribute('aria-pressed', v==='confirmado');
-  document.getElementById('st-tentative').setAttribute('aria-pressed', v==='tentativo');
-}
-function checkClash(){
-  const f = document.getElementById('f-day').value;
-  const ini = parseInt(document.getElementById('f-time').value);
-  const dur = parseInt(document.getElementById('f-length').value);
-  const ch = overlaps(f, dockSel, ini, dur, editingId, { nave:dockSel, tipo:moveSel, items:readWasteRows() });
-  const bq = blockingPeriod(f, dockSel, ini, dur);
-  const box = document.getElementById('m-clash');
-  if(bq){
-    box.className='modal-clash on';
-    box.innerHTML = `<b>Horario bloqueado.</b> Ese espacio está marcado como
-      <b>${esc(bq.motivo)}</b> (${hhmm(bq.ini)}–${hhmm(bq.ini+bq.dur)}).
-      Puedes agendarlo igual: quedará marcado en rojo.`;
-  } else if(ch.length){
-    /* Whoever booked first keeps the slot, so say who would have to move. */
-    const otro = ch[0];
-    const yoPrimero = editingId
-      && firstBooked(state.reservas.find(r=>r.id===editingId) || {id:editingId}, otro).id === editingId;
-    box.className='modal-clash on';
-    box.innerHTML = `<b>Cruce de horario.</b> ${esc(otro.cliente)} ya está en ${dock(dockSel).name}
-      de ${hhmm(otro.ini)} a ${hhmm(otro.ini+otro.dur)}.
-      ${yoPrimero ? 'Este movimiento se agendó primero, así que tiene prioridad.'
-                  : `${esc(otro.cliente)} agendó primero: si lo dejas así, el que debería moverse es este.`}
-      Puedes agendarlo igual: quedará marcado en rojo.`;
-  } else if(overlaps(f, dockSel, ini, dur, editingId).length){
-    /* Same hour and same dock, but they do not compete: say why. */
-    box.className='modal-clash ok';
-    box.innerHTML = `<b>Coinciden en la hora, pero no se estorban.</b>
-      Los pallets y maxisacas se descargan en patio, así que conviven con un
-      granel o piso caminante en el mismo horario.`;
-  } else box.className='modal-clash';
-  checkDockClient();
-}
-/* Warns when the customer is not on this dock's list. Never blocks. */
-function checkDockClient(){
-  const cliente = document.getElementById('f-customer').value;
-  const box = document.getElementById('m-offdock');
-  if(dockAllows(dockSel, cliente)){ box.className='m-offdock'; box.innerHTML=''; return }
-  const suyos = DOCKS.filter(n=>dockAllows(n.id, cliente) && dockClients(n.id).length);
-  box.className='m-offdock on';
-  box.innerHTML = `<b>⚑ ${esc(cliente.trim())} no está en la lista de ${dock(dockSel).name}.</b>
-    ${suyos.length ? `Según las listas, le corresponde <b>${esc(suyos.map(n=>n.name).join(' o '))}</b>.` : ''}
-    Puedes agendarlo igual: quedará marcado con ⚑.`;
-}
-['f-day','f-time','f-length'].forEach(id=>
-  document.getElementById(id).addEventListener('change', checkClash));
-document.getElementById('f-customer').addEventListener('input', checkDockClient);
-
-function saveBooking(){
-  const cliente = document.getElementById('f-customer').value.trim();
-  if(!cliente){ toast('Falta el nombre del cliente.', true); document.getElementById('f-customer').focus(); return }
-  const obj = {
-    fecha: document.getElementById('f-day').value,
-    nave: dockSel,
-    ini: parseInt(document.getElementById('f-time').value),
-    dur: parseInt(document.getElementById('f-length').value),
-    cliente,
-    items: readWasteRows(),
-    veh: document.getElementById('f-vehicle').value,
-    quien: document.getElementById('f-by').value.trim(),
-    tipo: moveSel,
-    camiones: Math.max(1, parseInt(document.getElementById('f-trucks').value) || 1),
-    estado: statusSel,
-    notas: document.getElementById('f-notes').value.trim(),
-    real: editingId ? arrivalSel : null,
-  };
-  if(obj.ini + obj.dur > CLOSE_MIN){ toast(`La descarga terminaría después de las ${hhmm(CLOSE_MIN)}.`, true); return }
-  if(!obj.items.length){ toast('Falta indicar al menos un tipo de residuo.', true); return }
-
-  obj.residuo = obj.items.length ? obj.items[0].r : '';   /* kept for backwards compatibility */
-  obj.ton = obj.items.reduce((s,i)=>s+i.t,0);
-
-  if(editingId){
-    const prev = state.reservas.find(r=>r.id===editingId);
-    /* what changed, for the reschedule report */
-    if(prev.fecha!==obj.fecha || prev.ini!==obj.ini || prev.nave!==obj.nave)
-      logChange(prev, 'reprogramacion',
-                `${shortDate(prev.fecha)} ${hhmm(prev.ini)} ${dock(prev.nave).name}`,
-                `${shortDate(obj.fecha)} ${hhmm(obj.ini)} ${dock(obj.nave).name}`);
-    if(truckCount(prev) !== obj.camiones)
-      logChange(prev, 'camiones', truckCount(prev), obj.camiones);
-    obj.hist = prev.hist || [];
-    Object.assign(prev, obj);
-  } else {
-    /* `creado` is stamped once and never touched again: it is the evidence of
-       how much notice the plant got, and it decides who keeps the slot. */
-    state.reservas.push(Object.assign(
-      { id:'r'+Math.random().toString(36).slice(2,9), hist:[], creado: Date.now() }, obj));
-  }
-
-  remember(obj.tipo==='retiro' ? 'retiros' : 'clientes', obj.cliente);
-  obj.items.forEach(i=>remember('residuos', i.r));
-  remember('quien',    obj.quien);
-
-  save(); closeBooking(); render();
-  const ch = overlaps(obj.fecha, obj.nave, obj.ini, obj.dur, editingId, obj);
-  const bq = blockingPeriod(obj.fecha, obj.nave, obj.ini, obj.dur);
-  toast(bq ? `${obj.cliente} quedó dentro del horario de ${bq.motivo.toLowerCase()} (${hhmm(bq.ini)}–${hhmm(bq.ini+bq.dur)}).`
-     : ch.length ? `Agendado con cruce: revisa ${dock(obj.nave).name} a las ${hhmm(obj.ini)}.`
-     : `${obj.cliente} agendado en ${dock(obj.nave).name}, ${shortDate(obj.fecha)} a las ${hhmm(obj.ini)}.`,
-     !!(bq || ch.length));
-  editingId = null;
-}
-/* Copies the booking into the next free slot of the same dock and day. */
-function duplicateBooking(){
-  if(!editingId) return;
-  const r = state.reservas.find(x=>x.id===editingId);
-  const copia = JSON.parse(JSON.stringify(r));
-  copia.id = 'r'+Math.random().toString(36).slice(2,9);
-  copia.creado = Date.now();
-  copia.hist = [];
-  let t = r.ini + r.dur;
-  while(t + r.dur <= CLOSE_MIN && overlaps(r.fecha, r.nave, t, r.dur, null, r).length) t += STEP_MIN;
-  if(t + r.dur > CLOSE_MIN){ toast('No queda espacio libre ese día en ese punto de descarga.', true); return }
-  copia.ini = t;
-  state.reservas.push(copia);
-  save(); closeBooking(); render();
-  toast(`Copia de ${copia.cliente} creada a las ${hhmm(t)}. Ábrela para ajustarla.`);
-}
-
-function deleteBooking(){
-  if(!editingId) return;
-  const r = state.reservas.find(x=>x.id===editingId);
-  if(!confirm(`¿Eliminar el ingreso de ${r.cliente}?`)) return;
-  state.reservas = state.reservas.filter(x=>x.id!==editingId);
-  editingId = null; save(); closeBooking(); render();
-  toast('Ingreso eliminado.');
-}
-function closeBooking(){ document.getElementById('ov').classList.remove('is-open'); editingId = null }
-/* Closes any overlay by its id. Used by the "Cerrar" buttons. */
-function closeOverlay(id){
-  const el = document.getElementById(id);
-  if(el) el.classList.remove('is-open');
-  if(id==='ov') editingId = null;
-}
-document.querySelectorAll('.overlay').forEach(o=>
-  o.addEventListener('click', function(e){ if(e.target===this) closeOverlay(this.id) }));
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape') document.querySelectorAll('.overlay.is-open').forEach(o=>o.classList.remove('is-open'));
-  if(e.key==='Enter' && document.getElementById('ov').classList.contains('is-open')
-     && e.target.tagName==='INPUT'){ e.preventDefault(); saveBooking() }
-});
-
-/* ══════════════════════════════════════════════════════════════════════════
-   10b · BLOCKED TIME
-   ══════════════════════════════════════════════════════════════════════════ */
-let reasonSel = 'Colación';
-function openBlockModal(){
-  document.getElementById('bk-reasons').innerHTML = BLOCK_REASONS.map(m=>
-    `<button type="button" class="chip" data-m="${m}" aria-pressed="${m===reasonSel}"
-      onclick="pickReason('${m}')">${m}</button>`).join('');
-  document.getElementById('bk-dock').innerHTML =
-    `<option value="*">Todos los puntos</option>` +
-    DOCKS.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
-  document.getElementById('bk-when').innerHTML =
-    `<option value="diario">Todos los días</option>` +
-    weekDays().map(f=>`<option value="${f}">${DAY_ABBR[(fromISO(f).getDay()+6)%7]} ${shortDate(f)}</option>`).join('');
-  document.getElementById('bk-when').value = view==='day' ? day : 'diario';
-  document.getElementById('bk-start').innerHTML = Array.from({length:SLOTS},(_,i)=>{
-    const m = OPEN_MIN+i*STEP_MIN; return `<option value="${m}">${hhmm(m)}</option>`;
-  }).join('');
-  document.getElementById('bk-start').value = 12*60+30;
-  renderBlockList();
-  document.getElementById('ov-block').classList.add('is-open');
-}
-function pickReason(m){
-  reasonSel = m;
-  document.querySelectorAll('#bk-reasons .chip').forEach(b=>
-    b.setAttribute('aria-pressed', b.dataset.m===m));
-}
-function renderBlockList(){
-  const box = document.getElementById('bk-list');
-  if(!state.bloqueos.length){ box.innerHTML = '<p style="font-size:12px;color:var(--z400)">No hay bloqueos.</p>'; return }
-  box.innerHTML = state.bloqueos
-    .slice().sort((a,b)=>a.ini-b.ini)
-    .map(b=>`<div class="list-item">
-        <span><b style="font-weight:600">${esc(b.motivo)}</b> · ${hhmm(b.ini)}–${hhmm(Math.min(CLOSE_MIN,b.ini+b.dur))}
-        · ${b.nave==='*'?'todos los puntos':esc(dock(b.nave).name)}
-        · ${b.tipo==='diario'?'todos los días':shortDate(b.fecha)}</span>
-        <button class="link-btn" onclick="deleteBlock('${b.id}')">Quitar</button>
-      </div>`).join('');
-}
-function deleteBlock(id){
-  state.bloqueos = state.bloqueos.filter(b=>b.id!==id);
-  save(); renderBlockList(); render();
-}
-function saveBlock(){
-  const cuando = document.getElementById('bk-when').value;
-  const ini = parseInt(document.getElementById('bk-start').value);
-  const dur = parseInt(document.getElementById('bk-length').value);
-  state.bloqueos.push({
-    id:'b'+Math.random().toString(36).slice(2,9),
-    tipo: cuando==='diario' ? 'diario' : 'fecha',
-    fecha: cuando==='diario' ? null : cuando,
-    nave: document.getElementById('bk-dock').value,
-    ini, dur, motivo: reasonSel,
-  });
-  save(); renderBlockList(); render();
-  toast(`${reasonSel} bloqueado de ${hhmm(ini)} a ${hhmm(Math.min(CLOSE_MIN,ini+dur))}.`);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   11 · TOAST MESSAGES
-   ══════════════════════════════════════════════════════════════════════════ */
-let toastTimer;
-function toast(txt, malo){
-  const t = document.getElementById('toast');
-  t.textContent = txt;
-  t.className = 'on' + (malo?' malo':'');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.className='', 4200);
-}
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   12 · EXCEL (.xlsx) — written by hand, no external libraries
-   ══════════════════════════════════════════════════════════════════════════ */
-const CRC_TABLE = (()=>{ const t=new Uint32Array(256);
-  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0 }
-  return t })();
-function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++) c = CRC_TABLE[(c^u8[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0 }
-function bytes(s){ return new TextEncoder().encode(s) }
-
-function zipStore(files){
-  const parts=[], central=[]; let offset=0;
-  files.forEach(f=>{
-    const name = bytes(f.name), dat = f.data, crc = crc32(dat);
-    const lh = new Uint8Array(30+name.length), v = new DataView(lh.buffer);
-    v.setUint32(0,0x04034b50,true); v.setUint16(4,20,true); v.setUint16(6,0x0800,true);
-    v.setUint16(8,0,true); v.setUint16(10,0,true); v.setUint16(12,0x21,true);
-    v.setUint32(14,crc,true); v.setUint32(18,dat.length,true); v.setUint32(22,dat.length,true);
-    v.setUint16(26,name.length,true); v.setUint16(28,0,true);
-    lh.set(name,30);
-    parts.push(lh, dat);
-
-    const ch = new Uint8Array(46+name.length), w = new DataView(ch.buffer);
-    w.setUint32(0,0x02014b50,true); w.setUint16(4,20,true); w.setUint16(6,20,true);
-    w.setUint16(8,0x0800,true); w.setUint16(10,0,true); w.setUint16(12,0,true); w.setUint16(14,0x21,true);
-    w.setUint32(16,crc,true); w.setUint32(20,dat.length,true); w.setUint32(24,dat.length,true);
-    w.setUint16(28,name.length,true); w.setUint16(30,0,true); w.setUint16(32,0,true);
-    w.setUint16(34,0,true); w.setUint16(36,0,true); w.setUint32(38,0,true); w.setUint32(42,offset,true);
-    ch.set(name,46);
-    central.push(ch);
-    offset += lh.length + dat.length;
-  });
-  const cdSize = central.reduce((s,c)=>s+c.length,0);
-  const eo = new Uint8Array(22), e = new DataView(eo.buffer);
-  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true);
-  e.setUint32(12,cdSize,true); e.setUint32(16,offset,true);
-  const all = [...parts, ...central, eo];
-  const total = all.reduce((s,p)=>s+p.length,0);
-  const out = new Uint8Array(total); let p=0;
-  all.forEach(x=>{ out.set(x,p); p+=x.length });
-  return out;
-}
-
-function colLetter(i){ let s=''; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=(i-m-1)/26 } return s }
-function xmlEsc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c])) }
-
-function sheetXML(rows, widths){
-  const cols = (widths||[]).map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
-  const xmlRows = rows.map((row,fi)=>{
-    const cells = row.map((v,ci)=>{
-      const ref = colLetter(ci)+(fi+1);
-      const st = fi===0 ? ' s="1"' : '';
-      if(typeof v === 'number' && isFinite(v)) return `<c r="${ref}"${st}><v>${v}</v></c>`;
-      if(v===''||v==null) return `<c r="${ref}"${st}/>`;
-      return `<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
-    }).join('');
-    return `<row r="${fi+1}">${cells}</row>`;
-  }).join('');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>${cols}</cols><sheetData>${xmlRows}</sheetData></worksheet>`;
-}
-
-/* Builds and downloads an .xlsx file with one or more sheets. */
-function downloadWorkbook(sheets, fileName){
-  const overrides = sheets.map((_,k)=>
-    `<Override PartName="/xl/worksheets/sheet${k+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet"/>`).join('');
-  const sheetsXml = sheets.map((h,k)=>
-    `<sheet name="${xmlEsc(h.name)}" sheetId="${k+1}" r:id="rId${k+1}"/>`).join('');
-  const relsSheets = sheets.map((_,k)=>
-    `<Relationship Id="rId${k+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${k+1}.xml"/>`).join('');
-  const styleId = sheets.length + 1;
-
-  const files = [
-    { name:'[Content_Types].xml', data: bytes(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${overrides}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`) },
-    { name:'_rels/.rels', data: bytes(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`) },
-    { name:'xl/workbook.xml', data: bytes(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheetsXml}</sheets></workbook>`) },
-    { name:'xl/_rels/workbook.xml.rels', data: bytes(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${relsSheets}<Relationship Id="rId${styleId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`) },
-    { name:'xl/styles.xml', data: bytes(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF031716"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFCCFF00"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`) },
-  ];
-  sheets.forEach((h,k)=>files.push(
-    { name:`xl/worksheets/sheet${k+1}.xml`, data: bytes(sheetXML(h.rows, h.widths)) }));
-
-  const blob = new Blob([zipStore(files)], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = fileName;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
-}
-
-/* Detail rows: one per waste type of each truck. */
-/* One row per waste type of each movement. `Fecha/Hora de agendamiento` sit
-   next to `Agendado por`: who asked for the slot, and when. */
-const COLS_DETALLE = ['N° movimiento','Movimiento','Fecha','Día','Punto de descarga',
-  'Hora inicio','Hora término','Duración (min)','Cliente / Empresa','Tipo de residuo','Formato',
-  'Cantidad de fardos','Toneladas del residuo','Total del movimiento (t)','Cantidad de camiones',
-  'Vehículo','Estado',
-  'Agendado por','Fecha de agendamiento','Hora de agendamiento',
-  'Llegada','Reprogramaciones','Cambios de cantidad','Problema','Notas'];
-
-function detailRows(list){
-  const rows = [COLS_DETALLE.slice()];
-  let n = 0;
-  list.slice()
-    .sort((a,b)=> a.fecha===b.fecha ? a.ini-b.ini : a.fecha.localeCompare(b.fecha))
-    .forEach(r=>{
-      n++;
-      const total = totalTons(r);
-      itemsOf(r).forEach(it=>rows.push([
-        n, isPickup(r) ? 'Retiro' : 'Ingreso',
-        fromISO(r.fecha).toLocaleDateString('es-CL'),
-        DAY_NAMES[(fromISO(r.fecha).getDay()+6)%7],
-        dock(r.nave).name, hhmm(r.ini), hhmm(r.ini+r.dur), r.dur,
-        r.cliente, it.r||'', it.fmt||'',
-        isBale(it.r) ? baleCount(it) : '',
-        parseFloat(it.t)||0, total, truckCount(r), r.veh||'',
-        r.estado==='tentativo'?'Por confirmar':'Confirmado',
-        r.quien||'', bookedDate(r), bookedClock(r),
-        arrivalOf(r)==='nollego' ? 'No llegó' : arrivalOf(r)==='llego' ? 'Llegó' : 'Sin registrar',
-        changeCount(r,'reprogramacion'), changeCount(r,'camiones'),
-        clashReason.get(r.id)
-          || (clashYields.has(r.id) ? `Cruce — debe moverse (${clashWinner.get(r.id).cliente} agendó primero)`
-          :  clashes.has(r.id)      ? 'Cruce — tiene prioridad, agendó primero' : ''),
-        r.notas||''
-      ]));
-    });
-  return rows;
-}
-
-/* Daily summary: planned, arrived, did not arrive, not recorded. */
-function summaryRows(list){
-  const rows = [['Fecha','Día','Movimientos','Ingresos','Retiros','Camiones planificados',
-                 'Llegaron','No llegaron','Sin registrar','Cumplimiento',
-                 'Toneladas planificadas','Reprogramaciones','Cambios de cantidad']];
-  const linea = (etiqueta, dia, l) => {
-    const si  = l.filter(r=>arrivalOf(r)==='llego').length;
-    const no  = l.filter(r=>arrivalOf(r)==='nollego').length;
-    return [
-      etiqueta, dia,
-      l.length,
-      l.filter(r=>!isPickup(r)).length,
-      l.filter(r=>isPickup(r)).length,
-      l.reduce((s,r)=>s+truckCount(r),0),
-      si, no, l.length-si-no,
-      (si+no) ? Math.round(si/(si+no)*100)/100 : '',
-      Math.round(l.reduce((s,r)=>s+totalTons(r),0)*10)/10,
-      l.reduce((s,r)=>s+changeCount(r,'reprogramacion'),0),
-      l.reduce((s,r)=>s+changeCount(r,'camiones'),0),
-    ];
-  };
-  const days = [...new Set(list.map(r=>r.fecha))].sort();
-  days.forEach(f=>rows.push(linea(
-    fromISO(f).toLocaleDateString('es-CL'),
-    DAY_NAMES[(fromISO(f).getDay()+6)%7],
-    list.filter(r=>r.fecha===f))));
-  if(days.length>1) rows.push(linea('TOTAL','', list));
-  return rows;
-}
-
-/* One row per change: what moved, from what to what, and when. */
-function downloadExcel(){
-  const ds = weekDays();
-  const list = state.reservas.filter(r=>ds.includes(r.fecha));
-  if(!list.length){ toast('No hay ingresos agendados en esta semana.', true); return }
-  /* Two sheets: the day-by-day count, and the detail behind it. */
-  const sheets = [
-    { name:'Resumen por día', rows:summaryRows(list),
-      widths:[13,13,13,11,10,22,11,13,14,14,22,18,20] },
-    { name:'Detalle', rows:detailRows(list),
-      widths:[14,12,12,11,26,11,13,13,26,30,16,16,20,22,20,13,14,16,20,20,14,16,18,34,30] },
-  ];
-  downloadWorkbook(sheets, `GIRI_planificacion_${ds[0]}_a_${ds[5]}.xlsx`);
-  toast('Excel descargado: resumen por día y detalle.');
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   12b · GOOGLE SHEETS
-   The spreadsheet is both the backup and the shared copy: every change is
-   pushed to it, and on load whatever someone else changed is pulled back.
-   ══════════════════════════════════════════════════════════════════════════ */
-let syncTimer = null, syncing = false, lastSync = null;
-
-/* The hard-coded address wins; if empty, the last one this device knew is
-   used. That way, if someone updates the file and forgets to paste the address
-   back, devices that were already connected keep working. */
-function sheetUrl(){ return (SHEET_URL || (state.config && state.config.sheetUrl) || '').trim() }
-function urlIsFixed(){ return !!SHEET_URL }
-
-/* The dark label in the header only says when everything was last brought up
-   to date. It never mentions spreadsheets or services: the person using it just
-   needs to know the information is saved, and since when. */
-function renderSyncState(txt, mal){
-  /* sheet-note only exists inside the connection window, which is optional. */
-  const p = document.getElementById('sheet-status');
-  const pill = document.getElementById('sync-label');
-  const punto = document.querySelector('#sync-state .dot') || document.querySelector('.pill .dot');
-  const hour = h => h.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false});
-
-  if(p){
-    p.textContent = sheetUrl()
-      ? (txt || 'Conectado. Los cambios se guardan y se comparten solos.')
-      : 'La planificación se guarda solo en este equipo.';
-  }
-  const btn = document.getElementById('btn-disconnect');
-  if(btn) btn.style.display = (sheetUrl() && !urlIsFixed()) ? 'inline-flex' : 'none';
-
-  const box = document.getElementById('sync-state');
-  if(mal){
-    pill.textContent = 'Sin conexión';
-    if(punto) punto.style.background = '#FF6B5A';
-    if(box) box.title = 'No se pudo llegar a la planilla del equipo';
-    return;
-  }
-  /* Lime dot = shared with the team · grey dot = this device only */
-  if(punto) punto.style.background = sheetUrl() ? 'var(--neon)' : '#71717A';
-  if(box) box.title = sheetUrl()
-    ? 'Conectado: todos ven la misma información'
-    : 'Se guarda solo en este equipo (sin planilla compartida)';
-  const ref = lastSync || lastSaved;
-  pill.textContent = ref ? `Actualizado a las ${hour(ref)}` : 'Actualizado';
-}
-
-function scheduleSync(){
-  if(!sheetUrl()) return;
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(pushToSheet, 1500);
-}
-
-/* The keys sent to Apps Script stay in Spanish on purpose: they are the
-   contract with the spreadsheet, and data already stored uses them. */
-function payload(){
-  return {
-    tipo:'giri-plan', version:3, actualizado: state.actualizado || Date.now(),
-    datos: { reservas:state.reservas, bloqueos:state.bloqueos, listas:state.listas },
-    resumen: summaryRows(state.reservas),
-    detalle: detailRows(state.reservas),
-  };
-}
-
-async function pushToSheet(manual){
-  const url = sheetUrl();
-  if(!url || syncing) return;
-  syncing = true;
-  renderSyncState('Enviando a la planilla…');
-  findClashes();
-  try{
-    const r = await fetch(url, {
-      method:'POST', redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(payload()),
-    });
-    const t = await r.text();
-    if(!t.includes('"ok":true')) throw new Error('respuesta inesperada');
-    lastSync = new Date();
-    renderSyncState();
-    if(manual) toast('Planilla actualizada.');
-  }catch(e){
-    /* Some browsers block reading the response: send it anyway, without
-       being able to confirm it. */
-    try{
-      await fetch(url, {method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload())});
-      lastSync = new Date();
-      renderSyncState('Conectada. El envío salió, pero el navegador no dejó confirmarlo.');
-      if(manual) toast('Datos enviados a la planilla.');
-    }catch(e2){
-      renderSyncState('No se pudo llegar a la planilla. Revisa la URL o tu conexión.', true);
-      if(manual) toast('No se pudo conectar con la planilla.', true);
-    }
-  }
-  syncing = false;
-}
-
-async function pullFromSheet(manual, inicial){
-  const url = sheetUrl();
-  if(!url) return;
-  try{
-    const r = await fetch(url + '?accion=leer', {redirect:'follow'});
-    const j = await r.json();
-    if(!j || !j.ok) throw new Error('sin datos');
-    if(!j.datos || !j.datos.reservas){
-      if(manual) toast('La planilla todavía no tiene datos.');
-      if(inicial && state.reservas.length) pushToSheet();   /* empty spreadsheet: upload what we have */
-      return;
-    }
-    const firstTime = !state.config || state.config.urlAdoptada !== sheetUrl();
-    if(firstTime){
-      state.reservas = j.datos.reservas;
-      state.bloqueos = j.datos.bloqueos || state.bloqueos;
-      state.listas   = j.datos.listas   || state.listas;
-      state.actualizado = j.actualizado;
-      state.config = state.config || {};
-      state.config.urlAdoptada = sheetUrl();
-      normalizeBaleTons();
-      save(true);
-      lastSync = new Date();
-      render(); renderSyncState();
-      toast('Este equipo quedó conectado con la planificación del equipo.');
-      return;
-    }
-    if((j.actualizado||0) <= (state.actualizado||0)){
-      if(manual) toast('Ya tienes la versión más reciente.');
-      lastSync = new Date(); renderSyncState();
-      return;
-    }
-    state.reservas = j.datos.reservas;
-    state.bloqueos = j.datos.bloqueos || state.bloqueos;
-    state.listas   = j.datos.listas   || state.listas;
-    state.actualizado = j.actualizado;
-    normalizeBaleTons();
-    save(true);
-    lastSync = new Date();
-    render(); renderSyncState();
-    toast('Planificación actualizada desde la planilla.');
-  }catch(e){
-    if(manual) toast('No se pudo leer la planilla.', true);
-  }
-}
-
-function openSheetModal(){
-  if(urlIsFixed()){
-    toast('Esta página ya viene conectada a la planilla del equipo.');
-    return;
-  }
-  document.getElementById('f-sheet-url').value = sheetUrl();
-  document.getElementById('sheet-status').textContent = sheetUrl()
-    ? 'Conectada. Cada cambio se envía automáticamente.' : '';
-  document.getElementById('btn-disconnect').style.display = sheetUrl() ? 'inline-flex' : 'none';
-  document.getElementById('ov-sheet').classList.add('is-open');
-}
-async function connectSheet(){
-  const url = document.getElementById('f-sheet-url').value.trim();
-  const est = document.getElementById('sheet-status');
-  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){
-    est.textContent = 'La URL debe empezar con https://script.google.com/ y terminar en /exec';
-    return;
-  }
-  state.config.sheetUrl = url;
-  est.textContent = 'Conectando…';
-  save(true);
-  await pushToSheet(true);
-  est.textContent = 'Listo. La planilla queda conectada en este navegador.';
-  renderSyncState();
-}
-function disconnectSheet(){
-  state.config.sheetUrl = '';
-  save(true);
-  lastSync = null;
-  renderSyncState();
-  document.getElementById('sheet-status').textContent = 'Desconectada. Los datos siguen en este equipo.';
-  document.getElementById('f-sheet-url').value = '';
-}
-document.getElementById('ov-sheet').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('is-open') });
-
-/* ══════════════════════════════════════════════════════════════════════════
-   12c · SELF-CHECK
-   Open the page with ?diagnostico at the end of the address to get a report of
-   which buttons work on THIS device. Useful when something fails on someone
-   else's computer or phone and there is no console to look at.
-   ══════════════════════════════════════════════════════════════════════════ */
-const bootErrors = [];
-window.addEventListener('error', e=>bootErrors.push(e.message));
-
-function runSelfCheck(){
-  const out = [];
-  const add = (ok, what, extra) => out.push({ok, what, extra:extra||''});
-
-  /* 1 · every onclick points to a function that exists */
-  const missing = new Set();
-  document.querySelectorAll('[onclick]').forEach(el=>{
-    (el.getAttribute('onclick').match(/([a-zA-Z_$][\w$]*)\s*\(/g)||[]).forEach(x=>{
-      const n = x.replace(/\s*\($/,'');
-      if(typeof window[n] !== 'function') missing.add(n + '  ←  ' + (el.textContent||'').trim().slice(0,24));
-    });
-  });
-  add(missing.size===0, 'Botones conectados a su función', [...missing].join(' · '));
-
-  /* 2 · every id the code looks for is in the page */
-  const ids = new Set([...document.querySelectorAll('[id]')].map(e=>e.id));
-  const wanted = [...document.documentElement.innerHTML.matchAll(/getElementById\('([^']+)'\)/g)].map(m=>m[1]);
-  const noIds = [...new Set(wanted)].filter(i=>!ids.has(i));
-  add(noIds.length===0, 'Elementos que el código necesita', noIds.join(' · '));
-
-  /* 3 · the page header: without the viewport tag a phone renders at 980px
-        wide and the mobile layout never kicks in */
-  const vp = document.querySelector('meta[name="viewport"]');
-  add(!!vp, 'Etiqueta de pantalla para celular', vp ? '' : 'falta <meta name="viewport">: el celular verá la grilla');
-  add(document.doctype !== null, 'Documento bien formado', document.doctype ? '' : 'falta <!DOCTYPE html>');
-  add(window.innerWidth < 900 || window.innerWidth > 600, 'Ancho detectado: ' + window.innerWidth + ' px');
-
-  /* 4 · the key pieces are on screen */
-  const chico = window.innerWidth <= 900;
-  add(!!document.querySelector(chico ? '#mobile-list' : '.grid-box'),
-      chico ? 'Lista de celular presente' : 'Grilla presente');
-  add(getComputedStyle(document.querySelector(chico ? '#mobile-list' : '.grid-box')).display !== 'none',
-      chico ? 'Lista de celular visible' : 'Grilla visible');
-  add(document.querySelectorAll('#view-switch button').length===2, 'Botones Día y Semana');
-  add(getComputedStyle(document.getElementById('view-switch')).display !== 'none', 'Botón Día/Semana visible');
-  add(document.querySelectorAll('#move-switch button').length===3, 'Botones Todo / Ingresos / Retiros');
-  const antesF = moveFilter;
-  try{
-    setMoveFilter('retiro');
-    const okR = visibleBookings().every(r=>isPickup(r));
-    setMoveFilter('ingreso');
-    const okI = visibleBookings().every(r=>!isPickup(r));
-    add(okR && okI, 'El filtro Ingresos/Retiros filtra bien');
-  } catch(e){ add(false, 'El filtro Ingresos/Retiros filtra bien', e.message) }
-  moveFilter = antesF;
-
-  /* 5 · the day view actually reacts */
-  const antes = view;
-  try{ setView('semana'); setView('day'); add(view==='day', 'Cambiar de vista funciona') }
-  catch(e){ add(false, 'Cambiar de vista funciona', e.message) }
-  view = antes; render();
-
-  /* 6 · state of the shared spreadsheet */
-  add(!!sheetUrl(), 'Conectado a la planilla', sheetUrl() ? '' : 'sin dirección: cada equipo guarda su copia');
-
-  /* 7 · errors caught since the page opened */
-  add(bootErrors.length===0, 'Sin errores al cargar', bootErrors.slice(0,3).join(' · '));
-
-  const html = `
-    <div style="position:fixed;inset:0;background:rgba(3,23,22,.55);z-index:999;overflow:auto;padding:1rem"
-         onclick="if(event.target===this)this.remove()">
-      <div style="max-width:620px;margin:2rem auto;background:#fff;border-top:3px solid var(--neon);padding:1.4rem;font-size:13px">
-        <h3 style="font-size:17px;font-weight:500;margin-bottom:.2rem">Diagnóstico</h3>
-        <p style="color:var(--z500);font-size:12px;margin-bottom:1rem">
-          ${VERSION} · pantalla ${window.innerWidth}×${window.innerHeight} · ${chico?'modo celular':'modo computador'}
-        </p>
-        ${out.map(o=>`<div style="display:flex;gap:.6rem;padding:.45rem 0;border-bottom:1px solid var(--z200)">
-            <b style="color:${o.ok?'#1E8E4E':'var(--rojo)'};width:14px">${o.ok?'✓':'✕'}</b>
-            <span style="flex:1">${o.what}${o.extra?`<br><span style="color:var(--z500);font-size:11.5px">${esc(o.extra)}</span>`:''}</span>
-          </div>`).join('')}
-        <p style="margin-top:1rem;color:var(--z500);font-size:12px">
-          Si algo sale con ✕, manda una foto de esta pantalla.
-        </p>
-        <button class="btn" style="margin-top:1rem" onclick="this.closest('div').parentNode.remove()">Cerrar</button>
-      </div>
-    </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   13 · STARTUP
-   ══════════════════════════════════════════════════════════════════════════ */
-if(!load()){
-  state.bloqueos = [defaultLunchBreak()];
-  save(true);
-}
-/* Old records may carry a tonnage from a different bale weight. */
-if(normalizeBaleTons()) save(true);
-if(new Date().getDay()===0) day = addDays(todayISO(),1);
-render();
-renderSyncState();
-/* The version is no longer printed in the footer. It is still recoverable for
-   support: hover the footer text, or open the page with ?diagnostico. */
-const vEl = document.getElementById('version');
-if(vEl) vEl.title = VERSION;
-if(location.search.includes('diagnostico')) setTimeout(runSelfCheck, 600);
-/* Keep the hard-coded address as this device's fallback. */
-if(SHEET_URL){
-  state.config = state.config || {};
-  if(state.config.sheetUrl !== SHEET_URL){ state.config.sheetUrl = SHEET_URL; save(true) }
-}
-
-if(sheetUrl()){
-  pullFromSheet(false, true);
-  setInterval(()=>{ if(!document.querySelector('.overlay.is-open') && !drag) pullFromSheet() }, 60*1000);
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) pullFromSheet() });
-}
-setInterval(()=>{ if(view) render() }, 5*60*1000);   // refreshes the "now" line
+  (function () {
+    var s = document.createElement("script");
+    s.src = "app.js?v=" + Date.now();
+    document.body.appendChild(s);
+  })();
 </script>
 </body>
 </html>
