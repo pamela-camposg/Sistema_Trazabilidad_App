@@ -13,7 +13,7 @@
    scripts de python/rm/.
    ========================================================================= */
 
-let zonaElegida = null;      // "RM" | "SUR" | "NORTE"
+let zonaElegida = null;      // "RM" | "SUR" | "NORTE" | "UNIR" | "SIMPLE_ROUTE"
 let archivos = [];           // movimientos del mes que subió la operadora
 let baseGuardada = [];       // archivos base que ya están en el navegador
 let hayPrepararBase = false; // ¿el procesar.py del repo sabe recibir archivos base?
@@ -28,10 +28,6 @@ let esperadosBase = [
 ];
 
 const $ = (id) => document.getElementById(id);
-
-/* Se sube al cambiar los archivos de python/, para que el navegador
-   no siga usando una copia vieja guardada en caché. */
-const VERSION = "3";
 
 /* =========================================================================
    CABLEADO DEFENSIVO
@@ -78,12 +74,6 @@ function avisarDesajuste() {
     ". Sube el index.html nuevo y recarga con Ctrl+Shift+R."
   );
 }
-
-/* Scripts refactorizados de cada zona que hay que dejar dentro del motor.
-   Cuando se conecten SUR y NORTE, se agregan acá igual que RM. */
-const MODULOS_PY = {
-  rm: ["consolidar.py", "control_calidad.py", "revisar_consolidado.py"],
-};
 
 const ACEPTADOS = [".xlsx", ".zip"];
 const esValido = (nombre) =>
@@ -236,6 +226,23 @@ function iniciarMotor() {
   worker.postMessage({ tipo: "iniciar", base: document.baseURI });
 }
 
+/* -------------------------------------------------------------------------
+   Período por defecto: el mes anterior.
+   La consolidación se hace a mes cerrado, así que lo normal el 3 de
+   septiembre es querer agosto. Igual se puede cambiar a mano.
+   ------------------------------------------------------------------------- */
+(function periodoPorDefecto() {
+  const campo = $("periodo");
+  if (!campo || campo.value) return;
+  const hoy = new Date();
+  const anterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  const mes = String(anterior.getMonth() + 1).padStart(2, "0");
+  campo.value = `${anterior.getFullYear()}-${mes}`;
+  // No se puede pedir un mes que todavía no termina
+  const maxMes = String(hoy.getMonth() + 1).padStart(2, "0");
+  campo.max = `${hoy.getFullYear()}-${maxMes}`;
+})();
+
 /* =========================================================================
    2. ELEGIR ZONA
    ========================================================================= */
@@ -246,8 +253,93 @@ alEvento("zonas", "click", (ev) => {
   document.querySelectorAll(".zona-btn").forEach((b) =>
     b.setAttribute("aria-pressed", b === btn ? "true" : "false")
   );
+  ajustarPantallaSegunZona();
   revisarSiPuedeProcesar();
 });
+
+/* -------------------------------------------------------------------------
+   "Unir zonas" no es una zona más: no consolida, solo apila archivos que la
+   app ya generó. Por eso no necesita los archivos base ni el mes, y esos dos
+   pasos se esconden para no confundir a quien lo use.
+   ------------------------------------------------------------------------- */
+function ajustarPantallaSegunZona() {
+  const sr = zonaElegida === "SIMPLE_ROUTE";
+  // Unir y Simple Route comparten la misma forma: ninguna consolida, ninguna
+  // necesita los archivos base ni el mes. Cambia el texto, no la mecánica.
+  const unir = zonaElegida === "UNIR" || sr;
+
+  const aviso = $("aviso-unir");
+  if (aviso) aviso.classList.toggle("hidden", zonaElegida !== "UNIR");
+  const avisoSr = $("aviso-sr");
+  if (avisoSr) avisoSr.classList.toggle("hidden", !sr);
+
+  // paso 02 (archivos base) — la sección que contiene la lista de base
+  const pasoBase = $("lista-base") && $("lista-base").closest("section");
+  if (pasoBase) pasoBase.classList.toggle("hidden", unir);
+
+  // el selector de mes tampoco aplica: el período lo dice el nombre del archivo
+  const periodo = $("periodo");
+  if (periodo && periodo.parentElement) {
+    periodo.parentElement.classList.toggle("hidden", unir);
+  }
+
+  const zonaDrop = $("dropzone");
+  if (zonaDrop) {
+    zonaDrop.querySelector("span").textContent = sr
+      ? "Arrastra aquí Simple Route y la BO"
+      : unir
+        ? "Arrastra aquí los archivos ya generados"
+        : "Arrastra los archivos aquí";
+
+    // El paso 03 habla de "movimientos del mes" y de bajar la carpeta de
+    // OneDrive. En modo unir eso no aplica: lo que se suelta son archivos que
+    // la propia app generó. Se guardan los textos originales la primera vez
+    // para poder devolverlos al cambiar de zona.
+    const sec = zonaDrop.closest("section");
+    if (sec) {
+      const num = sec.querySelector("span:not(.dropzone span)");
+      const h2 = sec.querySelector("h2");
+      const desc = sec.querySelector("p");
+      if (h2 && !h2.dataset.original) h2.dataset.original = h2.textContent.trim();
+      if (desc && !desc.dataset.original) desc.dataset.original = desc.textContent.trim();
+      if (num && !num.dataset.original) num.dataset.original = num.textContent.trim();
+
+      if (h2) {
+        h2.textContent = sr
+          ? "Archivos a comparar"
+          : unir
+            ? "Archivos a unir"
+            : h2.dataset.original;
+      }
+      if (desc) {
+        desc.textContent = sr
+          ? "La exportación de Simple Route y BBDD BO SAN BERNARDO.xlsx."
+          : unir
+            ? "Los archivos que ya bajaste de cada zona. Dos o tres, uno por zona."
+            : desc.dataset.original;
+      }
+      if (num) num.textContent = unir ? "02" : num.dataset.original;
+    }
+  }
+
+  // Si se esconde el paso 02, el 04 pasa a ser el 03
+  const secProc = $("btn-procesar") && $("btn-procesar").closest("section");
+  if (secProc) {
+    const num = secProc.querySelector("span");
+    if (num && !num.dataset.original) num.dataset.original = num.textContent.trim();
+    if (num) num.textContent = unir ? "03" : num.dataset.original;
+    const desc = secProc.querySelector("p");
+    if (desc && !desc.dataset.original) desc.dataset.original = desc.textContent.trim();
+    if (desc) {
+      desc.textContent = sr
+      ? "Se compara servicio por servicio y se entrega el informe con las diferencias."
+      : unir
+        ? "Los archivos se apilan en uno solo, con una columna ZONA al final."
+        : desc.dataset.original;
+    }
+  }
+
+}
 
 /* =========================================================================
    3. ARCHIVOS BASE — se suben una vez y quedan guardados
@@ -468,8 +560,22 @@ function pintarLista() {
 
 conectarZonaDeCarga("dropzone", "input-archivos", agregarArchivos);
 
+/* El texto del botón depende de la zona, no de si está habilitado. Antes se
+   escribía solo cuando el botón estaba activo, así que al elegir Unir o Simple
+   Route sin archivos cargados seguía diciendo "Procesar consolidado". */
+let procesando = false;
+
+function etiquetaBoton() {
+  if (zonaElegida === "SIMPLE_ROUTE") return "Comparar";
+  if (zonaElegida === "UNIR") return "Unir archivos";
+  return "Procesar consolidado";
+}
+
 function revisarSiPuedeProcesar() {
-  $("btn-procesar").disabled = !(motorListo && zonaElegida && archivos.length > 0);
+  const btn = $("btn-procesar");
+  if (!btn) return;
+  btn.disabled = !(motorListo && zonaElegida && archivos.length > 0);
+  if (!procesando) btn.textContent = etiquetaBoton();
 }
 
 /* =========================================================================
@@ -477,6 +583,7 @@ function revisarSiPuedeProcesar() {
    ========================================================================= */
 alEvento("btn-procesar", "click", async () => {
   const btn = $("btn-procesar");
+  procesando = true;
   btn.disabled = true;
   btn.innerHTML = '<span class="spin" style="display:inline-block;vertical-align:middle"></span> Procesando…';
 
@@ -499,7 +606,12 @@ alEvento("btn-procesar", "click", async () => {
     const m = await enviarAlMotor({
       tipo: "procesar",
       zona: zonaElegida,
-      base: baseGuardada.map((i) => ({ nombre: i.nombre, bytes: i.bytes })),
+      periodo: ($("periodo") && $("periodo").value) || null,
+      // Unir no usa los archivos base: si se mandaran, entrarían a la carpeta
+      // de trabajo y la herramienta trataría de apilarlos.
+      base: (zonaElegida === "UNIR" || zonaElegida === "SIMPLE_ROUTE")
+        ? []
+        : baseGuardada.map((i) => ({ nombre: i.nombre, bytes: i.bytes })),
       movimientos,
     });
 
@@ -510,8 +622,9 @@ alEvento("btn-procesar", "click", async () => {
     mostrarProgreso("ERROR: " + ((e && e.message) || e));
     console.error(e);
   } finally {
+    procesando = false;
     btn.disabled = false;
-    btn.textContent = "Procesar consolidado";
+    btn.textContent = etiquetaBoton();
     $("txt-motor").textContent = "Motor listo";
     revisarSiPuedeProcesar();
   }
