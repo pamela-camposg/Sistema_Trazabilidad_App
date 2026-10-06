@@ -857,6 +857,8 @@ def _procesar_ecofibras(
     out["Región"]            = region
     out["Destino inferido"]  = "No"
 
+    out = excluir_traslados_a_planta_propia(out, nombre_log, p)
+
     out = aplicar_homologacion_cliente(out, "Cliente", "RUT", homolog_c)
     out = aplicar_homologacion_generador(out, "Generador", homolog_g)
 
