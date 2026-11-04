@@ -315,7 +315,7 @@ function ajustarPantallaSegunZona() {
         desc.textContent = sr
           ? "La exportación de Simple Route y BBDD BO SAN BERNARDO.xlsx."
           : unir
-            ? "Los archivos que ya bajaste de cada zona. Dos o tres, uno por zona."
+            ? "Los archivos que ya bajaste de cada zona: uno por zona y mes. Para un reproceso puedes soltar varios meses juntos."
             : desc.dataset.original;
       }
       if (num) num.textContent = unir ? "02" : num.dataset.original;
@@ -334,7 +334,7 @@ function ajustarPantallaSegunZona() {
       desc.textContent = sr
       ? "Se compara servicio por servicio y se entrega el informe con las diferencias."
       : unir
-        ? "Los archivos se apilan en uno solo, con una columna ZONA al final."
+        ? "Los archivos se apilan en uno solo, con una columna ZONA al final (y PERIODO si son varios meses)."
         : desc.dataset.original;
     }
   }
