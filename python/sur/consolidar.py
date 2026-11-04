@@ -58,6 +58,10 @@ REGION_SAN_JOAQUIN   = "Región de Los Lagos"
 REGION_IRAR          = "Región del Biobío"
 REGION_TEMUCO        = "Región de la Araucanía"
 REGION_BO_CHILLAN    = "Región de Ñuble"
+REGION_BO_CONCEPCION = "Región del Biobío"
+REGION_BO_TALCA      = "Región del Maule"
+REGION_BO_CURICO     = "Región del Maule"
+REGION_BO_RANCAGUA   = "Región del Libertador General Bernardo O'Higgins"
 REGION_BO_CHILOE     = "Región de Los Lagos"
 REGION_PROVEEDORES   = "Región de Los Lagos"
 
@@ -67,13 +71,26 @@ RUT_AMBIPAR    = "96824110-9"
 HOJA_DESTINATARIOS = "NACIONAL"
 
 # Plantas propias que ya están en el pipeline. Ver docstring del script
-# original para la explicación completa de por qué IRAR queda fuera.
+# original para la explicación completa.
+#
+# Es a nivel GRUPO, no solo Sur: una BO de Sur puede despachar hacia una planta
+# de otra zona, y esa planta registra el Ingreso igual. Da lo mismo la zona.
+#
+# IRAR LOS ÁNGELES queda FUERA: es planta propia pero todavía no está activa
+# (no registra su Ingreso con ticket). Si se excluyera, esos kilos se perderían.
 PLANTAS_PROPIAS_ACTIVAS = {
+    # Sur
     "ECOFIBRAS CORONEL",
     "ECOFIBRAS PLANTA TRAPÉN",
     "ECOFIBRAS SAN JOAQUÍN",
     "ECOFIBRAS PUERTO MONTT",
     "ECOFIBRAS TRAPÉN",
+    # RM
+    "ECOFIBRAS SAN BERNARDO",
+    "GIRI",
+    # Norte
+    "RECYNOR",
+    "RECYNOR ARICA",   # = IRAR Arica (nombre de Ventanilla Única)
 }
 
 COLUMNAS_FINALES = [
@@ -179,7 +196,8 @@ def verificar_rutas(rutas):
     si no existen, en vez de fallar (ver procesar_proveedores/procesar_bo_chiloe)."""
     obligatorias = [
         "coronel", "bo_trapen", "planta_trapen", "san_joaquin", "irar",
-        "bo_chillan", "temuco", "homologacion", "destinatarios",
+        "bo_chillan", "bo_concepcion", "bo_talca_curico_rancagua",
+        "temuco", "homologacion", "destinatarios",
         "sinader", "transportistas",
     ]
     faltan = [f"{k}: {rutas[k]}" for k in obligatorias if k not in rutas or not Path(rutas[k]).exists()]
@@ -1047,6 +1065,81 @@ def procesar_bo_chillan(rutas, transportistas, homolog_c, homolog_g, p):
     return out
 
 
+def _procesar_bo_simple(rutas, ruta_clave, hoja, nombre_log, region, homolog_c, homolog_g, p):
+    """Procesador genérico para una BO 'siempre Traslado' con Contrato propio
+    (mismo patrón que BO Chillán): Concepción, Talca, Rancagua, Curicó.
+
+    Talca, Rancagua y Curicó vienen en el MISMO archivo, cada una en su hoja.
+    """
+    p(f"\n── {nombre_log} — SIEMPRE Traslado (hoja {hoja!r}) ──")
+
+    df = leer_fuente(rutas[ruta_clave], hoja, p, headers_fallback=(7, 8, 0, 1))
+    p(f"  • Filas leídas: {len(df)}")
+
+    fecha_col = tomar_columna(df, ["Fecha", "FECHA"])
+    df["_Fecha"] = pd.to_datetime(fecha_col, errors="coerce")
+
+    n_antes = len(df)
+    df = df[df["_Fecha"] >= pd.Timestamp(FECHA_DESDE_SUR)].copy()
+    p(f"  • Filtro Sur (>= {FECHA_DESDE_SUR}): {len(df)} filas (excluidas: {n_antes - len(df)})")
+
+    out = base_final(len(df))
+
+    out["Fecha"]             = df["_Fecha"].values
+    out["Mes"]               = out["Fecha"].apply(nombre_mes)
+    out["Cliente"]           = tomar_columna(df, ["Cliente", "CLIENTE"]).apply(limpiar_texto).values
+    out["RUT"]               = tomar_columna(df, ["RUT", "RUT CLIENTE"]).apply(limpiar_texto).values
+    out["Gestor"]            = "AMBIPAR ENVIRONMENT CHILE"
+    out["Contrato"]          = tomar_columna(df, ["Contrato", "N° CONTRATO"]).apply(limpiar_texto).values
+    out["Generador"]         = tomar_columna(df, ["Generador", "GENERADOR"]).apply(limpiar_texto).values
+    out["Transportista"]     = "AMBIPAR ENVIRONMENT CHILE"
+    out["Rut transportista"] = "96824110-9"
+    out["Patente de Camión"] = tomar_columna(df, ["Patente de Camión", "PATENTE DE CAMIÓN", "Patente"]).apply(limpiar_texto).values
+    out["Ticket de pesaje"]  = tomar_columna(df, ["Ticket de pesaje", "TICKET DE PESAJE"]).apply(limpiar_texto).values
+
+    # Estas BO traen guía propia del cliente, no guía Ecofibras.
+    out["_guia_cliente"]   = tomar_columna(df, ["N° guía cliente", "N° GUÍA CLIENTE", "N° GUIA CLIENTE"]).apply(limpiar_texto).values
+    out["_guia_ecofibras"] = None
+    out["Peso neto"]         = tomar_columna(df, ["Peso neto", "PESO NETO KG", "Peso neto (kg)"]).apply(limpiar_numero).values
+    out["Unidad"]            = tomar_columna(df, ["Unidad", "UNIDAD"], default="kg").apply(limpiar_texto).fillna("kg").values
+    out["Movimiento"]        = "Traslado"
+    out["Destino"]           = tomar_columna(df, ["Destino", "DESTINO"]).apply(lambda x: normalizar_destino(x)).values
+    out["Comuna Destino"]    = tomar_columna(df, ["Comuna destino", "Comuna Destino", "COMUNA DESTINO"], default=None).apply(limpiar_texto).values
+    out["Comuna Destino"]    = out["Comuna Destino"].fillna(out["Destino"].apply(comuna_por_destino))
+    out["TIPO"]              = tomar_columna(df, ["TIPO", "TIPO RESIDUO"]).apply(limpiar_texto).values
+    out["Movimiento interempresa"] = "No"
+    out["Región"]            = region
+    out["Destino inferido"]  = "No"
+
+    out = excluir_traslados_a_planta_propia(out, nombre_log, p)
+
+    out = aplicar_homologacion_cliente(out, "Cliente", "RUT", homolog_c)
+    out = aplicar_homologacion_generador(out, "Generador", homolog_g)
+
+    p(f"  ✓ {nombre_log} final: {len(out)} filas")
+    return out
+
+
+def procesar_bo_concepcion(rutas, homolog_c, homolog_g, p):
+    return _procesar_bo_simple(rutas, "bo_concepcion", "TRASLADOS BO", "BO Concepción",
+                               REGION_BO_CONCEPCION, homolog_c, homolog_g, p)
+
+
+def procesar_bo_talca(rutas, homolog_c, homolog_g, p):
+    return _procesar_bo_simple(rutas, "bo_talca_curico_rancagua", "TRASLADOS BO TALCA", "BO Talca",
+                               REGION_BO_TALCA, homolog_c, homolog_g, p)
+
+
+def procesar_bo_rancagua(rutas, homolog_c, homolog_g, p):
+    return _procesar_bo_simple(rutas, "bo_talca_curico_rancagua", "TRASLADOS BO RANCAGUA", "BO Rancagua",
+                               REGION_BO_RANCAGUA, homolog_c, homolog_g, p)
+
+
+def procesar_bo_curico(rutas, homolog_c, homolog_g, p):
+    return _procesar_bo_simple(rutas, "bo_talca_curico_rancagua", "TRASLADOS BO CURICO", "BO Curicó",
+                               REGION_BO_CURICO, homolog_c, homolog_g, p)
+
+
 def procesar_temuco(rutas, homolog_c, homolog_g, p):
     p("\n── BO Temuco ──")
 
@@ -1517,7 +1610,11 @@ def consolidar(rutas, ruta_prueba=None, ruta_log=None, modo_reset=False,
     df_san_joaquin   = procesar_ecofibras_san_joaquin(rutas, transportistas, homolog_c, homolog_g, p)
     df_irar          = procesar_irar_los_angeles(rutas, transportistas, homolog_c, homolog_g, p)
     df_bo_chillan    = procesar_bo_chillan(rutas, transportistas, homolog_c, homolog_g, p)
-    df_temuco        = procesar_temuco(rutas, homolog_c, homolog_g, p)
+    df_bo_concepcion = procesar_bo_concepcion(rutas, homolog_c, homolog_g, p)
+    df_bo_talca      = procesar_bo_talca(rutas, homolog_c, homolog_g, p)
+    df_bo_rancagua   = procesar_bo_rancagua(rutas, homolog_c, homolog_g, p)
+    df_bo_curico     = procesar_bo_curico(rutas, homolog_c, homolog_g, p)
+    df_temuco       = procesar_temuco(rutas, homolog_c, homolog_g, p)
     df_bo_chiloe     = procesar_bo_chiloe(rutas, homolog_c, homolog_g, p)
     df_proveedores   = procesar_proveedores(rutas, transportistas, homolog_c, homolog_g, p)
 
@@ -1528,6 +1625,10 @@ def consolidar(rutas, ruta_prueba=None, ruta_log=None, modo_reset=False,
         "SAN_JOAQUIN":      df_san_joaquin,
         "IRAR_LOS_ANGELES": df_irar,
         "BO_CHILLAN":       df_bo_chillan,
+        "BO_CONCEPCION":    df_bo_concepcion,
+        "BO_TALCA":         df_bo_talca,
+        "BO_RANCAGUA":      df_bo_rancagua,
+        "BO_CURICO":        df_bo_curico,
         "TEMUCO":           df_temuco,
         "BO_CHILOE":        df_bo_chiloe,
         "PROVEEDORES":      df_proveedores,
