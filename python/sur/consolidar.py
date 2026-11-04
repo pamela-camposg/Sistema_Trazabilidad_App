@@ -1423,9 +1423,22 @@ def unir_destinatarios(df, df_dest, p):
     dj["_k_comuna"] = dj["COMUNA DE ESTABLECIMIENTO"].apply(normalizar_texto)
     dj["_k_region"] = dj["REGIÓN DE ESTABLECIMIENTO NORMALIZADA_ORIGINAL"].apply(normalizar_region_para_cruce)
 
-    dj["_ler_lista"] = dj["CÓDIGOS LER"].astype(str).apply(
-        lambda s: [t for t in re.split(r"[;,\n\r/|]+", s) if t.strip()] or [s]
-    )
+    # Celda vacía: con pandas 3 astype(str) deja el vacío como NaN (antes lo
+    # convertía en el texto "nan") y re.split fallaba con "expected string,
+    # got float". Un destinatario sin LER se marca con una clave que no calza
+    # con ningún código real, igual que pasaba antes con "nan".
+    def _separar_ler(s):
+        if pd.isna(s) or not str(s).strip():
+            return ["SIN LER"]
+        s = str(s)
+        return [t for t in re.split(r"[;,\n\r/|]+", s) if t.strip()] or [s]
+
+    sin_ler = dj.loc[dj["CÓDIGOS LER"].isna() | dj["CÓDIGOS LER"].astype(str).str.strip().isin(["", "nan"]),
+                     "NOMBRE DE FANTASÍA"].unique().tolist()
+    if sin_ler:
+        p(f"  ⚠ Destinatarios sin CÓDIGOS LER en el maestro (no se pueden cruzar por LER): {sin_ler}")
+
+    dj["_ler_lista"] = dj["CÓDIGOS LER"].apply(_separar_ler)
     n_dj_antes = len(dj)
     dj = dj.explode("_ler_lista")
     dj["_k_ler"] = dj["_ler_lista"].apply(normalizar_ler)
