@@ -636,11 +636,23 @@ def _recortar_revision(ruta, anio, mes, etiqueta, log, formatear=None):
 #   · los del año    (TRAZABILIDAD_RM_2026-07.xlsx) → el año de todo Chile
 #
 # No se pueden mezclar: apilar el mes de una zona con el año de otra daría un
-# archivo sin sentido, así que eso se avisa y no se hace.
+# archivo sin sentido, así que eso se avisa.
 #
-# Se agrega una columna ZONA al final, para que después de apilar se sepa de
-# dónde vino cada fila. Va al final y no al principio para que las 24 columnas
-# de siempre queden en la misma posición de siempre.
+# REPROCESO (varios meses a la vez)
+#   Con los archivos del mes se pueden soltar VARIOS meses juntos, por ejemplo
+#   MES_2026-09 y MES_2026-10 de RM, Sur y Norte (seis archivos). Sale un solo
+#   archivo CHILE_MES_2026-09_a_2026-10.xlsx con todo apilado, ordenado por mes
+#   y zona, y con una columna PERIODO además de ZONA. Lo que se controla:
+#     · que la misma zona y el mismo mes no vengan dos veces (se repetirían
+#       las filas);
+#     · que a ninguna zona le falte un mes que las otras sí trajeron.
+#   Con un solo mes el archivo sale exactamente igual que siempre (sin PERIODO).
+#
+#   Los archivos del AÑO no se pueden juntar de distintos cortes: cada uno ya
+#   trae el año completo, así que se repetirían los meses en común.
+#
+# Las columnas ZONA y PERIODO van al final y no al principio para que las 24
+# columnas de siempre queden en la misma posición de siempre.
 # =============================================================================
 _ZONAS_VALIDAS = ("NORTE", "SUR", "RM")
 _RE_ZONA = re.compile(r"(?<![A-Z])(NORTE|SUR|RM)(?![A-Z])")
@@ -667,14 +679,34 @@ def _tipo_de_archivo(nombre, hojas):
     return "mes"
 
 
+def _periodo_de_archivo(nombre, df):
+    """'AAAA-MM' del archivo. Primero el nombre (MES_2026-09_RM.xlsx); si el
+    nombre no lo trae, la columna Fecha, pero solo si todas sus filas son del
+    mismo mes. None si no se puede saber."""
+    m = _RE_PERIODO.search(os.path.basename(str(nombre)))
+    if m and 1 <= int(m.group(2)) <= 12:
+        return m.group(0)
+    if "Fecha" in df.columns:
+        fechas = pd.to_datetime(df["Fecha"], errors="coerce").dropna()
+        if len(fechas):
+            meses = fechas.dt.to_period("M").astype(str).unique()
+            if len(meses) == 1:
+                return meses[0]
+    return None
+
+
 def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
-    """Apila los archivos ya generados por las zonas en uno solo."""
+    """Apila los archivos ya generados por las zonas en uno solo.
+
+    Acepta varios meses a la vez (reproceso): ver el bloque de arriba.
+    """
     from rm import consolidar as mod_consolidar   # solo para los colores
 
     salida = Path(carpeta_salida)
     rutas = _listar_archivos(carpeta_entrada)
     fuentes, alertas, partes = [], [], []
-    tipos, periodos, zonas_vistas = set(), set(), {}
+    tipos, periodos_nombre = set(), set()
+    vistos = {}              # (zona, periodo) o zona → nombre del archivo
     columnas_ref = None
 
     log.append("── Revisando lo que se soltó ──")
@@ -714,7 +746,8 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
         tipo = _tipo_de_archivo(nombre, hojas)
         m = _RE_PERIODO.search(nombre)
         if m:
-            periodos.add(m.group(0))
+            periodos_nombre.add(m.group(0))
+        per = _periodo_de_archivo(nombre, df) if tipo == "mes" else None
 
         # Las columnas del primer archivo mandan. Si otro no las tiene todas,
         # apilar produciría filas corridas: mejor dejarlo fuera y avisar.
@@ -733,21 +766,35 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
             log.append(f"  ✗ {nombre}: columnas distintas")
             continue
 
-        if zona in zonas_vistas:
+        if tipo == "mes" and per is None:
             alertas.append({
-                "titulo": f"La zona {zona} viene dos veces",
-                "detalle": f"Ya se había leído {zonas_vistas[zona]} y ahora "
-                           f"{nombre}. Las filas se van a repetir. Deja solo "
-                           f"un archivo por zona.",
+                "titulo": f"No se pudo saber de qué mes es {nombre}",
+                "detalle": "El nombre no trae el mes (AAAA-MM) y sus fechas no "
+                           "son todas del mismo mes. Se unió igual, pero con "
+                           "PERIODO vacío. Revisa que sea el archivo correcto.",
             })
-        zonas_vistas[zona] = nombre
+
+        # Un archivo del mes se identifica por zona + mes; uno del año, solo
+        # por la zona (ya trae todo el año).
+        clave = (zona, per) if tipo == "mes" else zona
+        if clave in vistos:
+            cual = f"La zona {zona}" + (f" de {per}" if tipo == "mes" and per else "")
+            alertas.append({
+                "titulo": f"{cual} viene dos veces",
+                "detalle": f"Ya se había leído {vistos[clave]} y ahora "
+                           f"{nombre}. Las filas se van a repetir. Deja solo "
+                           f"un archivo por zona" +
+                           (" y mes." if tipo == "mes" else "."),
+            })
+        vistos[clave] = nombre
 
         tipos.add(tipo)
         df = df.reindex(columns=columnas_ref)
         df["ZONA"] = zona
-        partes.append(df)
+        partes.append((per or "", _ZONAS_VALIDAS.index(zona) if zona in _ZONAS_VALIDAS else 9, per, df))
         fuentes.append({"archivo": nombre, "hojas": ", ".join(hojas), "filas": len(df)})
-        log.append(f"  ✓ {nombre}: zona {zona}, tipo {tipo}, {len(df)} filas")
+        log.append(f"  ✓ {nombre}: zona {zona}, tipo {tipo}"
+                   + (f", mes {per}" if per else "") + f", {len(df)} filas")
 
     if not partes:
         return {
@@ -762,6 +809,12 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
             "salida": None, "descargas": [], "log": "\n".join(log),
         }
 
+    tipo = "MES" if tipos == {"mes"} else ("ANUAL" if tipos == {"anual"} else "MIXTO")
+
+    # Meses presentes (solo tiene sentido con archivos del mes)
+    meses = sorted({per for _, _, per, _ in partes if per})
+    reproceso = tipo == "MES" and len(meses) > 1
+
     if len(tipos) > 1:
         alertas.insert(0, {
             "titulo": "Se mezclaron archivos del mes con archivos del año",
@@ -769,17 +822,49 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
                        "un archivo que no significa nada. Vuelve a soltar solo "
                        "archivos del mismo tipo.",
         })
-    if len(periodos) > 1:
+    elif tipo == "ANUAL" and len(periodos_nombre) > 1:
         alertas.insert(0, {
-            "titulo": "Los archivos son de meses distintos",
-            "detalle": "Períodos encontrados: " + ", ".join(sorted(periodos)) +
-                       ". Revisa que sean todos del mismo cierre.",
+            "titulo": "Los archivos del año son de cortes distintos",
+            "detalle": "Períodos encontrados: " + ", ".join(sorted(periodos_nombre)) +
+                       ". Cada archivo del año ya trae todo el año, así que no "
+                       "se juntan cortes distintos. Usa el mismo corte para "
+                       "todas las zonas, o usa los archivos del mes.",
         })
 
-    unido = pd.concat(partes, ignore_index=True)
+    # Reproceso: ¿a alguna zona le falta un mes que otras sí trajeron?
+    if reproceso:
+        zonas_por_mes = {}
+        for _, _, per, df in partes:
+            if per:
+                zonas_por_mes.setdefault(per, set()).add(df["ZONA"].iloc[0] if len(df) else None)
+        todas = set().union(*zonas_por_mes.values()) - {None}
+        for per in meses:
+            faltan = sorted(todas - zonas_por_mes.get(per, set()))
+            if faltan:
+                alertas.insert(0, {
+                    "titulo": f"En {per} falta {', '.join(faltan)}",
+                    "detalle": f"Se soltaron archivos de {', '.join(sorted(todas))} "
+                               f"para otros meses, pero no de {', '.join(faltan)} "
+                               f"para {per}. Si es a propósito, ignora este aviso; "
+                               f"si no, agrega ese archivo y vuelve a unir.",
+                })
 
-    tipo = "MES" if tipos == {"mes"} else ("ANUAL" if tipos == {"anual"} else "MIXTO")
-    sufijo = sorted(periodos)[0] if len(periodos) == 1 else ""
+    # Orden: por mes y, dentro del mes, Norte → Sur → RM (orden de _ZONAS_VALIDAS)
+    partes.sort(key=lambda t: (t[0], t[1]))
+    dfs = []
+    for _, _, per, df in partes:
+        if reproceso:
+            df = df.copy()
+            df["PERIODO"] = per or ""
+        dfs.append(df)
+    unido = pd.concat(dfs, ignore_index=True)
+
+    if reproceso:
+        sufijo = f"{meses[0]}_a_{meses[-1]}"
+    elif tipo == "MES" and len(meses) == 1:
+        sufijo = meses[0]
+    else:
+        sufijo = sorted(periodos_nombre)[0] if len(periodos_nombre) == 1 else ""
     # RM, Sur y Norte son las tres zonas de Chile: el archivo unido es
     # el país completo, no la región.
     nombre_salida = f"CHILE_{tipo}" + (f"_{sufijo}" if sufijo else "") + ".xlsx"
@@ -789,13 +874,16 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
         unido.to_excel(w, sheet_name="TRAZABILIDAD", index=False)
         _pintar(w, "TRAZABILIDAD", unido.columns,
                 getattr(mod_consolidar, "formatear_encabezado", None))
-        # ZONA la agrega la app, no el consolidador: se marca en crema como el
-        # resto de las columnas derivadas.
+        # ZONA y PERIODO las agrega la app, no el consolidador: se marcan en
+        # crema como el resto de las columnas derivadas.
         try:
             from openpyxl.styles import Font, PatternFill
-            celda = w.sheets["TRAZABILIDAD"].cell(row=1, column=len(unido.columns))
-            celda.font = Font(bold=True, color=mod_consolidar.COLOR_TEAL)
-            celda.fill = PatternFill("solid", fgColor=mod_consolidar.COLOR_CREMA)
+            hoja = w.sheets["TRAZABILIDAD"]
+            for col in ("ZONA", "PERIODO"):
+                if col in unido.columns:
+                    celda = hoja.cell(row=1, column=list(unido.columns).index(col) + 1)
+                    celda.font = Font(bold=True, color=mod_consolidar.COLOR_TEAL)
+                    celda.fill = PatternFill("solid", fgColor=mod_consolidar.COLOR_CREMA)
         except Exception:
             pass
 
@@ -807,18 +895,32 @@ def _unir_zonas(carpeta_entrada, carpeta_salida, log, periodo=None):
     log.append("")
     log.append(f"── Archivo unido: {nombre_salida} ──")
     log.append(f"  {len(unido)} filas × {len(unido.columns)} columnas")
-    for z, n in sorted(por_zona.items()):
-        log.append(f"    {z:<6} {n:>8} filas")
+    if reproceso:
+        tabla = unido.groupby(["PERIODO", "ZONA"]).size()
+        for (per, z), n in tabla.items():
+            log.append(f"    {per}  {z:<6} {n:>8} filas")
+    else:
+        for z, n in sorted(por_zona.items()):
+            log.append(f"    {z:<6} {n:>8} filas")
 
     if not alertas:
         alertas.append({
             "titulo": "Sin problemas",
-            "detalle": f"Se unieron {len(partes)} zona(s) sin conflictos de "
-                       f"columnas ni de período.",
+            "detalle": (f"Se unieron {len(partes)} archivo(s) de {len(meses)} "
+                        f"meses ({', '.join(meses)}), sin conflictos de columnas "
+                        f"ni archivos repetidos." if reproceso else
+                        f"Se unieron {len(partes)} zona(s) sin conflictos de "
+                        f"columnas ni de período."),
         })
 
+    if reproceso:
+        encabezado = (f"<b>Reproceso: {len(meses)} meses unidos "
+                      f"({meses[0]} a {meses[-1]}), {len(partes)} archivo(s).</b> ")
+    else:
+        encabezado = f"<b>{len(partes)} zona(s) unidas.</b> "
+
     return {
-        "resumen": (f"<b>{len(partes)} zona(s) unidas.</b> "
+        "resumen": (encabezado +
                     f"{_formato_miles(len(unido), 0)} filas × "
                     f"{len(unido.columns)} columnas"
                     + (f" · {_formato_miles(kilos)} kg" if kilos else "")
