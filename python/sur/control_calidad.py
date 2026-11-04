@@ -453,7 +453,7 @@ def cargar_fuentes_control(rutas, p):
     san_joaquin_raw   = leer_fuente(rutas["san_joaquin"],   "INGRESOS",       p, headers_fallback=(8, 9, 7, 0))
     irar_raw          = leer_fuente(rutas["irar"],          "INGRESOS",       p, headers_fallback=(8, 9, 7, 0))
     bo_chillan_raw    = leer_fuente(rutas["bo_chillan"],    "TRASLADOS BO",   p, headers_fallback=(0, 1, 7, 8))
-    temuco_raw        = leer_fuente(rutas["temuco"],        "BBDD",           p, headers_fallback=(7, 8, 0))
+    temuco_raw        = leer_fuente(rutas["temuco"],        "TEMUCO",         p, headers_fallback=(7, 8, 0))
     bo_concepcion_raw = leer_fuente(rutas["bo_concepcion"],            "TRASLADOS BO",          p, headers_fallback=(7, 8, 0, 1))
     bo_talca_raw      = leer_fuente(rutas["bo_talca_curico_rancagua"], "TRASLADOS BO TALCA",    p, headers_fallback=(7, 8, 0, 1))
     bo_rancagua_raw   = leer_fuente(rutas["bo_talca_curico_rancagua"], "TRASLADOS BO RANCAGUA", p, headers_fallback=(7, 8, 0, 1))
