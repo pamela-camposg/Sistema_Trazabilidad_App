@@ -1143,7 +1143,7 @@ def procesar_bo_curico(rutas, homolog_c, homolog_g, p):
 def procesar_temuco(rutas, homolog_c, homolog_g, p):
     p("\n── BO Temuco ──")
 
-    df = leer_fuente(rutas["temuco"], "BBDD", p, headers_fallback=(7, 8, 0))
+    df = leer_fuente(rutas["temuco"], "TEMUCO", p, headers_fallback=(7, 8, 0))
     p(f"  • Filas leídas: {len(df)}")
 
     fecha_col = tomar_columna(df, ["Fecha", "FECHA"])
