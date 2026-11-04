@@ -59,7 +59,11 @@ NOMBRES_ARCHIVO = {
     "san_joaquin":     ["BBDD ECOFIBRAS SAN JOAQUIN.xlsx"],
     "irar":            ["BBDD IRAR LOS ÁNGELES.xlsx", "BBDD I.R.A.R LOS ÁNGELES.xlsx"],
     "bo_chillan":      ["BBDD BO CHILLÁN.xlsx"],
-    "temuco":          ["BBDD TEMUCO.xlsx"],
+    # _clave() ignora tildes, espacios y guiones bajos: "BBDD_BO_CONCEPCION.xlsx"
+    # también calza. Talca, Rancagua y Curicó vienen en UN archivo (una hoja c/u).
+    "bo_concepcion":   ["BBDD BO CONCEPCIÓN.xlsx"],
+    "bo_talca_curico_rancagua": ["BBDD BO TALCA CURICO RANCAGUA.xlsx"],
+    "temuco":         ["BBDD TEMUCO.xlsx"],
     "bo_chiloe":       ["BBDD BO CHILOÉ.xlsx", "BBDD BO CHILOE.xlsx"],
     "homologacion":    ["HOMOLOGACION.xlsx"],
     "destinatarios":   ["BBDD_DESTINATARIO.xlsx", "BBDD DESTINATARIO.xlsx"],
@@ -122,7 +126,9 @@ def rutas_desde_config(base=None):
         "san_joaquin":     zona / "BBDD ECOFIBRAS SAN JOAQUIN.xlsx",
         "irar":            zona / "BBDD IRAR LOS ÁNGELES.xlsx",
         "bo_chillan":      zona / "BBDD BO CHILLÁN.xlsx",
-        "temuco":          zona / "BBDD TEMUCO.xlsx",
+        "bo_concepcion":   zona / "BBDD BO CONCEPCIÓN.xlsx",
+        "bo_talca_curico_rancagua": zona / "BBDD BO TALCA CURICO RANCAGUA.xlsx",
+        "temuco":         zona / "BBDD TEMUCO.xlsx",
         "bo_chiloe":       zona / "BBDD BO CHILOÉ.xlsx",
         "homologacion":    info / "HOMOLOGACION.xlsx",
         "destinatarios":   info / "BBDD_DESTINATARIO.xlsx",
@@ -448,6 +454,10 @@ def cargar_fuentes_control(rutas, p):
     irar_raw          = leer_fuente(rutas["irar"],          "INGRESOS",       p, headers_fallback=(8, 9, 7, 0))
     bo_chillan_raw    = leer_fuente(rutas["bo_chillan"],    "TRASLADOS BO",   p, headers_fallback=(0, 1, 7, 8))
     temuco_raw        = leer_fuente(rutas["temuco"],        "BBDD",           p, headers_fallback=(7, 8, 0))
+    bo_concepcion_raw = leer_fuente(rutas["bo_concepcion"],            "TRASLADOS BO",          p, headers_fallback=(7, 8, 0, 1))
+    bo_talca_raw      = leer_fuente(rutas["bo_talca_curico_rancagua"], "TRASLADOS BO TALCA",    p, headers_fallback=(7, 8, 0, 1))
+    bo_rancagua_raw   = leer_fuente(rutas["bo_talca_curico_rancagua"], "TRASLADOS BO RANCAGUA", p, headers_fallback=(7, 8, 0, 1))
+    bo_curico_raw     = leer_fuente(rutas["bo_talca_curico_rancagua"], "TRASLADOS BO CURICO",   p, headers_fallback=(7, 8, 0, 1))
 
     if "bo_chiloe" in rutas and Path(rutas["bo_chiloe"]).exists():
         bo_chiloe_raw = leer_fuente(rutas["bo_chiloe"], "BBDD", p, headers_fallback=(6, 7, 0))
@@ -524,6 +534,23 @@ def cargar_fuentes_control(rutas, p):
         }),
     }
 
+    # BO Concepción, Talca, Rancagua y Curicó: mismo mapa que BO Chillán.
+    mapa_bo = {
+        "Fecha":         ["Fecha", "FECHA"],
+        "Cliente":       ["Cliente", "CLIENTE"],
+        "RUT":           ["RUT", "RUT CLIENTE"],
+        "Generador":     ["Generador", "GENERADOR"],
+        "Transportista": ["Transportista", "TRANSPORTISTA"],
+        "Destino":       ["Destino", "DESTINO"],
+        "TIPO":          ["TIPO", "TIPO RESIDUO"],
+        "Movimiento":    ["Movimiento", "MOVIMIENTO"],
+        "Peso neto":     ["Peso neto", "PESO NETO KG", "Peso neto (kg)"],
+    }
+    fuentes["BO_CONCEPCION"] = preparar_control("BO_CONCEPCION", bo_concepcion_raw, mapa_bo)
+    fuentes["BO_TALCA"]      = preparar_control("BO_TALCA",      bo_talca_raw,      mapa_bo)
+    fuentes["BO_RANCAGUA"]   = preparar_control("BO_RANCAGUA",   bo_rancagua_raw,   mapa_bo)
+    fuentes["BO_CURICO"]     = preparar_control("BO_CURICO",     bo_curico_raw,     mapa_bo)
+
     for nombre, df in fuentes.items():
         p(f"  {nombre:<18} {len(df):>6} filas | >= {FECHA_DESDE_SUR}: {df['_desde'].sum()}")
 
@@ -571,6 +598,10 @@ def controlar(rutas, ruta_salida=None, mostrar=True):
     df_all.loc[df_all["ORIGEN"].eq("BO_TRAPEN"),        "Movimiento_norm"] = "Traslado"
     df_all.loc[df_all["ORIGEN"].eq("BO_CHILOE"),        "Movimiento_norm"] = "Traslado"
     df_all.loc[df_all["ORIGEN"].eq("BO_CHILLAN"),       "Movimiento_norm"] = "Traslado"
+    df_all.loc[df_all["ORIGEN"].eq("BO_CONCEPCION"),    "Movimiento_norm"] = "Traslado"
+    df_all.loc[df_all["ORIGEN"].eq("BO_TALCA"),         "Movimiento_norm"] = "Traslado"
+    df_all.loc[df_all["ORIGEN"].eq("BO_RANCAGUA"),      "Movimiento_norm"] = "Traslado"
+    df_all.loc[df_all["ORIGEN"].eq("BO_CURICO"),        "Movimiento_norm"] = "Traslado"
     df_all.loc[df_all["ORIGEN"].eq("PLANTA_TRAPEN"),    "Movimiento_norm"] = "Ingreso"
 
     # En hojas INGRESOS, movimiento vacío se interpreta como Ingreso para control.
@@ -639,7 +670,10 @@ def controlar(rutas, ruta_salida=None, mostrar=True):
     # Destinos vacíos solo importan cuando movimiento final será Traslado o fuente Temuco/IRAR
     destinos_revisar = df_all.copy()
     necesita_destino_archivo = (
-        destinos_revisar["ORIGEN"].isin(["TEMUCO", "IRAR_LOS_ANGELES", "BO_CHILOE"])
+        destinos_revisar["ORIGEN"].isin([
+            "TEMUCO", "IRAR_LOS_ANGELES", "BO_CHILOE",
+            "BO_CONCEPCION", "BO_TALCA", "BO_RANCAGUA", "BO_CURICO",
+        ])
         | (
             destinos_revisar["ORIGEN"].isin(["CORONEL", "BO_TRAPEN", "SAN_JOAQUIN"])
             & destinos_revisar["Movimiento_norm"].eq("Traslado")
