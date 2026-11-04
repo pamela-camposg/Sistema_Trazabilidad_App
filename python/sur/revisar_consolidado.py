@@ -57,6 +57,8 @@ REGIONES_VALIDAS = {
     "Región del Biobío",
     "Región de Los Lagos",
     "Región de Ñuble",        # BO Chillán
+    "Región del Maule",       # BO Talca, BO Curicó
+    "Región del Libertador General Bernardo O'Higgins",  # BO Rancagua
 }
 
 MOVIMIENTOS_VALIDOS = {"Ingreso", "Traslado", "Traslado externo"}
