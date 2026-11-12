@@ -88,14 +88,20 @@ const esValido = (nombre) =>
    ========================================================================= */
 const DB_NOMBRE = "trazabilidad_app";
 const DB_STORE = "archivos_base";
+// Versión 2: se suma el almacén de la carpeta de OneDrive conectada. Lo que
+// ya estaba guardado (los archivos base) no se toca al actualizar.
+const DB_CARPETAS = "carpetas";
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NOMBRE, 1);
+    const req = indexedDB.open(DB_NOMBRE, 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(DB_STORE)) {
         db.createObjectStore(DB_STORE, { keyPath: "nombre" });
+      }
+      if (!db.objectStoreNames.contains(DB_CARPETAS)) {
+        db.createObjectStore(DB_CARPETAS, { keyPath: "id" });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -103,12 +109,12 @@ function abrirDB() {
   });
 }
 
-function operarDB(modo, accion) {
+function operarDB(modo, accion, almacen = DB_STORE) {
   return abrirDB().then(
     (db) =>
       new Promise((resolve, reject) => {
-        const tx = db.transaction(DB_STORE, modo);
-        const store = tx.objectStore(DB_STORE);
+        const tx = db.transaction(almacen, modo);
+        const store = tx.objectStore(almacen);
         const pedido = accion(store);
         tx.oncomplete = () => resolve(pedido && pedido.result);
         tx.onerror = () => reject(tx.error);
@@ -128,6 +134,13 @@ const guardarBaseDB = (items) =>
     items.forEach((i) => s.put(i));
   });
 
+// La carpeta conectada se guarda como "permiso para volver a abrirla", no como
+// copia de los archivos: cada vez se leen las versiones del día.
+const leerCarpetasDB = () => operarDB("readonly", (s) => s.getAll(), DB_CARPETAS);
+const guardarCarpetaDB = (id, handle) =>
+  operarDB("readwrite", (s) => { s.put({ id, handle }); }, DB_CARPETAS);
+const borrarCarpetasDB = () => operarDB("readwrite", (s) => s.clear(), DB_CARPETAS);
+
 /* =========================================================================
    1. EL MOTOR, EN UN HILO APARTE
    -------------------------------------------------------------------------
@@ -139,6 +152,7 @@ const guardarBaseDB = (items) =>
 let worker = null;
 let motorListo = false;
 let pendiente = null;      // la operación que está esperando respuesta
+let esperadosPendiente = null;  // la consulta de "qué archivos busca esta zona"
 
 function enviarAlMotor(mensaje) {
   return new Promise((resolve, reject) => {
@@ -198,6 +212,7 @@ function iniciarMotor() {
           "Este navegador no permite guardar archivos base (" +
           ((e && e.message) || e) + "). Puedes seguir subiéndolos cada vez.";
       });
+      pintarCarpeta();
       revisarSiPuedeProcesar();
 
     } else if (m.tipo === "error-motor") {
@@ -213,8 +228,14 @@ function iniciarMotor() {
       $("registro").textContent = `Paso: ${m.paso}\n\n${m.detalle}`;
       $("registro").classList.remove("oculto");
 
+    } else if (m.tipo === "esperados") {
+      // Va por un canal propio para no cruzarse con un proceso en curso
+      if (esperadosPendiente) { esperadosPendiente.resolve(m.res); esperadosPendiente = null; }
+
     } else if (m.tipo === "error") {
-      if (pendiente) { pendiente.reject(new Error(m.mensaje)); pendiente = null; }
+      if (m.origen === "esperados") {
+        if (esperadosPendiente) { esperadosPendiente.reject(new Error(m.mensaje)); esperadosPendiente = null; }
+      } else if (pendiente) { pendiente.reject(new Error(m.mensaje)); pendiente = null; }
       console.error(m.detalle);
 
     } else if (pendiente) {
@@ -339,6 +360,10 @@ function ajustarPantallaSegunZona() {
     }
   }
 
+  // Unir trabaja con archivos que la app ya generó: la carpeta no aplica
+  const bloque = $("bloque-carpeta");
+  if (bloque) bloque.style.display = zonaElegida === "UNIR" ? "none" : "";
+  pintarCarpeta();
 }
 
 /* =========================================================================
@@ -530,6 +555,353 @@ alEvento("btn-borrar-base", "click", async () => {
 conectarZonaDeCarga("dropzone-base", "input-base", recibirBase);
 
 /* =========================================================================
+   3b. CARPETA DE ONEDRIVE CONECTADA
+   -------------------------------------------------------------------------
+   En vez de descargar los Excel desde SharePoint y soltarlos acá, la
+   operadora conecta UNA vez su carpeta de OneDrive sincronizada (la misma que
+   usa el consolidador en Visual Studio). Desde ahí la página lee directo:
+
+     · los archivos de la zona  → General/BBDD/ZONA CENTRO | ZONA SUR | ZONA NORTE
+     · los archivos base        → General/Información Base
+     · GIRI (solo RM)           → Trazabilidad GIRI - Operaciones Actualizado
+
+   Sirve conectar cualquiera de estas carpetas: "OneDrive - Ambipar Group"
+   (alcanza todo, incluido GIRI), "Inteligencia Circular - 7. Trazabilidad",
+   "General", "BBDD" o la carpeta de la zona.
+
+   Los archivos NO se suben a ningún lado: se leen del disco del computador y
+   pasan directo al motor, igual que si se hubieran arrastrado. Usa la API de
+   carpetas del navegador, que existe en Chrome y Edge (no en Firefox/Safari).
+   ========================================================================= */
+const soportaCarpetas = typeof window.showDirectoryPicker === "function";
+let carpetaPrincipal = null;   // carpeta elegida por la operadora
+let carpetaGiri = null;        // opcional: la carpeta de GIRI, si no cuelga de la principal
+let revisionCarpeta = null;    // lo último que se encontró, para mostrarlo
+const cacheEsperados = {};
+
+const ZONAS_SOLO_CARPETA = ["RM", "SUR", "NORTE"];
+const CARPETA_DE_ZONA = { RM: "ZONA CENTRO", SUR: "ZONA SUR", NORTE: "ZONA NORTE", SIMPLE_ROUTE: "ZONA CENTRO" };
+const NOMBRE_TRZ = "Inteligencia Circular - 7. Trazabilidad";
+const NOMBRE_GIRI = "Trazabilidad GIRI - Operaciones Actualizado";
+
+/* Igual que _clave() en Python: sin tildes, mayúsculas, sin espacios ni
+   . _ - ( ). Así "BBDD_BO_CONCEPCION.xlsx" y "BBDD BO CONCEPCIÓN.xlsx" calzan. */
+const clave = (s) =>
+  String(s).normalize("NFKD").replace(/[^\x00-\x7F]/g, "").toUpperCase().replace(/[ ._\-()]/g, "");
+
+async function cargarCarpetas() {
+  if (!soportaCarpetas) return pintarCarpeta();
+  try {
+    for (const c of (await leerCarpetasDB()) || []) {
+      if (c.id === "principal") carpetaPrincipal = c.handle;
+      if (c.id === "giri") carpetaGiri = c.handle;
+    }
+  } catch (e) {
+    console.warn("No se pudo leer la carpeta guardada:", e);
+  }
+  pintarCarpeta();
+  revisarSiPuedeProcesar();
+}
+
+/* El navegador recuerda la carpeta, pero en cada visita pide confirmar el
+   permiso de lectura. Solo se puede pedir desde un clic de la operadora. */
+async function tienePermiso(handle, pedir) {
+  if (!handle) return false;
+  const opts = { mode: "read" };
+  try {
+    if ((await handle.queryPermission(opts)) === "granted") return true;
+    if (!pedir) return false;
+    return (await handle.requestPermission(opts)) === "granted";
+  } catch (e) {
+    return false;
+  }
+}
+
+async function subcarpeta(dir, nombre) {
+  if (!dir) return null;
+  const c = clave(nombre);
+  for await (const [n, h] of dir.entries()) {
+    if (h.kind === "directory" && clave(n) === c) return h;
+  }
+  return null;
+}
+
+async function bajarPor(dir, partes) {
+  let d = dir;
+  for (const p of partes) {
+    d = await subcarpeta(d, p);
+    if (!d) return null;
+  }
+  return d;
+}
+
+/* Encuentra la carpeta de la zona, la de archivos base y la de GIRI, partiendo
+   de la carpeta que haya elegido la operadora. */
+async function ubicarCarpetas(raiz, zona, giriOk) {
+  const nombreZona = CARPETA_DE_ZONA[zona];
+
+  let general = null;
+  for (const partes of [[NOMBRE_TRZ, "General"], ["General"], []]) {
+    const d = partes.length ? await bajarPor(raiz, partes) : raiz;
+    if (d && ((await subcarpeta(d, "BBDD")) || (await subcarpeta(d, "Información Base")))) {
+      general = d;
+      break;
+    }
+  }
+
+  let zonaDir = general ? await bajarPor(general, ["BBDD", nombreZona]) : null;
+  if (!zonaDir) zonaDir = await subcarpeta(raiz, nombreZona);              // eligió "BBDD"
+  if (!zonaDir && clave(raiz.name) === clave(nombreZona)) zonaDir = raiz;  // eligió la zona
+
+  const infoDir = general ? await subcarpeta(general, "Información Base") : null;
+
+  let giriDir = null;
+  if (zona === "RM") {
+    giriDir = (carpetaGiri && giriOk) ? carpetaGiri : await subcarpeta(raiz, NOMBRE_GIRI);
+  }
+  return { nombreZona, zonaDir, infoDir, giriDir };
+}
+
+async function excelDe(dir) {
+  const out = [];
+  if (!dir) return out;
+  for await (const [n, h] of dir.entries()) {
+    if (h.kind === "file" && n.toLowerCase().endsWith(".xlsx") && !n.startsWith("~$")) out.push([n, h]);
+  }
+  return out;
+}
+
+/* Las consultas van en fila: si la operadora cambia rápido de zona, una no
+   pisa a la otra. Cada zona se consulta una sola vez por visita. */
+let colaEsperados = Promise.resolve();
+function pedirEsperados(zona) {
+  if (!cacheEsperados[zona]) {
+    const p = colaEsperados.catch(() => {}).then(() => new Promise((resolve, reject) => {
+      esperadosPendiente = { resolve, reject };
+      worker.postMessage({ tipo: "esperados", zona });
+    }));
+    colaEsperados = p;
+    cacheEsperados[zona] = p;
+    p.catch(() => { delete cacheEsperados[zona]; });
+  }
+  return cacheEsperados[zona];
+}
+
+/* Busca en la carpeta los archivos que necesita la zona. No lee su contenido
+   todavía: solo dice qué encontró, dónde, y qué falta. */
+async function buscarEnCarpeta(zona, pedirPermiso) {
+  if (!carpetaPrincipal || !CARPETA_DE_ZONA[zona]) return null;
+  if (!(await tienePermiso(carpetaPrincipal, pedirPermiso))) return { sinPermiso: true };
+  const giriOk = zona === "RM" && carpetaGiri ? await tienePermiso(carpetaGiri, pedirPermiso) : false;
+
+  const esp = await pedirEsperados(zona);
+  if (!esp) return { procesarAntiguo: true };
+
+  const ub = await ubicarCarpetas(carpetaPrincipal, zona, giriOk);
+
+  // Orden de búsqueda: archivos base desde Información Base; el resto desde la
+  // carpeta de la zona; GIRI desde su carpeta. El primero que aparece gana.
+  const lugares = [["Información Base", ub.infoDir], [ub.nombreZona, ub.zonaDir]];
+  if (ub.giriDir) lugares.push(["GIRI", ub.giriDir]);
+
+  const porClave = new Map();
+  for (const [origen, dir] of lugares) {
+    for (const [n, h] of await excelDe(dir)) {
+      const c = clave(n);
+      if (!porClave.has(c)) porClave.set(c, { nombre: n, handle: h, origen });
+    }
+  }
+
+  const guardadosBase = new Set(baseGuardada.map((i) => clave(i.nombre)));
+  const encontrados = [];
+  const faltan = [];
+  for (const g of esp.grupos) {
+    const claves = g.nombres.map(clave);
+    const hit = claves.map((c) => porClave.get(c)).find(Boolean);
+    if (hit) {
+      encontrados.push({ ...hit, maestro: g.maestro });
+    } else if (g.maestro && claves.some((c) => guardadosBase.has(c))) {
+      // No está en la carpeta, pero hay uno guardado en el navegador: sirve.
+      encontrados.push({ nombre: g.nombres[0], origen: "guardado en este computador", guardado: true, maestro: true });
+    } else if (!g.opcional) {
+      faltan.push(g.nombres[0]);
+    }
+  }
+  return { ub, encontrados, faltan };
+}
+
+function pintarRevision(rv) {
+  const ul = $("lista-carpeta");
+  if (!ul) return;
+  ul.innerHTML = "";
+  if (!rv || rv.sinPermiso || rv.procesarAntiguo) return;
+  const fila = (texto, derecha, clase) => {
+    const li = document.createElement("li");
+    if (clase) li.className = clase;
+    const a = document.createElement("span");
+    a.textContent = texto;
+    const b = document.createElement("span");
+    b.className = "origen";
+    b.textContent = derecha;
+    li.append(a, b);
+    ul.appendChild(li);
+  };
+  rv.encontrados.forEach((e) => fila("✓ " + e.nombre, e.origen));
+  rv.faltan.forEach((n) => fila("✗ " + n, "no está en la carpeta", "falta"));
+}
+
+/* Escribe en pantalla el estado de la carpeta y, si ya hay permiso, revisa
+   qué archivos de la zona encuentra. */
+async function pintarCarpeta() {
+  const estado = $("estado-carpeta");
+  if (!estado) return;
+  const btnConectar = $("btn-conectar");
+  const btnRevisar = $("btn-revisar-carpeta");
+  const btnGiri = $("btn-conectar-giri");
+  const btnDesc = $("btn-desconectar");
+
+  if (!soportaCarpetas) {
+    estado.textContent =
+      "Este navegador no permite conectar carpetas. Abre la herramienta en Chrome o " +
+      "Edge, o sigue arrastrando los archivos abajo.";
+    [btnConectar, btnRevisar, btnGiri, btnDesc].forEach((b) => b && (b.style.display = "none"));
+    return;
+  }
+
+  btnConectar.textContent = carpetaPrincipal ? "Cambiar carpeta" : "Conectar carpeta de OneDrive";
+  btnRevisar.style.display = carpetaPrincipal ? "" : "none";
+  btnDesc.style.display = carpetaPrincipal ? "" : "none";
+  btnGiri.style.display = carpetaPrincipal && zonaElegida === "RM" ? "" : "none";
+  if (carpetaGiri) btnGiri.textContent = "Cambiar carpeta GIRI";
+
+  if (!carpetaPrincipal) {
+    estado.textContent =
+      "Conecta una sola vez la carpeta \"OneDrive - Ambipar Group\" (o la carpeta " +
+      "\"General\" de Trazabilidad) y la herramienta leerá los archivos sola, sin descargarlos.";
+    pintarRevision(null);
+    return;
+  }
+
+  let texto = `Carpeta conectada: ${carpetaPrincipal.name}` +
+    (carpetaGiri ? ` · GIRI: ${carpetaGiri.name}` : "") + ".";
+
+  if (!zonaElegida || !CARPETA_DE_ZONA[zonaElegida]) {
+    estado.textContent = texto + " Elige una zona para ver qué archivos se van a leer.";
+    pintarRevision(null);
+    return;
+  }
+  if (!motorListo || procesando) {
+    estado.textContent = texto;
+    return;
+  }
+
+  const zonaRevisada = zonaElegida;
+  try {
+    const rv = await buscarEnCarpeta(zonaRevisada, false);
+    if (zonaElegida !== zonaRevisada || procesando) return;   // ya cambió de zona
+    revisionCarpeta = rv;
+    if (rv && rv.sinPermiso) {
+      texto += " El navegador necesita tu permiso para leerla: haz clic en \"Revisar " +
+               "archivos\" (o en Procesar) y elige \"Permitir\".";
+    } else if (rv && rv.procesarAntiguo) {
+      texto += " El archivo python/procesar.py publicado es una versión anterior: " +
+               "actualízalo para poder leer la carpeta.";
+    } else if (rv) {
+      if (!rv.ub.zonaDir) {
+        texto += ` No encontré la carpeta ${rv.ub.nombreZona} dentro de la carpeta conectada. ` +
+                 `Conecta "OneDrive - Ambipar Group" o la carpeta "General" de Trazabilidad.`;
+      } else {
+        texto += ` Se van a leer ${rv.encontrados.length} archivo(s).`;
+        if (rv.faltan.length) texto += ` Faltan ${rv.faltan.length}: puedes arrastrarlos abajo.`;
+        if (!rv.ub.infoDir) {
+          texto += ` Los archivos base no se leen de "Información Base" porque esa carpeta ` +
+                   `no cuelga de la conectada; para que se lean también, conecta la carpeta "General".`;
+        }
+      }
+    }
+    estado.textContent = texto;
+    // Si ni siquiera está la carpeta de la zona, la lista de faltantes solo confunde
+    pintarRevision(rv && rv.ub && !rv.ub.zonaDir ? null : rv);
+  } catch (e) {
+    estado.textContent = texto + " No se pudo revisar la carpeta: " + ((e && e.message) || e);
+  }
+  revisarSiPuedeProcesar();
+}
+
+/* Lee el contenido de lo encontrado. Se llama al procesar. */
+async function leerDesdeCarpeta(zona) {
+  const rv = await buscarEnCarpeta(zona, true);
+  if (!rv) return [];
+  if (rv.sinPermiso) {
+    throw new Error("No se dio permiso para leer la carpeta conectada. Vuelve a " +
+                    "hacer clic en Procesar y elige \"Permitir\".");
+  }
+  if (rv.procesarAntiguo) return [];
+  revisionCarpeta = rv;
+  pintarRevision(rv);
+
+  const leidos = [];
+  for (const e of rv.encontrados) {
+    if (e.guardado) continue;       // lo pone la lista de archivos base guardados
+    try {
+      const f = await e.handle.getFile();
+      leidos.push({ nombre: e.nombre, bytes: new Uint8Array(await f.arrayBuffer()) });
+      mostrarProgreso(`  ✓ leído de ${e.origen}: ${e.nombre}`);
+    } catch (err) {
+      throw new Error(
+        `No se pudo leer ${e.nombre} desde la carpeta (${(err && err.message) || err}). ` +
+        `Si OneDrive lo tiene "solo en línea", ábrelo o márcalo como "Mantener siempre ` +
+        `en este dispositivo" y vuelve a procesar.`
+      );
+    }
+  }
+  return leidos;
+}
+
+alEvento("btn-conectar", "click", async () => {
+  try {
+    const h = await window.showDirectoryPicker({ id: "trazabilidad", mode: "read" });
+    carpetaPrincipal = h;
+    await guardarCarpetaDB("principal", h);
+  } catch (e) {
+    if (e && e.name === "AbortError") return;   // cerró el diálogo
+    $("estado-carpeta").textContent = "No se pudo conectar la carpeta: " + ((e && e.message) || e);
+    return;
+  }
+  pintarCarpeta();
+  revisarSiPuedeProcesar();
+});
+
+alEvento("btn-conectar-giri", "click", async () => {
+  try {
+    const h = await window.showDirectoryPicker({ id: "trazabilidad-giri", mode: "read" });
+    carpetaGiri = h;
+    await guardarCarpetaDB("giri", h);
+  } catch (e) {
+    if (e && e.name === "AbortError") return;
+    $("estado-carpeta").textContent = "No se pudo conectar la carpeta GIRI: " + ((e && e.message) || e);
+    return;
+  }
+  pintarCarpeta();
+});
+
+alEvento("btn-revisar-carpeta", "click", async () => {
+  // Este clic es el que permite pedir el permiso de lectura
+  await tienePermiso(carpetaPrincipal, true);
+  if (carpetaGiri && zonaElegida === "RM") await tienePermiso(carpetaGiri, true);
+  pintarCarpeta();
+});
+
+alEvento("btn-desconectar", "click", async () => {
+  carpetaPrincipal = null;
+  carpetaGiri = null;
+  revisionCarpeta = null;
+  try { await borrarCarpetasDB(); } catch (e) { /* no importa */ }
+  pintarCarpeta();
+  revisarSiPuedeProcesar();
+});
+
+/* =========================================================================
    4. MOVIMIENTOS DEL MES
    ========================================================================= */
 function agregarArchivos(fileList) {
@@ -574,7 +946,11 @@ function etiquetaBoton() {
 function revisarSiPuedeProcesar() {
   const btn = $("btn-procesar");
   if (!btn) return;
-  btn.disabled = !(motorListo && zonaElegida && archivos.length > 0);
+  // Con la carpeta conectada no hace falta soltar nada en RM, Sur ni Norte.
+  // Simple Route igual necesita la exportación de Simple Route, que no vive
+  // en OneDrive; Unir trabaja con archivos que la app ya generó.
+  const bastaCarpeta = !!carpetaPrincipal && ZONAS_SOLO_CARPETA.includes(zonaElegida);
+  btn.disabled = !(motorListo && zonaElegida && !procesando && (archivos.length > 0 || bastaCarpeta));
   if (!procesando) btn.textContent = etiquetaBoton();
 }
 
@@ -598,20 +974,45 @@ alEvento("btn-procesar", "click", async () => {
   $("registro").classList.remove("oculto");
 
   try {
+    // 1. Carpeta conectada. Va primero porque el permiso de lectura solo se
+    //    puede pedir justo después del clic.
+    let deCarpeta = [];
+    if (carpetaPrincipal && CARPETA_DE_ZONA[zonaElegida]) {
+      mostrarProgreso("Leyendo los archivos desde la carpeta conectada…");
+      deCarpeta = await leerDesdeCarpeta(zonaElegida);
+    }
+
+    // 2. Lo que se arrastró a mano manda: si un archivo está en los dos
+    //    lados, se usa el arrastrado. Se compara por nombre normalizado, así
+    //    "BBDD_DESTINATARIO" y "BBDD DESTINATARIO" cuentan como el mismo.
+    const usadas = new Set();
     const movimientos = [];
     for (const f of archivos) {
       movimientos.push({ nombre: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+      usadas.add(clave(f.name));
     }
+    for (const a of deCarpeta) {
+      if (!usadas.has(clave(a.nombre))) {
+        movimientos.push(a);
+        usadas.add(clave(a.nombre));
+      }
+    }
+
+    // 3. Archivos base guardados en el navegador: solo los que no llegaron
+    //    ya desde la carpeta (Información Base trae la versión del día).
+    //    Unir y Simple Route no los usan: si se mandaran, entrarían a la
+    //    carpeta de trabajo y la herramienta trataría de apilarlos.
+    const base = (zonaElegida === "UNIR" || zonaElegida === "SIMPLE_ROUTE")
+      ? []
+      : baseGuardada
+          .filter((i) => !usadas.has(clave(i.nombre)))
+          .map((i) => ({ nombre: i.nombre, bytes: i.bytes }));
 
     const m = await enviarAlMotor({
       tipo: "procesar",
       zona: zonaElegida,
       periodo: ($("periodo") && $("periodo").value) || null,
-      // Unir no usa los archivos base: si se mandaran, entrarían a la carpeta
-      // de trabajo y la herramienta trataría de apilarlos.
-      base: (zonaElegida === "UNIR" || zonaElegida === "SIMPLE_ROUTE")
-        ? []
-        : baseGuardada.map((i) => ({ nombre: i.nombre, bytes: i.bytes })),
+      base,
       movimientos,
     });
 
@@ -697,5 +1098,12 @@ function descargar(bytes, nombre) {
 
 if (faltanElementos.length) avisarDesajuste();
 
-console.info("app.js — Sistema Trazabilidad Ambipar (versión con archivos base)");
+console.info("app.js — Sistema Trazabilidad Ambipar (versión con carpeta de OneDrive)");
+// Salida de emergencia: abrir la página con ?sin-carpeta olvida la carpeta
+// conectada sin intentar abrirla (por si algún navegador falla al recuperarla).
+if (new URLSearchParams(location.search).has("sin-carpeta")) {
+  borrarCarpetasDB().catch(() => {}).finally(pintarCarpeta);
+} else {
+  cargarCarpetas();
+}
 iniciarMotor();
