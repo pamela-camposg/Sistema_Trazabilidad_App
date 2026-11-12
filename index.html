@@ -93,6 +93,16 @@
   .dropzone{ transition:.15s ease }
   .dropzone:hover, .dropzone.drag{ border-color:#CCFF00; background:#FBFFE8 }
 
+  /* Carpeta de OneDrive conectada */
+  #bloque-carpeta{ border:1px solid #e4e4e7; border-left:3px solid #CCFF00; border-radius:6px; background:#F9F9FB; padding:.9rem 1rem }
+  #bloque-carpeta .botones{ display:flex; flex-wrap:wrap; align-items:center; gap:.6rem }
+  #bloque-carpeta .btn{ margin:0 }
+  #estado-carpeta{ margin-top:.6rem; font-size:.8125rem; color:#52525b; line-height:1.55 }
+  #lista-carpeta{ margin-top:.5rem }
+  #lista-carpeta li{ display:flex; justify-content:space-between; gap:1rem; padding:.4rem .2rem; font-size:.75rem; color:#3f3f46; border-bottom:1px solid #ececef }
+  #lista-carpeta li.falta{ color:#B4610A }
+  #lista-carpeta .origen{ font-size:.6875rem; color:#a1a1aa; white-space:nowrap }
+
   #resultado{ display:none }
 
   /* -----------------------------------------------------------------------
@@ -335,9 +345,21 @@
           <h2 class="premium-heading text-[15px] font-medium text-tinta">Movimientos del mes</h2>
         </div>
         <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
-          Los Excel de la zona elegida. Puedes soltar los archivos sueltos o bajar la
-          carpeta completa desde OneDrive y soltar el .zip tal cual.
+          Los Excel de la zona elegida. Con la carpeta de OneDrive conectada se leen
+          solos, sin descargar nada. También puedes soltar archivos sueltos o un .zip.
         </p>
+
+        <!-- Carpeta de OneDrive conectada: los archivos se leen directo del PC -->
+        <div id="bloque-carpeta" class="mt-5">
+          <div class="botones">
+            <button id="btn-conectar" type="button" class="btn secundario">Conectar carpeta de OneDrive</button>
+            <button id="btn-revisar-carpeta" type="button" class="btn secundario" style="display:none">Revisar archivos</button>
+            <button id="btn-conectar-giri" type="button" class="btn secundario" style="display:none">Conectar carpeta GIRI</button>
+            <button id="btn-desconectar" type="button" class="quitar" style="display:none">Desconectar</button>
+          </div>
+          <p id="estado-carpeta"></p>
+          <ul id="lista-carpeta"></ul>
+        </div>
 
         <div class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <label for="periodo" class="text-[13px] font-medium text-tinta">Mes a consolidar</label>
@@ -352,7 +374,8 @@
                class="dropzone mt-5 block cursor-pointer rounded-md border border-dashed border-zinc-300 px-6 py-12 text-center">
           <span class="text-[13px] font-medium text-tinta">Arrastra los archivos aquí</span>
           <span class="mt-0.5 block text-[12px] text-zinc-400">
-            o haz clic para elegirlos · .xlsx o .zip
+            o haz clic para elegirlos · .xlsx o .zip · si un archivo también está en la
+            carpeta conectada, se usa el que arrastraste
           </span>
         </label>
         <input type="file" id="input-archivos" multiple accept=".xlsx,.zip" />
