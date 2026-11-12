@@ -545,8 +545,10 @@ async function pintarBase(res) {
       `reconocible adentro. ` + esperados + ".";
 
   } else if (!total) {
-    $("estado-base").textContent =
-      "Todavía no hay archivos base guardados en este computador.";
+    $("estado-base").textContent = carpetaPrincipal
+      ? "No hay archivos base guardados en este computador, pero no hacen falta: " +
+        "se leen de la carpeta conectada."
+      : "Todavía no hay archivos base guardados en este computador.";
 
   } else {
     let msg = `Hay ${total} de ${cuantos} archivos base guardados.`;
@@ -646,28 +648,69 @@ async function bajarPor(dir, partes) {
 
 /* Encuentra la carpeta de la zona, la de archivos base y la de GIRI, partiendo
    de la carpeta que haya elegido la operadora. */
+/* -------------------------------------------------------------------------
+   Dónde está "General" depende de cómo cada persona sincronizó SharePoint:
+     · con "Agregar acceso directo":  OneDrive - Ambipar Group\Inteligencia
+       Circular - 7. Trazabilidad\General
+     · con "Sincronizar":             Ambipar Group\Inteligencia Circular -
+       Documentos Compartilhados\7. Trazabilidad\General  (u otra variante)
+   Por eso no se asume una ruta fija: se busca, unos pocos niveles hacia
+   abajo, la carpeta que tenga adentro "BBDD" e "Información Base". De paso
+   se busca la carpeta que tenga el archivo de GIRI. Se hace una vez por
+   carpeta conectada y se recuerda.
+   ------------------------------------------------------------------------- */
+const MAX_NIVELES = 4;
+const MAX_CARPETAS = 600;      // tope para no recorrer todo OneDrive
+let ubicacionCache = null;     // { raiz, general, giriDir }
+const CLAVE_BBDD = clave("BBDD");
+const CLAVE_INFO = clave("Información Base");
+const CLAVE_GIRI_ARCHIVO = clave("OPERACIONES GIRI (INGRESOS Y EGRESOS).xlsx");
+
+async function explorar(raiz) {
+  if (ubicacionCache && ubicacionCache.raiz === raiz) return ubicacionCache;
+  let general = null;
+  let giriDir = null;
+  let vistas = 0;
+  let nivel = [raiz];
+  for (let n = 0; n <= MAX_NIVELES && nivel.length && !(general && giriDir); n++) {
+    const siguiente = [];
+    for (const dir of nivel) {
+      if (++vistas > MAX_CARPETAS) break;
+      const sub = [];
+      let tieneBBDD = false, tieneInfo = false;
+      for await (const [nombre, h] of dir.entries()) {
+        const c = clave(nombre);
+        if (h.kind === "directory") {
+          sub.push(h);
+          if (c === CLAVE_BBDD) tieneBBDD = true;
+          if (c === CLAVE_INFO) tieneInfo = true;
+        } else if (!giriDir && c === CLAVE_GIRI_ARCHIVO) {
+          giriDir = dir;
+        }
+      }
+      if (!general && tieneBBDD && tieneInfo) general = dir;
+      // Dentro de "General" no hace falta seguir bajando
+      if (dir !== general) siguiente.push(...sub);
+    }
+    nivel = siguiente;
+  }
+  ubicacionCache = { raiz, general, giriDir };
+  return ubicacionCache;
+}
+
 async function ubicarCarpetas(raiz, zona, giriOk) {
   const nombreZona = CARPETA_DE_ZONA[zona];
-
-  let general = null;
-  for (const partes of [[NOMBRE_TRZ, "General"], ["General"], []]) {
-    const d = partes.length ? await bajarPor(raiz, partes) : raiz;
-    if (d && ((await subcarpeta(d, "BBDD")) || (await subcarpeta(d, "Información Base")))) {
-      general = d;
-      break;
-    }
-  }
+  const { general, giriDir: giriEncontrado } = await explorar(raiz);
 
   let zonaDir = general ? await bajarPor(general, ["BBDD", nombreZona]) : null;
   if (!zonaDir) zonaDir = await subcarpeta(raiz, nombreZona);              // eligió "BBDD"
   if (!zonaDir && clave(raiz.name) === clave(nombreZona)) zonaDir = raiz;  // eligió la zona
 
-  const infoDir = general ? await subcarpeta(general, "Información Base") : null;
+  let infoDir = general ? await subcarpeta(general, "Información Base") : null;
+  if (!infoDir && clave(raiz.name) === CLAVE_INFO) infoDir = raiz;
 
   let giriDir = null;
-  if (zona === "RM") {
-    giriDir = (carpetaGiri && giriOk) ? carpetaGiri : await subcarpeta(raiz, NOMBRE_GIRI);
-  }
+  if (zona === "RM") giriDir = (carpetaGiri && giriOk) ? carpetaGiri : giriEncontrado;
   return { nombreZona, zonaDir, infoDir, giriDir };
 }
 
@@ -868,40 +911,72 @@ async function leerDesdeCarpeta(zona) {
   return leidos;
 }
 
+/* Mensaje de error de conexión, visible en los dos pasos (02 y 03). Antes,
+   si la persona apretaba el botón del paso 02 y fallaba, el aviso salía solo
+   en el paso 03 y parecía que no pasaba nada. */
+function avisarCarpeta(texto) {
+  ["estado-carpeta", "estado-base-carpeta"].forEach((id) => { if ($(id)) $(id).textContent = texto; });
+}
+
+function explicarError(e) {
+  const nombre = (e && e.name) || "";
+  if (nombre === "SecurityError" || nombre === "NotAllowedError") {
+    return "El navegador no dejó usar esa carpeta (a veces Chrome bloquea carpetas " +
+           "principales como \"OneDrive - Ambipar Group\", o la configuración del computador " +
+           "no lo permite). Prueba eligiendo directamente la carpeta \"General\" de Trazabilidad, " +
+           "la que tiene adentro \"BBDD\" e \"Información Base\".";
+  }
+  return (e && e.message) || String(e);
+}
+
+let carpetaSinRecordar = false;   // se conectó, pero el navegador no dejó guardarla
+
 async function conectarCarpeta() {
+  let h;
   try {
-    const h = await window.showDirectoryPicker({ id: "trazabilidad", mode: "read" });
-    carpetaPrincipal = h;
-    await guardarCarpetaDB("principal", h);
+    h = await window.showDirectoryPicker({ id: "trazabilidad", mode: "read" });
   } catch (e) {
     if (e && e.name === "AbortError") return;   // cerró el diálogo
-    $("estado-carpeta").textContent = "No se pudo conectar la carpeta: " + ((e && e.message) || e);
+    avisarCarpeta("No se pudo conectar la carpeta. " + explicarError(e));
     return;
   }
-  pintarCarpeta();
+  carpetaPrincipal = h;
+  ubicacionCache = null;
+  // Recordarla es un extra: si el navegador no deja guardarla (ventana de
+  // incógnito, configuración del equipo), igual se usa en esta visita.
+  try {
+    await guardarCarpetaDB("principal", h);
+    carpetaSinRecordar = false;
+  } catch (e) {
+    carpetaSinRecordar = true;
+    console.warn("No se pudo recordar la carpeta:", e);
+  }
+  avisarCarpeta("Buscando los archivos en la carpeta…");
+  pintarBase().catch(() => {});
+  await pintarCarpeta();
   revisarSiPuedeProcesar();
 }
 
-// El mismo botón está en el paso 02 (archivos base) y en el paso 03: es una
-// sola conexión que sirve para los dos.
+// El botón está en el paso 02 y en el paso 03: es una sola conexión que
+// sirve para los dos. En el paso 02 también sirve para dar el permiso.
 alEvento("btn-conectar", "click", conectarCarpeta);
-alEvento("btn-conectar-base", "click", conectarCarpeta);
+alEvento("btn-conectar-base", "click", async () => {
+  if (!carpetaPrincipal) return conectarCarpeta();
+  await tienePermiso(carpetaPrincipal, true);   // este clic permite pedir el permiso
+  pintarCarpeta();
+});
 
 /* -------------------------------------------------------------------------
-   ARCHIVOS BASE DESDE LA CARPETA
-   Al procesar, los archivos base ya se leen de "Información Base" (ver
-   buscarEnCarpeta). Esto solo lo muestra en el paso 02 y permite guardar
-   una copia en el navegador, para cuando la carpeta no esté disponible.
-   La opción de subirlos a mano sigue igual.
+   ARCHIVOS BASE Y CARPETA (paso 02)
+   Al procesar, los archivos base se leen de "Información Base" (ver
+   buscarEnCarpeta). Acá solo se muestra si la carpeta está conectada o no.
+   La opción de subirlos a mano sigue igual: los guardados se usan cuando no
+   hay carpeta o cuando a la carpeta le falta alguno.
    ------------------------------------------------------------------------- */
 async function ubicarInfoBase(raiz) {
-  if (clave(raiz.name) === clave("Información Base")) return raiz;
-  for (const partes of [[NOMBRE_TRZ, "General"], ["General"], []]) {
-    const d = partes.length ? await bajarPor(raiz, partes) : raiz;
-    const info = d && (await subcarpeta(d, "Información Base"));
-    if (info) return info;
-  }
-  return null;
+  if (clave(raiz.name) === CLAVE_INFO) return raiz;
+  const { general } = await explorar(raiz);
+  return general ? await subcarpeta(general, "Información Base") : null;
 }
 
 async function maestrosEnCarpeta(pedirPermiso) {
@@ -927,74 +1002,55 @@ async function pintarBaseCarpeta() {
   const estado = $("estado-base-carpeta");
   const bloque = $("base-carpeta");
   if (!estado || !bloque) return;
-  const btnConectar = $("btn-conectar-base");
-  const btnGuardar = $("btn-base-desde-carpeta");
+  const btn = $("btn-conectar-base");
+  const mostrarBoton = (texto) => {
+    btn.style.display = texto ? "" : "none";
+    if (texto) btn.textContent = texto;
+  };
 
   if (!soportaCarpetas) {
-    bloque.style.display = "none";
-    return;
+    estado.textContent = "✗ No conectada: este navegador no permite conectar carpetas (usa " +
+      "Chrome o Edge). Se usan los archivos base guardados, o súbelos abajo.";
+    return mostrarBoton(null);
   }
-  bloque.style.display = "";
-  btnConectar.style.display = carpetaPrincipal ? "none" : "";
-  btnGuardar.style.display = "none";
-
   if (!carpetaPrincipal) {
-    estado.textContent = "Si conectas la carpeta de OneDrive, los archivos base se leen solos " +
-      "de \"Información Base\" y siempre se usa la versión del día.";
-    return;
+    estado.textContent = "✗ No conectada. Se usan los archivos base guardados en este " +
+      "computador, o súbelos abajo.";
+    return mostrarBoton("Conectar carpeta de OneDrive");
   }
   if (!motorListo || procesando) {
-    estado.textContent = `Carpeta conectada: ${carpetaPrincipal.name}.`;
-    return;
+    estado.textContent = `✓ Conectada a "${carpetaPrincipal.name}".`;
+    return mostrarBoton(null);
   }
 
   try {
     const r = await maestrosEnCarpeta(false);
     if (r && r.sinPermiso) {
-      estado.textContent = `Carpeta conectada: ${carpetaPrincipal.name}. El navegador necesita ` +
-        "tu permiso para leerla: haz clic en \"Revisar archivos\" (paso 03) o en Procesar.";
-    } else if (r && r.procesarAntiguo) {
+      estado.textContent = `Conectada a "${carpetaPrincipal.name}", pero falta tu permiso para ` +
+        "leerla en esta visita.";
+      return mostrarBoton("Dar permiso");
+    }
+    mostrarBoton(null);
+    if (r && r.procesarAntiguo) {
       estado.textContent = "Para leer los archivos base desde la carpeta hay que actualizar " +
         "python/procesar.py.";
     } else if (r && !r.info) {
-      estado.textContent = `La carpeta conectada (${carpetaPrincipal.name}) no contiene ` +
-        "\"Información Base\". Se usan los archivos base guardados en este computador. " +
-        "Para leerlos de la carpeta, conecta \"OneDrive - Ambipar Group\" o la carpeta \"General\".";
+      estado.textContent = `Conectada a "${carpetaPrincipal.name}", pero ahí no encontré ` +
+        "\"Información Base\". Se usan los archivos base guardados. Para leerlos de la carpeta, " +
+        "conecta la carpeta \"General\" de Trazabilidad (paso 03, \"Cambiar carpeta\").";
     } else if (r) {
-      const total = r.encontrados.length + r.faltan.length;
-      let texto = `Al procesar se leen de "Información Base" (versión del día): ` +
-        `${r.encontrados.length} de ${total}.`;
-      if (r.faltan.length) {
-        texto += ` No están en la carpeta: ${r.faltan.join(", ")}; para esos se usa el guardado aquí.`;
+      let texto = `✓ Conectada a "${carpetaPrincipal.name}". Los archivos base se leen de ` +
+        `"Información Base" (${r.encontrados.length} de ${r.encontrados.length + r.faltan.length}).`;
+      if (r.faltan.length) texto += ` Para ${r.faltan.join(", ")} se usa el guardado aquí.`;
+      if (carpetaSinRecordar) {
+        texto += " Este navegador no dejó recordar la carpeta: la próxima vez habrá que volver a conectarla.";
       }
       estado.textContent = texto;
-      btnGuardar.style.display = r.encontrados.length ? "" : "none";
     }
   } catch (e) {
-    estado.textContent = "No se pudo revisar \"Información Base\": " + ((e && e.message) || e);
+    estado.textContent = "No se pudo revisar la carpeta: " + explicarError(e);
   }
 }
-
-alEvento("btn-base-desde-carpeta", "click", async () => {
-  const btn = $("btn-base-desde-carpeta");
-  btn.disabled = true;
-  try {
-    const r = await maestrosEnCarpeta(true);
-    if (!r || r.sinPermiso || r.procesarAntiguo || !r.encontrados.length) {
-      $("estado-base").textContent = "No encontré archivos base en la carpeta conectada.";
-      return;
-    }
-    const archivosCarpeta = [];
-    for (const e of r.encontrados) archivosCarpeta.push(await e.handle.getFile());
-    // Mismo camino que si se hubieran soltado a mano: Python los revisa y
-    // quedan guardados en el navegador, reemplazando la copia anterior.
-    await recibirBase(archivosCarpeta);
-  } catch (e) {
-    $("estado-base").textContent = "No se pudo copiar desde la carpeta: " + ((e && e.message) || e);
-  } finally {
-    btn.disabled = false;
-  }
-});
 
 alEvento("btn-conectar-giri", "click", async () => {
   try {
@@ -1003,7 +1059,7 @@ alEvento("btn-conectar-giri", "click", async () => {
     await guardarCarpetaDB("giri", h);
   } catch (e) {
     if (e && e.name === "AbortError") return;
-    $("estado-carpeta").textContent = "No se pudo conectar la carpeta GIRI: " + ((e && e.message) || e);
+    avisarCarpeta("No se pudo conectar la carpeta GIRI. " + explicarError(e));
     return;
   }
   pintarCarpeta();
@@ -1011,6 +1067,7 @@ alEvento("btn-conectar-giri", "click", async () => {
 
 alEvento("btn-revisar-carpeta", "click", async () => {
   // Este clic es el que permite pedir el permiso de lectura
+  ubicacionCache = null;   // vuelve a buscar, por si se movieron carpetas
   await tienePermiso(carpetaPrincipal, true);
   if (carpetaGiri && zonaElegida === "RM") await tienePermiso(carpetaGiri, true);
   pintarCarpeta();
@@ -1021,6 +1078,7 @@ alEvento("btn-desconectar", "click", async () => {
   carpetaGiri = null;
   revisionCarpeta = null;
   try { await borrarCarpetasDB(); } catch (e) { /* no importa */ }
+  pintarBase().catch(() => {});
   pintarCarpeta();
   revisarSiPuedeProcesar();
 });
