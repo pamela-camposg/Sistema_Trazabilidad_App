@@ -660,47 +660,68 @@ async function bajarPor(dir, partes) {
    carpeta conectada y se recuerda.
    ------------------------------------------------------------------------- */
 const MAX_NIVELES = 4;
-const MAX_CARPETAS = 600;      // tope para no recorrer todo OneDrive
+const MAX_CARPETAS = 1500;     // tope para no recorrer todo OneDrive
 let ubicacionCache = null;     // { raiz, general, giriDir }
 const CLAVE_BBDD = clave("BBDD");
 const CLAVE_INFO = clave("Información Base");
 const CLAVE_GIRI_ARCHIVO = clave("OPERACIONES GIRI (INGRESOS Y EGRESOS).xlsx");
+// Carpetas que probablemente llevan a lo que se busca: se revisan primero,
+// para no gastar el tope en carpetas de otras áreas.
+const PISTAS = /TRAZAB|GENERAL|INTELIGENCIA|GIRI|BBDD|INFORMACION/;
+const conPista = (h) => PISTAS.test(clave(h.name));
 
-async function explorar(raiz) {
-  if (ubicacionCache && ubicacionCache.raiz === raiz) return ubicacionCache;
-  let general = null;
-  let giriDir = null;
+/* Busca hacia abajo la primera carpeta que cumpla "cumple(nombres de
+   subcarpetas, claves de archivos)". Revisa primero las que tienen pista. */
+async function buscarHaciaAbajo(raiz, cumple) {
   let vistas = 0;
   let nivel = [raiz];
-  for (let n = 0; n <= MAX_NIVELES && nivel.length && !(general && giriDir); n++) {
+  for (let n = 0; n <= MAX_NIVELES && nivel.length; n++) {
     const siguiente = [];
+    nivel.sort((a, b) => conPista(b) - conPista(a));
     for (const dir of nivel) {
-      if (++vistas > MAX_CARPETAS) break;
+      if (++vistas > MAX_CARPETAS) return null;
       const sub = [];
-      let tieneBBDD = false, tieneInfo = false;
+      const subClaves = new Set();
+      const archivos = new Set();
       for await (const [nombre, h] of dir.entries()) {
-        const c = clave(nombre);
-        if (h.kind === "directory") {
-          sub.push(h);
-          if (c === CLAVE_BBDD) tieneBBDD = true;
-          if (c === CLAVE_INFO) tieneInfo = true;
-        } else if (!giriDir && c === CLAVE_GIRI_ARCHIVO) {
-          giriDir = dir;
-        }
+        if (h.kind === "directory") { sub.push(h); subClaves.add(clave(nombre)); }
+        else archivos.add(clave(nombre));
       }
-      if (!general && tieneBBDD && tieneInfo) general = dir;
-      // Dentro de "General" no hace falta seguir bajando
-      if (dir !== general) siguiente.push(...sub);
+      if (cumple(subClaves, archivos)) return dir;
+      siguiente.push(...sub);
     }
     nivel = siguiente;
   }
-  ubicacionCache = { raiz, general, giriDir };
+  return null;
+}
+
+/* "General" se busca una vez por carpeta conectada; GIRI solo cuando se pide
+   (zona RM), para no recorrer OneDrive entero buscando algo que Sur no usa. */
+async function explorar(raiz, conGiri = false) {
+  if (!ubicacionCache || ubicacionCache.raiz !== raiz) {
+    let general = null;
+    for (const partes of [[], ["General"], [NOMBRE_TRZ, "General"]]) {     // rutas conocidas
+      const d = partes.length ? await bajarPor(raiz, partes) : raiz;
+      if (d && (await subcarpeta(d, "BBDD")) && (await subcarpeta(d, "Información Base"))) {
+        general = d;
+        break;
+      }
+    }
+    if (!general) {
+      general = await buscarHaciaAbajo(raiz, (sub) => sub.has(CLAVE_BBDD) && sub.has(CLAVE_INFO));
+    }
+    ubicacionCache = { raiz, general, giriDir: undefined };
+  }
+  if (conGiri && ubicacionCache.giriDir === undefined) {
+    ubicacionCache.giriDir = (await subcarpeta(raiz, NOMBRE_GIRI)) ||
+      (await buscarHaciaAbajo(raiz, (sub, archivos) => archivos.has(CLAVE_GIRI_ARCHIVO)));
+  }
   return ubicacionCache;
 }
 
 async function ubicarCarpetas(raiz, zona, giriOk) {
   const nombreZona = CARPETA_DE_ZONA[zona];
-  const { general, giriDir: giriEncontrado } = await explorar(raiz);
+  const { general, giriDir: giriEncontrado } = await explorar(raiz, zona === "RM" && !(carpetaGiri && giriOk));
 
   let zonaDir = general ? await bajarPor(general, ["BBDD", nombreZona]) : null;
   if (!zonaDir) zonaDir = await subcarpeta(raiz, nombreZona);              // eligió "BBDD"
@@ -767,6 +788,7 @@ async function buscarEnCarpeta(zona, pedirPermiso) {
   const guardadosBase = new Set(baseGuardada.map((i) => clave(i.nombre)));
   const encontrados = [];
   const faltan = [];
+  const faltanGrupos = [];
   for (const g of esp.grupos) {
     const claves = g.nombres.map(clave);
     const hit = claves.map((c) => porClave.get(c)).find(Boolean);
@@ -777,9 +799,10 @@ async function buscarEnCarpeta(zona, pedirPermiso) {
       encontrados.push({ nombre: g.nombres[0], origen: "guardado en este computador", guardado: true, maestro: true });
     } else if (!g.opcional) {
       faltan.push(g.nombres[0]);
+      faltanGrupos.push(g);
     }
   }
-  return { ub, encontrados, faltan };
+  return { ub, encontrados, faltan, faltanGrupos };
 }
 
 function pintarRevision(rv) {
@@ -1159,9 +1182,11 @@ alEvento("btn-procesar", "click", async () => {
     // 1. Carpeta conectada. Va primero porque el permiso de lectura solo se
     //    puede pedir justo después del clic.
     let deCarpeta = [];
+    let usoCarpeta = false;
     if (carpetaPrincipal && CARPETA_DE_ZONA[zonaElegida]) {
       mostrarProgreso("Leyendo los archivos desde la carpeta conectada…");
       deCarpeta = await leerDesdeCarpeta(zonaElegida);
+      usoCarpeta = true;
     }
 
     // 2. Lo que se arrastró a mano manda: si un archivo está en los dos
@@ -1190,6 +1215,22 @@ alEvento("btn-procesar", "click", async () => {
           .filter((i) => !usadas.has(clave(i.nombre)))
           .map((i) => ({ nombre: i.nombre, bytes: i.bytes }));
 
+    // 4. Antes de mandar al motor: si con la carpeta conectada todavía falta
+    //    algo obligatorio, se dice acá, claro y con qué hacer, en vez del
+    //    error técnico de Python. (Si soltó un .zip no se puede saber qué
+    //    trae adentro, así que se deja pasar y Python avisa.)
+    const hayZip = archivos.some((f) => f.name.toLowerCase().endsWith(".zip"));
+    if (usoCarpeta && revisionCarpeta && revisionCarpeta.faltanGrupos && !hayZip) {
+      const presentes = new Set([...usadas, ...base.map((b) => clave(b.nombre))]);
+      const siguenFaltando = revisionCarpeta.faltanGrupos.filter(
+        (g) => !g.nombres.some((n) => presentes.has(clave(n)))
+      );
+      if (siguenFaltando.length) {
+        mostrarFaltantes(siguenFaltando, revisionCarpeta.ub);
+        return;
+      }
+    }
+
     const m = await enviarAlMotor({
       tipo: "procesar",
       zona: zonaElegida,
@@ -1212,6 +1253,46 @@ alEvento("btn-procesar", "click", async () => {
     revisarSiPuedeProcesar();
   }
 });
+
+/* Cuando faltan archivos y la carpeta está conectada: se dice cuáles y qué
+   hacer, separando los archivos base (paso 02) de los de la zona (paso 03). */
+function mostrarFaltantes(grupos, ub) {
+  const base = grupos.filter((g) => g.maestro).map((g) => g.nombres[0]);
+  const zona = grupos.filter((g) => !g.maestro).map((g) => g.nombres[0]);
+
+  $("resultado").style.display = "block";
+  $("resumen").innerHTML = "<b>Faltan archivos, así que no se procesó.</b> Abajo está qué falta y qué hacer.";
+  $("tabla-fuentes").querySelector("tbody").innerHTML = "";
+  $("descargas").innerHTML = "";
+  $("registro").classList.add("oculto");
+
+  const cont = $("alertas");
+  cont.innerHTML = "";
+  const alerta = (titulo, detalle) => {
+    const div = document.createElement("div");
+    div.className = "alerta";
+    const t = document.createElement("b");
+    t.textContent = titulo;
+    div.append(t, document.createTextNode(" — " + detalle));
+    cont.appendChild(div);
+  };
+
+  if (base.length) {
+    const motivo = ub && !ub.infoDir
+      ? `La carpeta conectada ("${carpetaPrincipal.name}") no contiene "Información Base"`
+      : `No están en "Información Base"`;
+    alerta(`Faltan archivos base: ${base.join(", ")}`,
+      `${motivo} y tampoco están guardados en este computador. Solución: en el paso 03 aprieta ` +
+      `"Cambiar carpeta" y elige la carpeta "General" de Trazabilidad (la que tiene adentro ` +
+      `"BBDD" e "Información Base"), o sube estos archivos en el paso 02.`);
+  }
+  if (zona.length) {
+    const donde = ub && ub.zonaDir ? `la carpeta "${ub.nombreZona}"` : "la carpeta conectada";
+    alerta(`Faltan archivos de la zona: ${zona.join(", ")}`,
+      `No están en ${donde}. Revisa que estén sincronizados en OneDrive con ese nombre, o ` +
+      `arrástralos en el paso 03.`);
+  }
+}
 
 /* =========================================================================
    6. MOSTRAR RESULTADO Y PREPARAR LAS DESCARGAS
