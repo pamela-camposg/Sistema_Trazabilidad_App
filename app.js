@@ -438,7 +438,16 @@ async function recibirBase(fileList) {
       bytes: g.bytes,
     }));
 
-    if (items.length) await guardarBaseDB(items);
+    if (items.length) {
+      // Uno por tipo: si "BBDD_DESTINATARIO.xlsx" llega y había guardado un
+      // "BBDD DESTINATARIO.xlsx", el viejo se borra (si no, quedaban los dos).
+      const tipos = new Set(items.map((i) => i.etiqueta));
+      const viejos = ((await leerBaseDB()) || []).filter(
+        (v) => tipos.has(v.etiqueta) && !items.some((i) => i.nombre === v.nombre)
+      );
+      for (const v of viejos) await borrarUnoBaseDB(v.nombre);
+      await guardarBaseDB(items);
+    }
     console.info("[archivos base]\n" + ((m.res && m.res.log) || ""));
 
     const res = m.res || {};
@@ -753,6 +762,7 @@ function pintarRevision(rv) {
 /* Escribe en pantalla el estado de la carpeta y, si ya hay permiso, revisa
    qué archivos de la zona encuentra. */
 async function pintarCarpeta() {
+  pintarBaseCarpeta();   // el paso 02 también muestra lo de la carpeta
   const estado = $("estado-carpeta");
   if (!estado) return;
   const btnConectar = $("btn-conectar");
@@ -858,7 +868,7 @@ async function leerDesdeCarpeta(zona) {
   return leidos;
 }
 
-alEvento("btn-conectar", "click", async () => {
+async function conectarCarpeta() {
   try {
     const h = await window.showDirectoryPicker({ id: "trazabilidad", mode: "read" });
     carpetaPrincipal = h;
@@ -870,6 +880,120 @@ alEvento("btn-conectar", "click", async () => {
   }
   pintarCarpeta();
   revisarSiPuedeProcesar();
+}
+
+// El mismo botón está en el paso 02 (archivos base) y en el paso 03: es una
+// sola conexión que sirve para los dos.
+alEvento("btn-conectar", "click", conectarCarpeta);
+alEvento("btn-conectar-base", "click", conectarCarpeta);
+
+/* -------------------------------------------------------------------------
+   ARCHIVOS BASE DESDE LA CARPETA
+   Al procesar, los archivos base ya se leen de "Información Base" (ver
+   buscarEnCarpeta). Esto solo lo muestra en el paso 02 y permite guardar
+   una copia en el navegador, para cuando la carpeta no esté disponible.
+   La opción de subirlos a mano sigue igual.
+   ------------------------------------------------------------------------- */
+async function ubicarInfoBase(raiz) {
+  if (clave(raiz.name) === clave("Información Base")) return raiz;
+  for (const partes of [[NOMBRE_TRZ, "General"], ["General"], []]) {
+    const d = partes.length ? await bajarPor(raiz, partes) : raiz;
+    const info = d && (await subcarpeta(d, "Información Base"));
+    if (info) return info;
+  }
+  return null;
+}
+
+async function maestrosEnCarpeta(pedirPermiso) {
+  if (!carpetaPrincipal) return null;
+  if (!(await tienePermiso(carpetaPrincipal, pedirPermiso))) return { sinPermiso: true };
+  // Los nombres de los archivos base salen de Python, igual que los de las zonas
+  const esp = await pedirEsperados("SUR");
+  if (!esp) return { procesarAntiguo: true };
+  const info = await ubicarInfoBase(carpetaPrincipal);
+  const enInfo = await excelDe(info);
+  const encontrados = [];
+  const faltan = [];
+  for (const g of esp.grupos.filter((x) => x.maestro)) {
+    const claves = g.nombres.map(clave);
+    const hit = enInfo.find(([n]) => claves.includes(clave(n)));
+    if (hit) encontrados.push({ nombre: hit[0], handle: hit[1] });
+    else faltan.push(g.nombres[0]);
+  }
+  return { info, encontrados, faltan };
+}
+
+async function pintarBaseCarpeta() {
+  const estado = $("estado-base-carpeta");
+  const bloque = $("base-carpeta");
+  if (!estado || !bloque) return;
+  const btnConectar = $("btn-conectar-base");
+  const btnGuardar = $("btn-base-desde-carpeta");
+
+  if (!soportaCarpetas) {
+    bloque.style.display = "none";
+    return;
+  }
+  bloque.style.display = "";
+  btnConectar.style.display = carpetaPrincipal ? "none" : "";
+  btnGuardar.style.display = "none";
+
+  if (!carpetaPrincipal) {
+    estado.textContent = "Si conectas la carpeta de OneDrive, los archivos base se leen solos " +
+      "de \"Información Base\" y siempre se usa la versión del día.";
+    return;
+  }
+  if (!motorListo || procesando) {
+    estado.textContent = `Carpeta conectada: ${carpetaPrincipal.name}.`;
+    return;
+  }
+
+  try {
+    const r = await maestrosEnCarpeta(false);
+    if (r && r.sinPermiso) {
+      estado.textContent = `Carpeta conectada: ${carpetaPrincipal.name}. El navegador necesita ` +
+        "tu permiso para leerla: haz clic en \"Revisar archivos\" (paso 03) o en Procesar.";
+    } else if (r && r.procesarAntiguo) {
+      estado.textContent = "Para leer los archivos base desde la carpeta hay que actualizar " +
+        "python/procesar.py.";
+    } else if (r && !r.info) {
+      estado.textContent = `La carpeta conectada (${carpetaPrincipal.name}) no contiene ` +
+        "\"Información Base\". Se usan los archivos base guardados en este computador. " +
+        "Para leerlos de la carpeta, conecta \"OneDrive - Ambipar Group\" o la carpeta \"General\".";
+    } else if (r) {
+      const total = r.encontrados.length + r.faltan.length;
+      let texto = `Al procesar se leen de "Información Base" (versión del día): ` +
+        `${r.encontrados.length} de ${total}.`;
+      if (r.faltan.length) {
+        texto += ` No están en la carpeta: ${r.faltan.join(", ")}; para esos se usa el guardado aquí.`;
+      }
+      estado.textContent = texto;
+      btnGuardar.style.display = r.encontrados.length ? "" : "none";
+    }
+  } catch (e) {
+    estado.textContent = "No se pudo revisar \"Información Base\": " + ((e && e.message) || e);
+  }
+}
+
+alEvento("btn-base-desde-carpeta", "click", async () => {
+  const btn = $("btn-base-desde-carpeta");
+  btn.disabled = true;
+  try {
+    const r = await maestrosEnCarpeta(true);
+    if (!r || r.sinPermiso || r.procesarAntiguo || !r.encontrados.length) {
+      $("estado-base").textContent = "No encontré archivos base en la carpeta conectada.";
+      return;
+    }
+    const archivosCarpeta = [];
+    for (const e of r.encontrados) archivosCarpeta.push(await e.handle.getFile());
+    // Mismo camino que si se hubieran soltado a mano: Python los revisa y
+    // quedan guardados en el navegador, reemplazando la copia anterior.
+    await recibirBase(archivosCarpeta);
+  } catch (e) {
+    $("estado-base").textContent = "No se pudo copiar desde la carpeta: " + ((e && e.message) || e);
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 alEvento("btn-conectar-giri", "click", async () => {
