@@ -102,6 +102,11 @@
   #lista-carpeta li{ display:flex; justify-content:space-between; gap:1rem; padding:.4rem .2rem; font-size:.75rem; color:#3f3f46; border-bottom:1px solid #ececef }
   #lista-carpeta li.falta{ color:#B4610A }
   #lista-carpeta .origen{ font-size:.6875rem; color:#a1a1aa; white-space:nowrap }
+  #base-carpeta{ border:1px solid #e4e4e7; border-left:3px solid #CCFF00; border-radius:6px; background:#F9F9FB; padding:.9rem 1rem }
+  #base-carpeta .botones{ display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; margin-top:.6rem }
+  #base-carpeta .btn{ margin:0 }
+  #base-carpeta .botones:empty, #base-carpeta .botones.vacio{ display:none }
+  #estado-base-carpeta{ font-size:.8125rem; color:#52525b; line-height:1.55 }
 
   #resultado{ display:none }
 
@@ -314,8 +319,18 @@
         </div>
         <p class="mt-1.5 max-w-xl text-[13px] leading-relaxed text-zinc-500">
           Homologación, Destinatarios, Clasificación SINADER y Transportistas son los
-          mismos para las tres zonas. Quedan guardados en este computador.
+          mismos para las tres zonas. Con la carpeta de OneDrive conectada se leen solos
+          de “Información Base”; si no, se usan los guardados en este computador.
         </p>
+
+        <!-- Archivos base desde la carpeta de OneDrive conectada -->
+        <div id="base-carpeta" class="mt-5">
+          <p id="estado-base-carpeta"></p>
+          <div class="botones">
+            <button id="btn-conectar-base" type="button" class="btn secundario">Conectar carpeta de OneDrive</button>
+            <button id="btn-base-desde-carpeta" type="button" class="btn secundario" style="display:none">Guardar copia desde la carpeta</button>
+          </div>
+        </div>
 
         <p id="estado-base"
            class="mt-5 rounded-r-md border-l-[3px] border-neon bg-zinc-50 px-4 py-2.5 text-[13px] text-zinc-600">
