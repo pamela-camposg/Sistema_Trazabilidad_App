@@ -1477,6 +1477,56 @@ def _instalar_lectores_livianos(mod_control, mod_consolidar, log=None):
 
 
 # =============================================================================
+# CARPETA CONECTADA — qué archivos tiene que ir a buscar la página
+# -----------------------------------------------------------------------------
+# Cuando la operadora conecta su carpeta de OneDrive, la página lee los
+# archivos directo del computador. Para leer SOLO los que sirven (y no todo lo
+# que haya en la carpeta), le pregunta a Python qué nombres busca cada zona.
+# Así la lista vive en un solo lugar: NOMBRES_ARCHIVO de cada control_calidad
+# más NOMBRES_EXTRA_ZONA de acá. Si mañana se agrega una base nueva, la
+# carpeta conectada la encuentra sola, sin tocar app.js.
+# =============================================================================
+def nombres_esperados(zona):
+    """Grupos de archivos que necesita una zona.
+
+    Cada grupo trae los nombres aceptados para ese archivo, si es un archivo
+    base (maestro) y si es opcional.
+    """
+    import importlib
+
+    zona = (zona or "").strip().upper()
+    if zona == "SIMPLE_ROUTE":
+        return {"zona": zona, "grupos": [{
+            "clave": "bo", "nombres": list(NOMBRES_BO_SIMPLE_ROUTE),
+            "maestro": False, "opcional": False,
+        }]}
+    if zona not in ZONAS_CONECTADAS:
+        return {"zona": zona, "grupos": []}
+
+    mod = importlib.import_module(f"{zona.lower()}.control_calidad")
+    opcionales = set(getattr(mod, "OPCIONALES", set()))
+    extra = NOMBRES_EXTRA_ZONA.get(zona, {})
+    extra_obligatorios = set(EXTRA_OBLIGATORIOS_ZONA.get(zona, []))
+
+    claves = list(mod.NOMBRES_ARCHIVO) + [k for k in extra if k not in mod.NOMBRES_ARCHIVO]
+    grupos = []
+    for k in claves:
+        nombres = list(mod.NOMBRES_ARCHIVO.get(k, [])) + list(extra.get(k, []))
+        nombres += NOMBRES_MAESTROS.get(k, [])
+        if k in mod.NOMBRES_ARCHIVO:
+            opcional = k in opcionales
+        else:
+            opcional = k not in extra_obligatorios
+        grupos.append({
+            "clave": k,
+            "nombres": list(dict.fromkeys(nombres)),   # sin repetidos, en orden
+            "maestro": k in NOMBRES_MAESTROS,
+            "opcional": opcional,
+        })
+    return {"zona": zona, "grupos": grupos}
+
+
+# =============================================================================
 # ARCHIVOS BASE — lo que llama la app cuando la operadora los sube
 # =============================================================================
 def preparar_base(carpeta):
