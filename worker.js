@@ -179,6 +179,21 @@ json.dumps(procesar(ZONA_JS, "/work/uploads", "/work/salida", PERIODO_JS))
 }
 
 /* ---------------------------------------------------------------------- */
+/* Qué archivos busca una zona. Lo usa la página para leer solo esos desde la
+   carpeta de OneDrive conectada. Si procesar.py es una versión anterior y no
+   tiene nombres_esperados(), responde null y la página sigue sin carpeta. */
+function esperados(zona) {
+  const hay = pyodide.runPython(`"nombres_esperados" in globals()`);
+  if (!hay) return postMessage({ tipo: "esperados", res: null });
+  pyodide.globals.set("ZONA_JS", zona);
+  const res = JSON.parse(pyodide.runPython(`
+import json
+json.dumps(nombres_esperados(ZONA_JS))
+`));
+  postMessage({ tipo: "esperados", res });
+}
+
+/* ---------------------------------------------------------------------- */
 onmessage = async (ev) => {
   const m = ev.data || {};
   try {
@@ -189,6 +204,8 @@ onmessage = async (ev) => {
       await prepararBase(m.archivos);
     } else if (m.tipo === "procesar") {
       await procesarZona(m.zona, m.base, m.movimientos, m.periodo);
+    } else if (m.tipo === "esperados") {
+      esperados(m.zona);
     }
   } catch (e) {
     postMessage({
